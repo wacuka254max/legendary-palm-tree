@@ -24,8 +24,12 @@
   --ink-muted: #a3a3ae;
   --ink-faint: #6e6e7a;
 
-  --pink:      #ff4d8f;
-  --blue:      #6ec6ff;
+  /* Both accents are bright enough to carry a solid button with dark text
+     on it, and are used at the same strength so neither reads as secondary. */
+  --pink:      #ff3d87;
+  --pink-hi:   #ff5c9c;
+  --blue:      #38c6ff;
+  --blue-hi:   #5bd2ff;
   --ok:        #5fd39a;
 
   /* The full-bleed gutter — the only horizontal rhythm on the page. */
@@ -79,8 +83,12 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .btn-lg { padding: 14px 28px; font-size: 15.5px; }
 
+/* Two bright solid fills, equal weight — pink for "free", blue to start. */
 .btn-solid { background: var(--pink); color: #0b0b0f; }
-.btn-solid:hover { background: #ff689e; }
+.btn-solid:hover { background: var(--pink-hi); }
+
+.btn-blue { background: var(--blue); color: #0b0b0f; }
+.btn-blue:hover { background: var(--blue-hi); }
 
 .btn-line { border-color: var(--line-hi); color: var(--ink); }
 .btn-line:hover { background: var(--surface); border-color: #45454f; }
