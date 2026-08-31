@@ -117,6 +117,42 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   color: var(--ink-muted);
 }
 .balance-id.is-error { color: var(--ink-faint); letter-spacing: 0; }
+/* Every account behind the headline. Three columns on a row so the ids line
+   up and the balances read down the right edge as one column of figures. */
+.accts { margin-top: 20px; border-top: 1px solid var(--line); }
+.acct {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.acct:last-child { border-bottom: 0; }
+.acct-kind {
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+  background: var(--surface-2);
+  border-radius: 6px;
+}
+.acct-id {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  overflow-wrap: anywhere;
+}
+.acct-bal {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.acct--none { display: block; color: var(--ink-faint); }
+
 .balance-hint { margin-top: 16px; font-size: 12.5px; color: var(--ink-faint); }
 .balance-hint strong { color: var(--ink-muted); font-weight: 600; }
 

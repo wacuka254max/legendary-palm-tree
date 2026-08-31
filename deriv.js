@@ -9,8 +9,9 @@
  *      no secret, so the verifier never leaves this browser.
  *   2. token     → auth.deriv.com/oauth2/token, exchanging the code + verifier
  *      for an access token and a refresh token.
- *   3. balances  → wss://ws.derivws.com, authorize(access_token), then ask for
- *      every account's balance at once.
+ *   3. balances  → api.derivws.com REST, Bearer access token + Deriv-App-ID.
+ *      NOT the WebSocket: that wants a numeric app_id and a legacy a1- token,
+ *      and this app has neither, which is what "Could not reach Deriv" was.
  *
  * Nothing is stored on a server. The tokens live in this browser and only this
  * browser; Evie never sees them, and there is no account to sign in to.
@@ -28,7 +29,6 @@
   var APP_ID = "34gG4jgJ0gHGbGDC2XvY5";
   var AUTH_URL = "https://auth.deriv.com/oauth2/auth";
   var TOKEN_URL = "https://auth.deriv.com/oauth2/token";
-  var WS_URL = "wss://ws.derivws.com/websockets/v3?app_id=" + encodeURIComponent(APP_ID);
 
   /**
    * Where Deriv sends the user back.
@@ -68,9 +68,6 @@
   var SESSION_KEY = "evie_deriv_session";
   var VERIFIER_KEY = "evie_pkce_verifier";
   var STATE_KEY = "evie_oauth_state";
-
-  /** Deriv is normally quick; past this, waiting helps nobody. */
-  var TIMEOUT_MS = 12000;
 
   /* ── session storage ───────────────────────────────────────────────────── */
 
@@ -268,94 +265,154 @@
       .catch(function () { return s.access_token; });
   }
 
-  /* ── step 3: what is in the account ────────────────────────────────────── */
+  /* ── step 3: what is in the account ──────────────────────────────────────
+     Over the REST API, not the WebSocket.
 
-  /**
-   * Every account this token reaches, with an accurate balance for each.
-   *
-   * authorize gives the roster (which id, which currency, real or demo). It is
-   * not a reliable source of balances, so we then ask for balances explicitly
-   * with account:"all" — that is the figure Deriv shows the user, per account,
-   * and the reason this reads the same number as their own portfolio page.
-   */
-  function accounts() {
-    return validToken().then(function (token) {
-      if (!token) return Promise.reject(new Error("not connected"));
+     The WebSocket was the wrong door and produced "Could not reach Deriv":
+     ws.derivws.com wants a NUMERIC app_id and a legacy a1- account token,
+     and this app has neither — the id is a 21-character OIDC client id and
+     OAuth hands back an ory_at_ access token. So the socket refused the
+     connection every time, whatever the account held.
 
-      return new Promise(function (resolve, reject) {
-        var ws, done = false, roster = [];
+     api.derivws.com is the door that matches these credentials: Bearer access
+     token plus the app id in a Deriv-App-ID header, CORS-open to the browser.
+     Three endpoints, matching the three scopes we asked for:
 
-        var finish = function (fn, arg) {
-          if (done) return;
-          done = true;
-          clearTimeout(timer);
-          try { if (ws) ws.close(); } catch (e) {}
-          fn(arg);
-        };
-        var ok = function (v) { finish(resolve, v); };
-        var bad = function (m) { finish(reject, new Error(m)); };
+       trade          → /trading/v1/options/accounts
+       payment        → /wallet/v1/wallets
+       account_manage → /account/v1/nickname
 
-        var timer = setTimeout(function () { bad("Deriv did not respond."); }, TIMEOUT_MS);
+     Only the options call is required. The other two are best-effort, so a
+     scope Deriv declines to grant costs a section of the page, not the page. */
 
-        try { ws = new WebSocket(WS_URL); }
-        catch (e) { return bad("Could not reach Deriv."); }
+  var REST_BASE = "https://api.derivws.com";
 
-        ws.onopen = function () { ws.send(JSON.stringify({ authorize: token })); };
-
-        ws.onmessage = function (ev) {
-          var msg;
-          try { msg = JSON.parse(ev.data); } catch (e) { return; }
-
-          if (msg.error) {
-            return bad(msg.error.message || "Deriv rejected the connection.");
-          }
-
-          if (msg.msg_type === "authorize" && msg.authorize) {
-            roster = (msg.authorize.account_list || []).map(function (a) {
-              return {
-                id: a.loginid,
-                currency: a.currency || "USD",
-                demo: !!a.is_virtual,
-                balance: typeof a.balance === "number" ? a.balance : null
-              };
-            });
-            // Fall back to the authorised account if the roster came back thin.
-            if (!roster.length && msg.authorize.loginid) {
-              roster = [{
-                id: msg.authorize.loginid,
-                currency: msg.authorize.currency || "USD",
-                demo: /^vr/i.test(msg.authorize.loginid),
-                balance: typeof msg.authorize.balance === "number" ? msg.authorize.balance : null
-              }];
-            }
-            ws.send(JSON.stringify({ balance: 1, account: "all" }));
-            return;
-          }
-
-          if (msg.msg_type === "balance" && msg.balance) {
-            var per = msg.balance.accounts || {};
-            roster.forEach(function (a) {
-              var row = per[a.id];
-              if (row && typeof row.balance === "number") {
-                a.balance = row.balance;
-                if (row.currency) a.currency = row.currency;
-              }
-            });
-            // The single authorised account is reported at the top level.
-            if (typeof msg.balance.balance === "number" && msg.balance.loginid) {
-              roster.forEach(function (a) {
-                if (a.id === msg.balance.loginid && a.balance == null) a.balance = msg.balance.balance;
-              });
-            }
-            return ok(roster);
-          }
-        };
-
-        ws.onerror = function () { bad("Could not reach Deriv."); };
-        ws.onclose = function () { if (!done) bad("Deriv closed the connection."); };
+  function get(path, token) {
+    return fetch(REST_BASE + path, {
+      headers: { Authorization: "Bearer " + token, "Deriv-App-ID": APP_ID },
+      cache: "no-store"
+    }).then(function (res) {
+      return res.json().catch(function () { return null; }).then(function (json) {
+        if (res.status === 401) {
+          var e401 = new Error("Your Deriv session has expired. Please connect again.");
+          e401.expired = true;
+          throw e401;
+        }
+        if (!res.ok) {
+          var msg = (json && json.errors && json.errors[0] && json.errors[0].message) ||
+            (json && (json.message || json.error)) || ("Deriv API error (" + res.status + ")");
+          throw new Error(String(msg));
+        }
+        return json && json.data;
       });
     });
   }
+
+  /* Deriv marks demo money several ways: options report account_type "demo",
+     and every virtual id starts VR (VRTC options, VRW wallet). Any one of them
+     is enough — a demo balance shown as real would be a lie about money. */
+  function isDemo() {
+    for (var i = 0; i < arguments.length; i++) {
+      var v = arguments[i];
+      if (v && (/demo|virtual/i.test(v) || /^vr/i.test(v))) return true;
+    }
+    return false;
+  }
+
+  function num(v) {
+    if (typeof v === "number") return v;
+    if (typeof v === "string" && v.trim() !== "" && !isNaN(Number(v))) return Number(v);
+    return null;
+  }
+
+  /**
+   * The whole portfolio: every options account and every wallet, real and demo,
+   * plus the profile nickname and the id of the account they connected with.
+   */
+  function portfolio() {
+    return validToken().then(function (token) {
+      if (!token) return Promise.reject(new Error("not connected"));
+
+      var settled = function (p) {
+        return p.then(
+          function (v) { return { ok: true, value: v }; },
+          function (e) { return { ok: false, error: e }; }
+        );
+      };
+
+      return Promise.all([
+        settled(get("/trading/v1/options/accounts", token)),
+        settled(get("/wallet/v1/wallets", token)),
+        settled(get("/account/v1/nickname", token))
+      ]).then(function (r) {
+        var optsR = r[0], walletsR = r[1], nickR = r[2];
+
+        // Options are the backbone. If that failed, there is nothing to show.
+        if (!optsR.ok) throw optsR.error;
+
+        var accounts = [];
+
+        (Array.isArray(optsR.value) ? optsR.value : []).forEach(function (a) {
+          var id = String(a.account_id || "");
+          if (!id) return;
+          accounts.push({
+            id: id,
+            kind: "Options",
+            currency: String(a.currency || ""),
+            balance: num(a.balance),
+            demo: isDemo(a.account_type, a.group, a.status, id)
+          });
+        });
+
+        if (walletsR.ok) {
+          (Array.isArray(walletsR.value) ? walletsR.value : []).forEach(function (w) {
+            var id = String(w.wallet_id || "");
+            if (!id) return;
+            var tb = w.total_balance || {};
+            accounts.push({
+              id: id,
+              kind: "Wallet",
+              currency: String(tb.converted_to || ""),
+              balance: num(tb.approximate_total_balance),
+              demo: isDemo(w.type, id)
+            });
+          });
+        }
+
+        var nickname = "";
+        if (nickR.ok && nickR.value && typeof nickR.value === "object") {
+          nickname = String(nickR.value.nickname || "");
+        }
+
+        /* Balances can arrive in more than one currency, and adding those
+           together would invent a number. Sum per currency instead and lead
+           with the biggest bucket, with every account still listed. */
+        function totals(demo) {
+          var byCur = {};
+          accounts.forEach(function (a) {
+            if (a.balance == null || !!a.demo !== demo) return;
+            var cur = a.currency || "";
+            byCur[cur] = (byCur[cur] || 0) + a.balance;
+          });
+          var bestCur = "", best = -Infinity;
+          Object.keys(byCur).forEach(function (c) {
+            if (byCur[c] > best) { best = byCur[c]; bestCur = c; }
+          });
+          return Object.keys(byCur).length
+            ? { amount: byCur[bestCur], currency: bestCur, split: byCur }
+            : null;
+        }
+
+        return {
+          nickname: nickname,
+          accounts: accounts,
+          real: totals(false),
+          demo: totals(true)
+        };
+      });
+    });
+  }
+
 
   global.EvieDeriv = {
     APP_ID: APP_ID,
@@ -367,6 +424,6 @@
     handleRedirect: handleRedirect,
     isConnected: isConnected,
     disconnect: clearSession,
-    accounts: accounts
+    portfolio: portfolio
   };
 })(window);

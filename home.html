@@ -38,15 +38,20 @@
 
   <section class="balance" id="balance" aria-live="polite">
     <div class="balance-head">
-      <p class="balance-k">Options balance</p>
-      <!-- Double-click flips this to the demo account. -->
+      <p class="balance-k">Portfolio balance</p>
+      <!-- Double-click flips the whole card to the demo side. -->
       <button class="badge" id="badge" type="button"
-              title="Double-click to see your demo account"
+              title="Double-click to see your demo accounts"
               aria-label="Account type. Double-click to switch between real and demo.">Real</button>
     </div>
+
     <p class="balance-v" id="amount">Checking…</p>
     <p class="balance-id" id="account"></p>
-    <p class="balance-hint" id="hint" hidden>Double-click <strong>Real</strong> to see your demo account.</p>
+
+    <!-- Every account behind that figure: options accounts and wallets. -->
+    <ul class="accts" id="accts"></ul>
+
+    <p class="balance-hint" id="hint" hidden>Double-click <strong>Real</strong> to see your demo accounts.</p>
   </section>
 
   <!-- The reason a funded account can still read zero here. -->
@@ -55,11 +60,12 @@
       <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
     </span>
     <div>
-      <p class="notice-t">Seeing zero, or less than you expect?</p>
+      <p class="notice-t">Options is the only balance a bot can trade</p>
       <p class="notice-p">
-        This is your <strong>options</strong> account balance — the only one a bot can
-        trade. Money sitting in your Deriv wallet, MT5 or another sub-account will not
-        show here until you move it across.
+        Everything above is your Deriv portfolio, but a bot can only trade the
+        <strong>options</strong> account. Money sitting in a wallet, in MT5 or in
+        another sub-account has to be moved across first — and anything Deriv does
+        not report here, such as an MT5 balance, will not appear above at all.
       </p>
       <a class="notice-go" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener noreferrer">
         Transfer funds to your options account

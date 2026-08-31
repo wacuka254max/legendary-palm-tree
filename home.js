@@ -1,14 +1,17 @@
 /**
  * EVIE — the home dashboard.
  *
- * Shows the one number a bot can actually trade on: the balance of the Deriv
- * OPTIONS account. That distinction is the whole reason the notice below it
- * exists — a funded Deriv user can read zero here and be entirely correct,
- * because their money is in a wallet or an MT5 account instead.
+ * Shows the whole Deriv portfolio, not just the options account: every options
+ * account and every wallet, each with its own id and balance, under a headline
+ * total and the id of the account they connected with.
+ *
+ * The headline is the largest single-currency bucket rather than a sum of
+ * everything. Adding USD to EUR would produce a number that is not money, so
+ * the per-account rows carry the detail instead.
  *
  * Real and demo both come back from the same read, so the badge is a toggle
- * rather than a second request: double-click flips the figure and the account
- * id between them, with no waiting.
+ * rather than a second request: double-click flips the whole card between
+ * them, with no waiting.
  */
 
 (function () {
@@ -25,7 +28,8 @@
   var hintEl = $("hint");
   var noticeEl = $("notice");
 
-  var state = { real: null, demo: null, showing: "real" };
+  var acctsEl = $("accts");
+  var state = { data: null, showing: "real" };
 
   function money(n, currency) {
     var v = Number(n || 0).toLocaleString(undefined, {
@@ -50,23 +54,54 @@
 
   /* ── painting ───────────────────────────────────────────────────────────── */
 
+  function esc(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
   function render() {
-    var a = state[state.showing];
+    var d = state.data;
+    if (!d) return;
+
     var isDemo = state.showing === "demo";
+    var side = isDemo ? d.demo : d.real;
+    var rows = d.accounts.filter(function (a) { return !!a.demo === isDemo; });
 
     badgeEl.textContent = isDemo ? "Demo" : "Real";
     badgeEl.classList.toggle("badge--demo", isDemo);
 
-    if (!a) {
-      amountEl.textContent = isDemo ? "No demo account" : "No real account";
-      accountEl.textContent = "";
+    /* The headline is the biggest single-currency bucket. Adding USD to EUR
+       would invent a number, so the per-account rows below carry the rest. */
+    amountEl.textContent = side ? money(side.amount, side.currency) : "—";
+
+    /* Who this is: the profile name where Deriv gave us one, and the id of the
+       account they actually connected with. */
+    var primary = rows.filter(function (a) { return a.kind === "Options"; })[0] || rows[0];
+    var who = [];
+    if (d.nickname) who.push(d.nickname);
+    if (primary) who.push(primary.id);
+    accountEl.textContent = who.join(" · ");
+    accountEl.classList.remove("is-error");
+
+    if (!rows.length) {
+      acctsEl.innerHTML = '<li class="acct acct--none">No ' +
+        (isDemo ? "demo" : "real") + " accounts on this login.</li>";
+      if (noticeEl) noticeEl.hidden = isDemo;
       return;
     }
 
-    amountEl.textContent = money(a.balance, a.currency);
-    accountEl.textContent = a.id;
+    acctsEl.innerHTML = rows.map(function (a) {
+      return '<li class="acct">' +
+        '<span class="acct-kind">' + esc(a.kind) + "</span>" +
+        '<span class="acct-id">' + esc(a.id) + "</span>" +
+        '<span class="acct-bal">' +
+          (a.balance == null ? "—" : esc(money(a.balance, a.currency))) +
+        "</span>" +
+      "</li>";
+    }).join("");
 
-    // The notice is about a real account reading low. On the demo it is noise.
+    // The transfer notice is about a real account reading low. On demo it is noise.
     if (noticeEl) noticeEl.hidden = isDemo;
   }
 
@@ -74,12 +109,13 @@
     amountEl.textContent = "Unavailable";
     accountEl.textContent = message || "Could not reach Deriv.";
     accountEl.classList.add("is-error");
+    if (acctsEl) acctsEl.innerHTML = "";
   }
 
   /* ── the badge is a toggle ──────────────────────────────────────────────── */
 
   badgeEl.addEventListener("dblclick", function () {
-    if (!state.real && !state.demo) return;
+    if (!state.data) return;
     state.showing = state.showing === "real" ? "demo" : "real";
     render();
   });
@@ -87,7 +123,7 @@
   /* Double-click has no touch equivalent, so a phone gets a plain tap. */
   badgeEl.addEventListener("click", function (e) {
     if (e.detail === 0 || matchMedia("(hover: none)").matches) {
-      if (!state.real && !state.demo) return;
+      if (!state.data) return;
       state.showing = state.showing === "real" ? "demo" : "real";
       render();
     }
@@ -132,22 +168,24 @@
   /* ── read the accounts ──────────────────────────────────────────────────── */
 
   function load() {
-    return D.accounts()
-      .then(function (list) {
-        var reals = list.filter(function (a) { return !a.demo && typeof a.balance === "number"; });
-        var demos = list.filter(function (a) { return a.demo && typeof a.balance === "number"; });
-
-        // Where there are several real accounts, the funded one is the one they
-        // mean — a second currency sitting at 0.00 is not the answer.
-        reals.sort(function (x, y) { return y.balance - x.balance; });
-
-        state.real = reals[0] || null;
-        state.demo = demos[0] || null;
-        state.showing = state.real ? "real" : (state.demo ? "demo" : "real");
-
-        if (hintEl && state.real && state.demo) hintEl.hidden = false;
+    return D.portfolio()
+      .then(function (d) {
+        state.data = d;
+        // Open on whichever side actually has money to show.
+        state.showing = d.real ? "real" : (d.demo ? "demo" : "real");
+        if (hintEl && d.real && d.demo) hintEl.hidden = false;
         render();
       })
-      .catch(function (e) { fail(e && e.message); });
+      .catch(function (e) {
+        // An expired session cannot be fixed by staring at it — send them back
+        // to the button that fixes it.
+        if (e && e.expired) {
+          D.disconnect();
+          try { sessionStorage.setItem("evie_connect_error", e.message); } catch (x) {}
+          window.location.replace("/");
+          return;
+        }
+        fail(e && e.message);
+      });
   }
 })();
