@@ -9,6 +9,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/favicon.svg" />
 <link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/analysis/analysis.css" />
 </head>
 <body class="dash">
 
@@ -21,7 +22,9 @@
       <span class="brand-name">Evie</span>
     </a>
     <div class="perch">
-      <a class="btn btn-line" href="/home.html">Back to home</a>
+      <span class="perch-v" id="balance">—</span>
+      <span class="badge" id="acct-badge">Real</span>
+      <a class="btn btn-line" href="/home.html">Home</a>
     </div>
   </div>
 </header>
@@ -29,12 +32,95 @@
 <main class="bleed dash-main">
   <h1 class="dash-title">Analysis</h1>
 
-  <!-- Empty on purpose. This file exists so Analysis has somewhere of its own
-       to grow, rather than being bolted onto the dashboard later. -->
-  <section class="panel" id="root"></section>
+  <div class="an">
+
+    <!-- ── market + digits ──────────────────────────────────────────── -->
+    <section class="panel-solid an-read">
+      <div class="an-row">
+        <label class="fld an-fld">
+          <span class="fld-k">Market</span>
+          <select class="fld-i" id="market"></select>
+        </label>
+        <label class="fld an-fld">
+          <span class="fld-k">Account</span>
+          <select class="fld-i" id="account"></select>
+        </label>
+      </div>
+
+      <p class="risk" id="risk"></p>
+
+      <h2 class="grp-t grp-t--sub">Last 10 digits</h2>
+      <ol class="dg-recent" id="recent"><li class="dg-none">Waiting for ticks…</li></ol>
+
+      <h2 class="grp-t grp-t--sub">
+        How often each digit appears
+        <span class="grp-note" id="window-note"></span>
+      </h2>
+      <ul class="dg-grid" id="grid"></ul>
+
+      <ul class="dg-key">
+        <li><span class="dg-dot dg-dot--high"></span>Most often</li>
+        <li><span class="dg-dot dg-dot--low"></span>Least often</li>
+        <li><span class="dg-dot dg-dot--rise"></span>Rising fastest</li>
+      </ul>
+    </section>
+
+    <!-- ── trade ────────────────────────────────────────────────────── -->
+    <section class="panel-solid an-trade">
+      <h2 class="grp-t">Trade</h2>
+
+      <div class="an-row">
+        <label class="fld an-fld">
+          <span class="fld-k">Stake (USD)</span>
+          <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
+        </label>
+        <label class="fld an-fld">
+          <span class="fld-k">Trades</span>
+          <input class="fld-i" id="count" type="number" min="1" max="100" step="1" value="1" inputmode="numeric" />
+        </label>
+      </div>
+
+      <div class="mart">
+        <div class="mart-top">
+          <span class="fld-k">Martingale</span>
+          <button class="tog" id="mart-tog" type="button" role="switch" aria-checked="true">
+            <span class="tog-dot"></span>
+          </button>
+        </div>
+        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="2" inputmode="decimal" />
+        <p class="mart-note">After a loss the next stake is multiplied by this. A win resets it.</p>
+      </div>
+
+      <h3 class="grp-t grp-t--sub">Digit</h3>
+      <div class="an-row">
+        <label class="fld an-fld">
+          <span class="fld-k">Barrier</span>
+          <select class="fld-i" id="barrier"></select>
+        </label>
+      </div>
+      <p class="mart-note" id="type-note"></p>
+
+      <h3 class="grp-t grp-t--sub">Place a trade</h3>
+      <div class="pairs" id="pairs"></div>
+
+      <div class="run-actions">
+        <button class="btn btn-line btn-lg" id="stop" type="button" disabled>Stop</button>
+      </div>
+
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+
+      <h3 class="grp-t grp-t--sub">Results <span class="grp-note" id="net"></span></h3>
+      <ul class="hist" id="hist"><li class="acct acct--none">No trades yet.</li></ul>
+    </section>
+
+  </div>
 </main>
 
 <script src="/deriv.js"></script>
-<script src="/analysis.js"></script>
+<script src="/analysis/contracts.js"></script>
+<script src="/analysis/session.js"></script>
+<script src="/analysis/digits.js"></script>
+<script src="/analysis/trader.js"></script>
+<script src="/analysis/app.js"></script>
 </body>
 </html>
