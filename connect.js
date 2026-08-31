@@ -74,7 +74,19 @@
     D.handleRedirect().then(function (r) {
       if (r.status === "connected") return goHome(true);
       busy(false);
-      if (r.status === "error") banner(r.message || "Connection failed.");
+      if (r.status !== "error") return;
+
+      // A redirect_uri rejection is the one failure the user can actually fix,
+      // and Deriv's message never says which URL it received — so say it.
+      if (/redirect_uri/i.test(r.message || "")) {
+        banner(
+          "Deriv rejected the redirect URL. Register this exact URL on the Deriv app: " +
+            D.redirectUri()
+        );
+        console.error("[evie] Deriv redirect_uri sent:", D.redirectUri());
+        return;
+      }
+      banner(r.message || "Connection failed.");
     });
   } else if (D.isConnected()) {
     goHome(false);

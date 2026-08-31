@@ -30,12 +30,29 @@
   var TOKEN_URL = "https://auth.deriv.com/oauth2/token";
   var WS_URL = "wss://ws.derivws.com/websockets/v3?app_id=" + encodeURIComponent(APP_ID);
 
-  /* Where Deriv sends the user back. This must match the redirect URL
-     registered on the Deriv app byte for byte, or Deriv rejects the request
-     before the user ever sees a login box. The landing page is the door, so
-     the origin's root is the redirect. */
+  /**
+   * Where Deriv sends the user back.
+   *
+   * Deriv compares this against the app's pre-registered redirect URLs BYTE FOR
+   * BYTE. A trailing slash, http vs https, www vs bare host — any one of them
+   * differing produces:
+   *
+   *   invalid_request … 'redirect_uri' does not match any of the OAuth 2.0
+   *   Client's pre-registered redirect urls
+   *
+   * Clunoid pins this to one fixed registered URL rather than deriving it from
+   * whatever page the user happened to click on, because deriving it means a
+   * preview deployment, a www hop or a bare /index.html all send something
+   * different and all get rejected. We do the same: one value, set once.
+   *
+   * Set it by defining window.EVIE_DERIV_REDIRECT_URI before this script loads
+   * (see the <script> block in index.html). It must equal the URL registered on
+   * the Deriv app exactly. With nothing set we fall back to this origin's root,
+   * which is right for the common case of the app being registered against the
+   * live domain.
+   */
   function redirectUri() {
-    return global.location.origin + "/";
+    return global.EVIE_DERIV_REDIRECT_URI || (global.location.origin + "/");
   }
 
   var TOKEN_KEY = "evie_deriv_token";
@@ -122,7 +139,11 @@
       u.searchParams.set("response_type", "code");
       u.searchParams.set("client_id", APP_ID);
       u.searchParams.set("redirect_uri", redirectUri());
-      u.searchParams.set("scope", "trade account_manage");
+      // The scopes this newer client actually allows — trade reaches the
+      // options accounts, payment the wallets, account_manage the profile.
+      // The older read/openid scopes are rejected outright.
+      u.searchParams.set("scope", "trade payment account_manage");
+      u.searchParams.set("brand", "deriv");
       u.searchParams.set("state", state);
       u.searchParams.set("code_challenge", challenge);
       u.searchParams.set("code_challenge_method", "S256");
@@ -329,6 +350,10 @@
 
   global.EvieDeriv = {
     APP_ID: APP_ID,
+    /* The exact string sent as redirect_uri. Deriv's rejection message never
+       says what it received, so surfacing it is the difference between fixing
+       this in a minute and guessing at trailing slashes. */
+    redirectUri: redirectUri,
     connect: connect,
     handleRedirect: handleRedirect,
     isConnected: isConnected,

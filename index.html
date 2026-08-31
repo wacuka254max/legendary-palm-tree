@@ -269,6 +269,15 @@
   </div>
 </footer>
 
+<!-- Deriv redirect URL.
+     This must equal a redirect URL registered on the Deriv app EXACTLY —
+     Deriv compares byte for byte, so https vs http, www vs bare host, and a
+     trailing slash all matter. Uncomment and set it to the registered value;
+     left commented, the code uses this origin's root (e.g. https://host/).
+     Clunoid pins the same way, in lib/deriv/config.ts. -->
+<script>
+  // window.EVIE_DERIV_REDIRECT_URI = "https://your-domain.vercel.app/";
+</script>
 <script src="/deriv.js"></script>
 <script src="/main.js" defer></script>
 <script src="/connect.js"></script>
