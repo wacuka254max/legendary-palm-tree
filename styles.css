@@ -693,20 +693,26 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 
 /* ── Automatic AI ───────────────────────────────────────────────────────── */
 
+/* Settings is a control column at a readable width; Session takes whatever is
+   left. On a wide screen that fills the page instead of leaving the right half
+   empty, and the two cards stay the same height so the layout does not step. */
 .run {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: 12px;
-  max-width: 900px;
+  grid-template-columns: minmax(0, 360px) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 14px;
 }
 
 .panel-solid {
-  padding: clamp(20px, 2.6vw, 26px);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: clamp(20px, 2.4vw, 28px);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
-.grp-t--sub { margin-top: 22px; }
+.grp-t--sub { margin-top: 24px; }
 
 .fld { display: block; margin-top: 14px; }
 .fld-k {
@@ -730,27 +736,30 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .fld-i:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
 .fld-i:disabled { opacity: 0.55; cursor: not-allowed; }
-.fld-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr)); gap: 12px; }
+.fld-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 12px; }
 
-.run-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-.run-actions .btn { flex: 1 1 auto; }
+/* Pushed to the bottom of the card, so Settings and Session line up however
+   tall the trade list grows. */
+.run-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 20px; }
+.run-actions .btn { flex: 1 1 130px; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* Which account is about to be traded. Real money says so in pink. */
-.risk { margin-top: 14px; font-size: 12.5px; color: var(--ink-faint); }
+/* Which account is about to be traded. Real money says so, in pink. */
+.risk { margin-top: 14px; font-size: 12.5px; line-height: 1.5; color: var(--ink-faint); }
 .risk--real { color: var(--pink); }
 
-.status { margin-top: 10px; font-size: 13px; color: var(--ink-muted); min-height: 1.2em; }
+.status { margin-top: 8px; font-size: 13px; line-height: 1.5; color: var(--ink-muted); min-height: 1.2em; }
 .status--error { color: var(--pink); }
 .status--success { color: var(--ok); }
 .status--warning { color: #e3b341; }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(50%, 110px), 1fr));
-  gap: 14px 12px;
-  margin-top: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+  gap: 16px 14px;
+  margin-top: 16px;
 }
+.stats-grid > div { min-width: 0; }
 .stats-grid dt {
   font-size: 10.5px;
   font-weight: 600;
@@ -759,24 +768,51 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   color: var(--ink-faint);
 }
 .stats-grid dd {
-  margin: 4px 0 0;
-  font-size: 1.05rem;
+  margin: 5px 0 0;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .stats-grid .is-up { color: var(--ok); }
 .stats-grid .is-down { color: var(--pink); }
 
-.hist { margin-top: 8px; max-height: 300px; overflow-y: auto; border-top: 1px solid var(--line); }
+/* The trade list fills the rest of the card and scrolls inside itself, so the
+   page never grows a second scrollbar as a session runs on. */
+.hist {
+  flex: 1 1 auto;
+  min-height: 150px;
+  /* Bounded, or `flex: 1` simply grows the card to the length of the session:
+     a long run would push the page metres tall instead of scrolling inside. */
+  max-height: clamp(200px, 42vh, 440px);
+  margin-top: 8px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+  /* A thin, self-coloured bar — the OS default is a light slab on a dark card. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-hi) transparent;
+  overscroll-behavior: contain;
+}
+.hist::-webkit-scrollbar { width: 8px; }
+.hist::-webkit-scrollbar-track { background: transparent; }
+.hist::-webkit-scrollbar-thumb {
+  background: var(--line-hi);
+  border-radius: 999px;
+  /* Inset from the edge so the bar reads as a thin pill, not a filled gutter. */
+  border: 2px solid var(--surface);
+}
+.hist::-webkit-scrollbar-thumb:hover { background: #45454f; }
+
 .trade {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: baseline;
   gap: 10px;
-  padding: 9px 0;
+  padding: 9px 2px;
   border-bottom: 1px solid var(--line);
   font-size: 13px;
 }
+.trade:last-child { border-bottom: 0; }
 .trade-r {
   padding: 2px 8px;
   font-size: 10px;
@@ -787,7 +823,13 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .trade--win .trade-r { color: var(--ok); background: rgba(95, 211, 154, 0.12); }
 .trade--loss .trade-r { color: var(--pink); background: rgba(255, 61, 135, 0.12); }
-.trade-m { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
-.trade-p { font-weight: 650; font-variant-numeric: tabular-nums; }
+.trade-m { color: var(--ink-muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.trade-p { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .trade--win .trade-p { color: var(--ok); }
 .trade--loss .trade-p { color: var(--pink); }
+
+@media (max-width: 860px) {
+  /* Below this the control column has nothing to sit beside. */
+  .run { grid-template-columns: minmax(0, 1fr); }
+  .run-actions { margin-top: 20px; padding-top: 0; }
+}
