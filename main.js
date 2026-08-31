@@ -1,4 +1,4 @@
-/* AlphaPilot — the small amount of behaviour the page needs.
+/* Evie — the small amount of behaviour the page needs.
    No dependencies; everything degrades to a working static page. */
 
 (function () {
