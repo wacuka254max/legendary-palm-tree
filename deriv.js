@@ -45,14 +45,23 @@
    * preview deployment, a www hop or a bare /index.html all send something
    * different and all get rejected. We do the same: one value, set once.
    *
-   * Set it by defining window.EVIE_DERIV_REDIRECT_URI before this script loads
-   * (see the <script> block in index.html). It must equal the URL registered on
-   * the Deriv app exactly. With nothing set we fall back to this origin's root,
-   * which is right for the common case of the app being registered against the
-   * live domain.
+   * Nothing here names a domain. The ORIGIN is read from wherever the site is
+   * being served, and only the PATH is fixed — so moving from the Vercel URL to
+   * a bought domain needs no code change at all: register
+   * https://<the-new-domain>/home.html on the Deriv app and it works.
+   *
+   * The path is the dashboard, not the landing page, because that is what is
+   * registered — Deriv hands the code back there. Clunoid points at a dashboard
+   * route the same way (/trading/command), not at its front door.
+   *
+   * window.EVIE_DERIV_REDIRECT_URI still overrides the whole thing, for the odd
+   * case of the app being registered against a different host than the one
+   * serving the page.
    */
+  var REDIRECT_PATH = "/home.html";
+
   function redirectUri() {
-    return global.EVIE_DERIV_REDIRECT_URI || (global.location.origin + "/");
+    return global.EVIE_DERIV_REDIRECT_URI || (global.location.origin + REDIRECT_PATH);
   }
 
   var TOKEN_KEY = "evie_deriv_token";

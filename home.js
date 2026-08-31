@@ -17,11 +17,7 @@
   var D = window.EvieDeriv;
   var $ = function (id) { return document.getElementById(id); };
 
-  /* An unconnected visitor has nothing to look at — send them to the door. */
-  if (!D || !D.isConnected()) {
-    window.location.replace("/");
-    return;
-  }
+  if (!D) { window.location.replace("/"); return; }
 
   var amountEl = $("amount");
   var accountEl = $("account");
@@ -39,19 +35,17 @@
     return (currency || "USD") + " " + v;
   }
 
-  /* ── success banner, only when they have just connected ─────────────────── */
+  /* ── success banner ─────────────────────────────────────────────────────── */
 
-  if (new URLSearchParams(window.location.search).has("connected")) {
+  function celebrate() {
     var flash = $("connected");
-    if (flash) {
-      flash.hidden = false;
-      // A timeout, not requestAnimationFrame: rAF is throttled in a background
-      // tab, which would leave the banner mounted at opacity 0 and never fade
-      // it in for someone who opened this in a tab they were not looking at.
-      setTimeout(function () { flash.classList.add("is-in"); }, 20);
-      setTimeout(function () { flash.classList.remove("is-in"); }, 5000);
-    }
-    try { history.replaceState({}, "", window.location.pathname); } catch (e) {}
+    if (!flash) return;
+    flash.hidden = false;
+    // A timeout, not requestAnimationFrame: rAF is throttled in a background
+    // tab, which would leave the banner mounted at opacity 0 and never fade
+    // it in for someone who opened this in a tab they were not looking at.
+    setTimeout(function () { flash.classList.add("is-in"); }, 20);
+    setTimeout(function () { flash.classList.remove("is-in"); }, 5000);
   }
 
   /* ── painting ───────────────────────────────────────────────────────────── */
@@ -109,23 +103,51 @@
     });
   }
 
+  /* ── entry ──────────────────────────────────────────────────────────────
+     This page is the registered Deriv redirect, so it has three ways in:
+     coming back from Deriv with a code, arriving already connected, or
+     arriving with nothing — which is the one case that gets sent away. */
+
+  var params = new URLSearchParams(window.location.search);
+
+  if (params.has("code") || params.has("error")) {
+    amountEl.textContent = "Connecting…";
+    D.handleRedirect().then(function (r) {
+      if (r.status === "connected") { celebrate(); return load(); }
+      // Nothing to show and nothing to retry here — the button is on the
+      // landing page, so hand them back to it with the reason.
+      try { sessionStorage.setItem("evie_connect_error", r.message || "Connection failed."); } catch (e) {}
+      window.location.replace("/");
+    });
+  } else if (!D.isConnected()) {
+    window.location.replace("/");
+  } else {
+    if (params.has("connected")) {
+      celebrate();
+      try { history.replaceState({}, "", window.location.pathname); } catch (e) {}
+    }
+    load();
+  }
+
   /* ── read the accounts ──────────────────────────────────────────────────── */
 
-  D.accounts()
-    .then(function (list) {
-      var reals = list.filter(function (a) { return !a.demo && typeof a.balance === "number"; });
-      var demos = list.filter(function (a) { return a.demo && typeof a.balance === "number"; });
+  function load() {
+    return D.accounts()
+      .then(function (list) {
+        var reals = list.filter(function (a) { return !a.demo && typeof a.balance === "number"; });
+        var demos = list.filter(function (a) { return a.demo && typeof a.balance === "number"; });
 
-      // Where there are several real accounts, the funded one is the one they
-      // mean — a second currency sitting at 0.00 is not the answer.
-      reals.sort(function (x, y) { return y.balance - x.balance; });
+        // Where there are several real accounts, the funded one is the one they
+        // mean — a second currency sitting at 0.00 is not the answer.
+        reals.sort(function (x, y) { return y.balance - x.balance; });
 
-      state.real = reals[0] || null;
-      state.demo = demos[0] || null;
-      state.showing = state.real ? "real" : (state.demo ? "demo" : "real");
+        state.real = reals[0] || null;
+        state.demo = demos[0] || null;
+        state.showing = state.real ? "real" : (state.demo ? "demo" : "real");
 
-      if (hintEl && state.real && state.demo) hintEl.hidden = false;
-      render();
-    })
-    .catch(function (e) { fail(e && e.message); });
+        if (hintEl && state.real && state.demo) hintEl.hidden = false;
+        render();
+      })
+      .catch(function (e) { fail(e && e.message); });
+  }
 })();

@@ -66,27 +66,35 @@
     });
   });
 
-  var params = new URLSearchParams(window.location.search);
-  var returning = params.has("code") || params.has("error");
+  function explain(message) {
+    // A redirect_uri rejection is the one failure the user can actually fix,
+    // and Deriv's message never says which URL it received — so say it.
+    if (/redirect_uri/i.test(message || "")) {
+      console.error("[evie] Deriv redirect_uri sent:", D.redirectUri());
+      return "Deriv rejected the redirect URL. Register this exact URL on the Deriv app: " + D.redirectUri();
+    }
+    return message || "Connection failed.";
+  }
 
-  if (returning) {
+  /* The dashboard is the registered redirect, so a failure there is handed
+     back here — this is where the button to try again lives. */
+  var handoff = "";
+  try {
+    handoff = sessionStorage.getItem("evie_connect_error") || "";
+    if (handoff) sessionStorage.removeItem("evie_connect_error");
+  } catch (e) {}
+  if (handoff) banner(explain(handoff));
+
+  var params = new URLSearchParams(window.location.search);
+
+  if (params.has("code") || params.has("error")) {
+    /* Only reached if the Deriv app is registered against the root instead of
+       the dashboard. Handling it here too means either registration works. */
     busy(true);
     D.handleRedirect().then(function (r) {
       if (r.status === "connected") return goHome(true);
       busy(false);
-      if (r.status !== "error") return;
-
-      // A redirect_uri rejection is the one failure the user can actually fix,
-      // and Deriv's message never says which URL it received — so say it.
-      if (/redirect_uri/i.test(r.message || "")) {
-        banner(
-          "Deriv rejected the redirect URL. Register this exact URL on the Deriv app: " +
-            D.redirectUri()
-        );
-        console.error("[evie] Deriv redirect_uri sent:", D.redirectUri());
-        return;
-      }
-      banner(r.message || "Connection failed.");
+      if (r.status === "error") banner(explain(r.message));
     });
   } else if (D.isConnected()) {
     goHome(false);
