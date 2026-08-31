@@ -241,22 +241,42 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .panel-foot { background: var(--raise); }
 
-/* Full-width stat band across the bottom of the hero. */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
-}
-.stats div { padding: clamp(20px, 2.6vw, 30px) 0; }
-.stats div + div { border-left: 1px solid var(--line); padding-left: clamp(16px, 2.4vw, 32px); }
-.stats dt { font-size: clamp(1.4rem, 2.6vw, 2.1rem); font-weight: 700; letter-spacing: -0.03em; }
-.stats dd {
-  margin: 5px 0 0;
-  font-size: clamp(0.72rem, 1.1vw, 0.82rem);
-  color: var(--ink-faint);
+/* Full-width mark strip across the bottom of the hero — every platform and
+   prop firm in one quiet row, so the fold answers "does it work with mine?" */
+.marks { padding-block: clamp(26px, 3.4vw, 40px); border-top: 1px solid var(--line); }
+
+.marks-label {
+  margin-bottom: clamp(18px, 2.2vw, 26px);
+  font-size: 11.5px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
 }
+
+.marks-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* Even optical spacing whatever the row count, and it wraps rather than
+     scrolling sideways, so nothing is ever hidden off-screen. */
+  gap: clamp(24px, 3.6vw, 56px) clamp(28px, 4vw, 64px);
+}
+.marks-row li { display: flex; align-items: center; flex: 0 0 auto; }
+.marks-row img {
+  /* A definite height, not max-height: several of these SVGs carry a viewBox
+     with no width/height, so they have no intrinsic size and would collapse
+     to 0x0 in a flex row. Fixing the height lets the aspect ratio set width. */
+  height: 26px;
+  width: auto;
+  max-width: 130px;
+  object-fit: contain;
+  /* Muted by default so the row reads as one texture, not twelve brands
+     competing with the headline; each lifts to full on hover. */
+  opacity: 0.62;
+  transition: opacity 0.18s ease;
+}
+.marks-row li:hover img { opacity: 1; }
 
 /* ── Sections ───────────────────────────────────────────────────────── */
 
@@ -423,12 +443,9 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 
 @media (max-width: 620px) {
-  /* Four stats would be ~70px wide each — go two up, with a divider grid. */
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stats div { padding: 20px 0; }
-  .stats div + div { border-left: 0; padding-left: 0; }
-  .stats div:nth-child(2n) { padding-left: clamp(16px, 4vw, 24px); border-left: 1px solid var(--line); }
-  .stats div:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  /* Tighter mark spacing so the strip stays a few rows, not a long ladder. */
+  .marks-row { gap: 22px 30px; }
+  .marks-row img { height: 22px; max-width: 104px; }
   .actions { width: 100%; }
   .actions .btn { flex: 1 1 100%; }
 }
