@@ -21,7 +21,9 @@
       <span class="brand-name">Evie</span>
     </a>
     <div class="perch">
-      <a class="btn btn-line" href="/home.html">Back to home</a>
+      <span class="perch-v" id="balance">—</span>
+      <span class="badge" id="acct-badge">Real</span>
+      <a class="btn btn-line" href="/home.html">Home</a>
     </div>
   </div>
 </header>
@@ -29,14 +31,76 @@
 <main class="bleed dash-main">
   <p class="eyebrow">Automatic AI</p>
   <h1 class="dash-title">Automatic AI</h1>
-  <p class="dash-sub">Hand it the account and let it trade.</p>
+  <p class="dash-sub">
+    Trades digit contracts across the Volatility indices. After a loss it stops
+    guessing — it reads the recent digits of every market and moves to a recovery
+    trade on whichever one is leaning hardest.
+  </p>
 
-  <!-- Empty on purpose. This file exists so Automatic AI has somewhere of its own
-       to grow, rather than being bolted onto the dashboard later. -->
-  <section class="panel" id="root"></section>
+  <div class="run">
+
+    <!-- ── controls ─────────────────────────────────────────────────── -->
+    <section class="panel-solid">
+      <h2 class="grp-t">Settings</h2>
+
+      <label class="fld">
+        <span class="fld-k">Account</span>
+        <select class="fld-i" id="account"></select>
+      </label>
+
+      <div class="fld-row">
+        <label class="fld">
+          <span class="fld-k">Stake</span>
+          <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
+        </label>
+        <label class="fld">
+          <span class="fld-k">Martingale</span>
+          <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" />
+        </label>
+      </div>
+
+      <div class="fld-row">
+        <label class="fld">
+          <span class="fld-k">Take profit</span>
+          <input class="fld-i" id="tp" type="number" min="0" step="1" value="100" inputmode="decimal" />
+        </label>
+        <label class="fld">
+          <span class="fld-k">Stop loss</span>
+          <input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" />
+        </label>
+      </div>
+
+      <div class="run-actions">
+        <button class="btn btn-blue btn-lg" id="start" type="button">Start</button>
+        <button class="btn btn-line btn-lg" id="stop" type="button" disabled>Stop</button>
+      </div>
+
+      <p class="risk" id="risk"></p>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- ── live state ───────────────────────────────────────────────── -->
+    <section class="panel-solid">
+      <h2 class="grp-t">Session</h2>
+
+      <dl class="stats-grid">
+        <div><dt>Profit</dt><dd id="s-profit">0.00</dd></div>
+        <div><dt>Trades</dt><dd id="s-trades">0</dd></div>
+        <div><dt>Win rate</dt><dd id="s-rate">0.00%</dd></div>
+        <div><dt>Next stake</dt><dd id="s-stake">—</dd></div>
+        <div><dt>Market</dt><dd id="s-market">—</dd></div>
+        <div><dt>Running</dt><dd id="s-time">00:00:00</dd></div>
+      </dl>
+
+      <h3 class="grp-t grp-t--sub">Trades</h3>
+      <ul class="hist" id="hist"><li class="acct acct--none">No trades yet.</li></ul>
+    </section>
+
+  </div>
 </main>
 
 <script src="/deriv.js"></script>
+<script src="/automatic-ai-engine.js"></script>
 <script src="/automatic-ai.js"></script>
 </body>
 </html>

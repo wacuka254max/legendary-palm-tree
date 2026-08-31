@@ -414,6 +414,52 @@
   }
 
 
+  /* ── step 4: a socket that can actually trade ────────────────────────────
+     Reading balances over REST is one thing; placing a trade needs a live
+     socket, and the ordinary WebSocket is shut to these credentials for the
+     same reason the balance read was.
+
+     Deriv's way through is an OTP: POST the account id to this endpoint with
+     the same Bearer token and app id, and it hands back a ready-to-connect
+     WebSocket URL that is ALREADY authorised. No authorize message, no legacy
+     a1- token, no numeric app_id.
+
+     The account id in the request IS the demo/real choice — there is no flag
+     for it. Ask for the OTP of a VRTC account and you get a demo socket; ask
+     for a CR account and every trade is real money.
+
+     Deriv-App-ID on the call is also what attributes the trades to this app. */
+  function tradeSocket(accountId) {
+    return validToken().then(function (token) {
+      if (!token) return Promise.reject(new Error("not connected"));
+
+      return fetch(
+        REST_BASE + "/trading/v1/options/accounts/" + encodeURIComponent(accountId) + "/otp",
+        {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token, "Deriv-App-ID": APP_ID }
+        }
+      ).then(function (res) {
+        return res.json().catch(function () { return null; }).then(function (json) {
+          if (res.status === 401) {
+            var e401 = new Error("Your Deriv session has expired. Please connect again.");
+            e401.expired = true;
+            throw e401;
+          }
+          var url = json && json.data && json.data.url;
+          if (!res.ok || !url) {
+            throw new Error(
+              (json && json.errors && json.errors[0] && json.errors[0].message) ||
+              (json && (json.message || json.error)) ||
+              ("Could not open a trading session (" + res.status + ").")
+            );
+          }
+          return String(url);
+        });
+      });
+    });
+  }
+
   global.EvieDeriv = {
     APP_ID: APP_ID,
     /* The exact string sent as redirect_uri. Deriv's rejection message never
@@ -425,6 +471,7 @@
     isConnected: isConnected,
     disconnect: clearSession,
     portfolio: portfolio,
+    tradeSocket: tradeSocket,
 
     /* Every page behind the connection opens the same way: no session means
        nothing to show, so go back to the door. Shared so a page added later
