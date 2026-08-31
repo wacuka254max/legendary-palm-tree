@@ -1,17 +1,18 @@
 /**
  * EVIE — the home dashboard.
  *
- * Shows the whole Deriv portfolio, not just the options account: every options
- * account and every wallet, each with its own id and balance, under a headline
- * total and the id of the account they connected with.
+ * The page itself shows one number: the real balance, top right. That is the
+ * figure somebody opens this for, and everything else — the demo account, the
+ * wallets, the per-account ids — is detail they want occasionally and not while
+ * they are deciding what to do next. So it lives behind the badge, one
+ * double-click away, in a sheet.
  *
  * The headline is the largest single-currency bucket rather than a sum of
- * everything. Adding USD to EUR would produce a number that is not money, so
- * the per-account rows carry the detail instead.
+ * everything. Adding USD to EUR would produce a figure that is not money.
  *
- * Real and demo both come back from the same read, so the badge is a toggle
- * rather than a second request: double-click flips the whole card between
- * them, with no waiting.
+ * This page is also the registered Deriv redirect, so it has three ways in:
+ * back from Deriv with a code, already connected, or connected to nothing —
+ * which is the only case that gets sent away.
  */
 
 (function () {
@@ -19,24 +20,27 @@
 
   var D = window.EvieDeriv;
   var $ = function (id) { return document.getElementById(id); };
-
   if (!D) { window.location.replace("/"); return; }
 
   var amountEl = $("amount");
-  var accountEl = $("account");
   var badgeEl = $("badge");
-  var hintEl = $("hint");
-  var noticeEl = $("notice");
+  var sheetEl = $("sheet");
+  var sheetBody = $("sheet-body");
 
-  var acctsEl = $("accts");
-  var state = { data: null, showing: "real" };
+  var data = null;
 
   function money(n, currency) {
-    var v = Number(n || 0).toLocaleString(undefined, {
+    if (n == null) return "—";
+    return (currency || "USD") + " " + Number(n).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
-    return (currency || "USD") + " " + v;
+  }
+
+  function esc(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
   /* ── success banner ─────────────────────────────────────────────────────── */
@@ -45,91 +49,89 @@
     var flash = $("connected");
     if (!flash) return;
     flash.hidden = false;
-    // A timeout, not requestAnimationFrame: rAF is throttled in a background
-    // tab, which would leave the banner mounted at opacity 0 and never fade
-    // it in for someone who opened this in a tab they were not looking at.
+    // A timeout, not requestAnimationFrame: rAF is throttled in a background tab,
+    // which would leave the banner mounted at opacity 0 and never fade it in.
     setTimeout(function () { flash.classList.add("is-in"); }, 20);
     setTimeout(function () { flash.classList.remove("is-in"); }, 5000);
   }
 
-  /* ── painting ───────────────────────────────────────────────────────────── */
+  /* ── the one number on the page ─────────────────────────────────────────── */
 
-  function esc(v) {
-    return String(v == null ? "" : v)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  }
-
-  function render() {
-    var d = state.data;
-    if (!d) return;
-
-    var isDemo = state.showing === "demo";
-    var side = isDemo ? d.demo : d.real;
-    var rows = d.accounts.filter(function (a) { return !!a.demo === isDemo; });
-
-    badgeEl.textContent = isDemo ? "Demo" : "Real";
-    badgeEl.classList.toggle("badge--demo", isDemo);
-
-    /* The headline is the biggest single-currency bucket. Adding USD to EUR
-       would invent a number, so the per-account rows below carry the rest. */
-    amountEl.textContent = side ? money(side.amount, side.currency) : "—";
-
-    /* Who this is: the profile name where Deriv gave us one, and the id of the
-       account they actually connected with. */
-    var primary = rows.filter(function (a) { return a.kind === "Options"; })[0] || rows[0];
-    var who = [];
-    if (d.nickname) who.push(d.nickname);
-    if (primary) who.push(primary.id);
-    accountEl.textContent = who.join(" · ");
-    accountEl.classList.remove("is-error");
-
-    if (!rows.length) {
-      acctsEl.innerHTML = '<li class="acct acct--none">No ' +
-        (isDemo ? "demo" : "real") + " accounts on this login.</li>";
-      if (noticeEl) noticeEl.hidden = isDemo;
-      return;
-    }
-
-    acctsEl.innerHTML = rows.map(function (a) {
-      return '<li class="acct">' +
-        '<span class="acct-kind">' + esc(a.kind) + "</span>" +
-        '<span class="acct-id">' + esc(a.id) + "</span>" +
-        '<span class="acct-bal">' +
-          (a.balance == null ? "—" : esc(money(a.balance, a.currency))) +
-        "</span>" +
-      "</li>";
-    }).join("");
-
-    // The transfer notice is about a real account reading low. On demo it is noise.
-    if (noticeEl) noticeEl.hidden = isDemo;
+  function paint() {
+    amountEl.textContent = data && data.real ? money(data.real.amount, data.real.currency) : "—";
   }
 
   function fail(message) {
     amountEl.textContent = "Unavailable";
-    accountEl.textContent = message || "Could not reach Deriv.";
-    accountEl.classList.add("is-error");
-    if (acctsEl) acctsEl.innerHTML = "";
+    amountEl.title = message || "Could not reach Deriv.";
   }
 
-  /* ── the badge is a toggle ──────────────────────────────────────────────── */
+  /* ── the detail sheet ───────────────────────────────────────────────────── */
 
-  badgeEl.addEventListener("dblclick", function () {
-    if (!state.data) return;
-    state.showing = state.showing === "real" ? "demo" : "real";
-    render();
-  });
+  function group(title, rows, emptyText) {
+    var body = rows.length
+      ? rows.map(function (a) {
+          return '<li class="acct">' +
+            '<span class="acct-kind">' + esc(a.kind) + "</span>" +
+            '<span class="acct-id">' + esc(a.id) + "</span>" +
+            '<span class="acct-bal">' + esc(money(a.balance, a.currency)) + "</span>" +
+          "</li>";
+        }).join("")
+      : '<li class="acct acct--none">' + esc(emptyText) + "</li>";
 
-  /* Double-click has no touch equivalent, so a phone gets a plain tap. */
-  badgeEl.addEventListener("click", function (e) {
-    if (e.detail === 0 || matchMedia("(hover: none)").matches) {
-      if (!state.data) return;
-      state.showing = state.showing === "real" ? "demo" : "real";
-      render();
+    return '<section class="grp"><h3 class="grp-t">' + esc(title) + "</h3>" +
+           '<ul class="accts">' + body + "</ul></section>";
+  }
+
+  function fillSheet() {
+    if (!data) return;
+
+    var reals = data.accounts.filter(function (a) { return !a.demo; });
+    var demos = data.accounts.filter(function (a) { return a.demo; });
+
+    var who = "";
+    if (data.nickname) {
+      who = '<p class="sheet-who">' + esc(data.nickname) + "</p>";
     }
+
+    sheetBody.innerHTML =
+      who +
+      group("Real", reals, "No real accounts on this login.") +
+      group("Demo", demos, "No demo account on this login.") +
+      '<p class="sheet-note">A bot can only trade the <strong>options</strong> account. ' +
+      "Money in a wallet or MT5 has to be moved across first, and an MT5 balance is " +
+      "not reported here at all.</p>";
+  }
+
+  function openSheet() {
+    if (!data) return;
+    fillSheet();
+    sheetEl.hidden = false;
+    setTimeout(function () { sheetEl.classList.add("is-in"); }, 10);
+    badgeEl.setAttribute("aria-expanded", "true");
+  }
+
+  function closeSheet() {
+    sheetEl.classList.remove("is-in");
+    badgeEl.setAttribute("aria-expanded", "false");
+    setTimeout(function () { sheetEl.hidden = true; }, 200);
+  }
+
+  badgeEl.addEventListener("dblclick", openSheet);
+
+  /* A phone has no double-click, so a single tap opens it there. */
+  badgeEl.addEventListener("click", function (e) {
+    if (e.detail === 0 || matchMedia("(hover: none)").matches) openSheet();
   });
 
-  /* ── disconnect ─────────────────────────────────────────────────────────── */
+  sheetEl.addEventListener("click", function (e) {
+    if (e.target.closest("[data-close]")) closeSheet();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !sheetEl.hidden) closeSheet();
+  });
+
+  /* ── disconnect, inside the sheet ───────────────────────────────────────── */
 
   var dc = $("disconnect");
   if (dc) {
@@ -139,46 +141,14 @@
     });
   }
 
-  /* ── entry ──────────────────────────────────────────────────────────────
-     This page is the registered Deriv redirect, so it has three ways in:
-     coming back from Deriv with a code, arriving already connected, or
-     arriving with nothing — which is the one case that gets sent away. */
-
-  var params = new URLSearchParams(window.location.search);
-
-  if (params.has("code") || params.has("error")) {
-    amountEl.textContent = "Connecting…";
-    D.handleRedirect().then(function (r) {
-      if (r.status === "connected") { celebrate(); return load(); }
-      // Nothing to show and nothing to retry here — the button is on the
-      // landing page, so hand them back to it with the reason.
-      try { sessionStorage.setItem("evie_connect_error", r.message || "Connection failed."); } catch (e) {}
-      window.location.replace("/");
-    });
-  } else if (!D.isConnected()) {
-    window.location.replace("/");
-  } else {
-    if (params.has("connected")) {
-      celebrate();
-      try { history.replaceState({}, "", window.location.pathname); } catch (e) {}
-    }
-    load();
-  }
-
-  /* ── read the accounts ──────────────────────────────────────────────────── */
+  /* ── reading it ─────────────────────────────────────────────────────────── */
 
   function load() {
     return D.portfolio()
-      .then(function (d) {
-        state.data = d;
-        // Open on whichever side actually has money to show.
-        state.showing = d.real ? "real" : (d.demo ? "demo" : "real");
-        if (hintEl && d.real && d.demo) hintEl.hidden = false;
-        render();
-      })
+      .then(function (d) { data = d; paint(); })
       .catch(function (e) {
-        // An expired session cannot be fixed by staring at it — send them back
-        // to the button that fixes it.
+        // An expired session cannot be fixed by staring at it — the refresh
+        // already ran before the call, so send them back to Connect.
         if (e && e.expired) {
           D.disconnect();
           try { sessionStorage.setItem("evie_connect_error", e.message); } catch (x) {}
@@ -187,5 +157,25 @@
         }
         fail(e && e.message);
       });
+  }
+
+  /* ── entry ──────────────────────────────────────────────────────────────── */
+
+  var params = new URLSearchParams(window.location.search);
+
+  if (params.has("code") || params.has("error")) {
+    amountEl.textContent = "Connecting…";
+    D.handleRedirect().then(function (r) {
+      if (r.status === "connected") { celebrate(); return load(); }
+      // Nothing to retry here — the button is on the landing page.
+      try { sessionStorage.setItem("evie_connect_error", r.message || "Connection failed."); } catch (e) {}
+      window.location.replace("/");
+    });
+  } else if (D.requireConnection()) {
+    if (params.has("connected")) {
+      celebrate();
+      try { history.replaceState({}, "", window.location.pathname); } catch (e) {}
+    }
+    load();
   }
 })();

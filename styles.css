@@ -85,76 +85,17 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   font-weight: 700;
 }
 
-/* The balance card. One number, given room, because it is the only thing on
-   this page anybody came to read. */
-.balance {
-  max-width: 520px;
-  padding: clamp(24px, 3vw, 32px);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-.balance-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.balance-k {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.13em;
-  color: var(--ink-faint);
-}
-.balance-v {
-  margin-top: 14px;
-  font-size: clamp(2rem, 5vw, 2.9rem);
+/* The real balance, perched top right in the nav. */
+.perch { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.perch-v {
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
   font-weight: 700;
-  letter-spacing: -0.035em;
-  font-variant-numeric: tabular-nums;
-}
-.balance-id {
-  margin-top: 6px;
-  font-size: 13.5px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-  color: var(--ink-muted);
-}
-.balance-id.is-error { color: var(--ink-faint); letter-spacing: 0; }
-/* Every account behind the headline. Three columns on a row so the ids line
-   up and the balances read down the right edge as one column of figures. */
-.accts { margin-top: 20px; border-top: 1px solid var(--line); }
-.acct {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: baseline;
-  gap: 12px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--line);
-  font-size: 13.5px;
-}
-.acct:last-child { border-bottom: 0; }
-.acct-kind {
-  padding: 3px 8px;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--ink-faint);
-  background: var(--surface-2);
-  border-radius: 6px;
-}
-.acct-id {
-  color: var(--ink-muted);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.03em;
-  overflow-wrap: anywhere;
-}
-.acct-bal {
-  font-weight: 650;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.acct--none { display: block; color: var(--ink-faint); }
 
-.balance-hint { margin-top: 16px; font-size: 12.5px; color: var(--ink-faint); }
-.balance-hint strong { color: var(--ink-muted); font-weight: 600; }
+.dash-sub { max-width: 56ch; margin-top: -8px; margin-bottom: 28px; color: var(--ink-muted); }
 
 /* Real vs demo. Blue is the live account; the demo is deliberately quieter so
    the two can never be mistaken for one another at a glance. */
@@ -171,39 +112,145 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   border-radius: 999px;
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
   transition: color 0.18s ease, border-color 0.18s ease;
 }
 .badge:hover { color: var(--blue-hi); border-color: var(--blue-hi); }
-.badge--demo { color: var(--ink-faint); border-color: var(--line-hi); }
-.badge--demo:hover { color: var(--ink-muted); border-color: var(--ink-faint); }
 
-/* Why a funded account can still read zero. */
-.notice {
-  display: flex;
-  gap: 14px;
-  max-width: 520px;
-  margin-top: 16px;
-  padding: clamp(18px, 2.2vw, 24px);
+/* The two things you can actually do from here. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 12px;
+  max-width: 720px;
+  margin-bottom: 24px;
+}
+.tile {
+  display: grid;
+  gap: 6px;
+  padding: clamp(22px, 2.6vw, 28px);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-left: 2px solid var(--pink);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
+  transition: border-color 0.18s ease, background 0.18s ease;
 }
-.notice[hidden] { display: none; }
-.notice-icon { flex: none; color: var(--pink); margin-top: 1px; }
-.notice-t { font-size: 14px; font-weight: 650; }
-.notice-p { margin-top: 6px; font-size: 13.5px; color: var(--ink-muted); }
-.notice-p strong { color: var(--ink); font-weight: 650; }
+.tile:hover { background: var(--surface-2); border-color: var(--line-hi); }
+.tile-icon {
+  display: grid;
+  place-items: center;
+  width: 42px; height: 42px;
+  margin-bottom: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-hi);
+  border-radius: 11px;
+}
+.tile-t { font-size: 1.1rem; font-weight: 650; }
+.tile-s { font-size: 0.92rem; color: var(--ink-muted); }
+
+/* A blank canvas for a page that has not been built yet. */
+.panel { min-height: 220px; border: 1px dashed var(--line-hi); border-radius: var(--radius); }
+
+/* ── Detail sheet ───────────────────────────────────────────────────────── */
+
+.sheet { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; }
+.sheet[hidden] { display: none; }
+.sheet-back { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.62); opacity: 0; transition: opacity 0.2s ease; }
+.sheet.is-in .sheet-back { opacity: 1; }
+
+.sheet-card {
+  position: relative;
+  width: min(100%, 480px);
+  max-height: min(84vh, 680px);
+  overflow-y: auto;
+  padding: clamp(22px, 3vw, 28px);
+  background: var(--surface);
+  border: 1px solid var(--line-hi);
+  border-radius: var(--radius);
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.sheet.is-in .sheet-card { opacity: 1; transform: none; }
+
+.sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.sheet-k {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+}
+.sheet-t { margin-top: 6px; font-size: 1.2rem; font-weight: 700; }
+.sheet-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px; height: 34px;
+  color: var(--ink-muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+.sheet-x:hover { color: var(--ink); border-color: var(--line-hi); }
+
+.sheet-body { margin-top: 20px; }
+.sheet-who { font-size: 14px; font-weight: 650; margin-bottom: 16px; }
+.sheet-note { margin-top: 18px; font-size: 12.5px; line-height: 1.55; color: var(--ink-faint); }
+.sheet-note strong { color: var(--ink-muted); font-weight: 650; }
+.sheet-foot { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+
+.grp + .grp { margin-top: 18px; }
+.grp-t {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+
+/* Every account: kind, id, balance — the figures line up down the right. */
+.accts { border-top: 1px solid var(--line); }
+.acct {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.acct:last-child { border-bottom: 0; }
+.acct-kind {
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+  background: var(--surface-2);
+  border-radius: 6px;
+}
+.acct-id { color: var(--ink-muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.acct-bal { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.acct--none { display: block; color: var(--ink-faint); }
+
+/* The one link that stays on the page. */
 .notice-go {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 12px;
+  padding: 11px 18px;
   font-size: 13.5px;
   font-weight: 600;
   color: var(--blue);
+  border: 1px solid var(--line-hi);
+  border-radius: 999px;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
-.notice-go:hover { color: var(--blue-hi); }
+.notice-go:hover { color: var(--blue-hi); border-color: var(--blue); background: var(--surface); }
 
 /* ── Flash messages ─────────────────────────────────────────────────────── */
 

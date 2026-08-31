@@ -424,6 +424,15 @@
     handleRedirect: handleRedirect,
     isConnected: isConnected,
     disconnect: clearSession,
-    portfolio: portfolio
+    portfolio: portfolio,
+
+    /* Every page behind the connection opens the same way: no session means
+       nothing to show, so go back to the door. Shared so a page added later
+       cannot forget it. Returns false when it has sent them away. */
+    requireConnection: function () {
+      if (isConnected()) return true;
+      global.location.replace("/");
+      return false;
+    }
   };
 })(window);
