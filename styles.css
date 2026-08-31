@@ -144,8 +144,23 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   border: 1px solid var(--line-hi);
   border-radius: 11px;
 }
+.tile-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
 .tile-t { font-size: 1.1rem; font-weight: 650; }
 .tile-s { font-size: 0.92rem; color: var(--ink-muted); }
+
+/* What the tile actually is. Outlined rather than filled, so it labels the
+   heading without competing with it. */
+.tag-bot {
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: 999px;
+  white-space: nowrap;
+}
 
 /* A blank canvas for a page that has not been built yet. */
 .panel { min-height: 220px; border: 1px dashed var(--line-hi); border-radius: var(--radius); }
@@ -715,6 +730,13 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .grp-t--sub { margin-top: 24px; }
 
 .fld { display: block; margin-top: 14px; }
+
+/* The A in "Account" — a handle, not a button. It looks like the rest of the
+   label until it has been used, so nothing advertises the demo accounts.
+   NOT named .reveal: that class already exists for the landing page's
+   scroll-in animation and starts at opacity 0, which would hide this. */
+.acct-reveal { cursor: pointer; user-select: none; }
+.acct-reveal--on { color: var(--blue); }
 .fld-k {
   display: block;
   margin-bottom: 6px;

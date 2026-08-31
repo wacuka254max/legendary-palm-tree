@@ -12,9 +12,9 @@
  *      — the socket is already authorised, and the legacy a1- token it would
  *      otherwise send does not exist in this flow.
  *
- * The picker defaults to the real account, the one shown on the dashboard, but
- * the demo is always one choice away and the page says plainly which of the two
- * is about to be traded. Real money deserves that much.
+ * The picker offers real accounts only. A demo sitting beside them every time
+ * is an invitation to trade the wrong one, so it is hidden until asked for:
+ * double-click the A in "Account" and the demo accounts appear.
  */
 
 (function () {
@@ -34,7 +34,9 @@
   var riskEl = $("risk");
   var histEl = $("hist");
 
-  var accounts = [];
+  var allAccounts = [];   // every options account this login reaches
+  var accounts = [];      // the ones currently offered in the picker
+  var showDemo = false;   // flipped by double-clicking the A in "Account"
   var bot = null;
   var running = false;
 
@@ -120,31 +122,68 @@
     acctBadge.textContent = a.demo ? "Demo" : "Real";
     acctBadge.classList.toggle("badge--demo", a.demo);
     balanceEl.textContent = money(a.balance, a.currency);
-    riskEl.textContent = a.demo
-      ? "Demo account — this trades Deriv's practice money, not yours."
-      : "Real account — every trade placed here uses your own money.";
+    // Only the real account carries a warning. The demo is hidden behind a
+    // deliberate gesture, and the badge beside the balance already says Demo.
+    riskEl.textContent = a.demo ? "" : "Real account — every trade placed here uses your own money.";
     riskEl.className = "risk" + (a.demo ? "" : " risk--real");
   }
 
   selectEl.addEventListener("change", describeChoice);
 
+  /* Double-clicking the A in "Account" reveals the demo accounts, and doing it
+     again hides them. Not while a session is running: swapping the account
+     under a live bot is not a thing anyone means to do. */
+  var revealEl = $("reveal");
+  if (revealEl) {
+    revealEl.addEventListener("dblclick", function () {
+      if (running) return;
+      if (!showDemo && !allAccounts.some(function (a) { return a.demo; })) {
+        return ui.showStatus("This login has no demo options account.", "warning");
+      }
+      showDemo = !showDemo;
+      revealEl.classList.toggle("acct-reveal--on", showDemo);
+      renderAccounts();
+      ui.showStatus(showDemo ? "Demo accounts shown." : "Demo accounts hidden.", "info");
+    });
+  }
+
   function fillAccounts(list) {
     // Only options accounts can trade. A wallet holds money but cannot take a
     // position, so offering one would be a promise the API cannot keep.
-    accounts = list.filter(function (a) { return a.kind === "Options"; });
+    allAccounts = list.filter(function (a) { return a.kind === "Options"; });
 
-    if (!accounts.length) {
-      ui.showStatus("This login has no Deriv options account to trade.", "error");
-      startBtn.disabled = true;
-      return;
-    }
-
-    // Real first, best-funded of those first, so the default matches the
-    // balance shown on the dashboard.
-    accounts.sort(function (x, y) {
+    // Best-funded first within each side, so the default matches the balance
+    // shown on the dashboard.
+    allAccounts.sort(function (x, y) {
       if (x.demo !== y.demo) return x.demo ? 1 : -1;
       return (y.balance || 0) - (x.balance || 0);
     });
+
+    renderAccounts();
+  }
+
+  /** Paint the picker. Real accounts only, unless the demo has been revealed. */
+  function renderAccounts() {
+    var keep = selectEl.value;
+
+    accounts = showDemo
+      ? allAccounts
+      : allAccounts.filter(function (a) { return !a.demo; });
+
+    if (!accounts.length) {
+      selectEl.innerHTML = "";
+      ui.showStatus(
+        showDemo
+          ? "This login has no Deriv options account to trade."
+          : "This login has no real Deriv options account to trade.",
+        "error"
+      );
+      startBtn.disabled = true;
+      riskEl.textContent = "";
+      return;
+    }
+
+    startBtn.disabled = running;
 
     selectEl.innerHTML = accounts.map(function (a) {
       return '<option value="' + esc(a.id) + '">' +
@@ -152,7 +191,9 @@
         "</option>";
     }).join("");
 
-    selectEl.value = accounts[0].id;
+    // Keep the current choice where it survives the change of list.
+    var stillThere = accounts.some(function (a) { return a.id === keep; });
+    selectEl.value = stillThere ? keep : accounts[0].id;
     describeChoice();
   }
 
