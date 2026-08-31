@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 32" width="200" height="32" role="img" aria-label="MetaTrader 4">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 24V8l7 9 7-9v16" stroke="#7dd3fc" stroke-width="3"/>
+    <path d="M24 24V8m-5 0h10" stroke="#f9a8d4" stroke-width="3"/>
+  </g>
+  <text x="40" y="23" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="17" font-weight="700" fill="#FFFFFF" letter-spacing="-0.2">MetaTrader</text>
+  <text x="163" y="23" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="17" font-weight="700" fill="#f9a8d4">4</text>
+</svg>

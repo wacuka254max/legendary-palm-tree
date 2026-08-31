@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>AlphaPilot | Free Fully Automated AI Trading Bots</title>
+<meta name="description" content="Free, fully automated AI trading bots that run 24/7 on MetaTrader 5, MetaTrader 4, Deriv, TradingView, Binance, Exness, cTrader and OANDA — and pass prop firm challenges on Funding Pips, FTMO, FundedNext and The5ers. No subscription, no code." />
+<meta name="theme-color" content="#07060f" />
+<meta name="robots" content="index,follow" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="AlphaPilot | Free Fully Automated AI Trading Bots" />
+<meta property="og:description" content="Free, fully automated AI trading bots that run 24/7 across MT5, MT4, Deriv, TradingView, Binance and more. No subscription, no code." />
+<meta property="og:image" content="/og.svg" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<!-- ══ Background: fixed, full-bleed, sits behind everything ══ -->
+<div class="bg" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow--pink"></div>
+  <div class="bg-glow bg-glow--blue"></div>
+  <div class="bg-glow bg-glow--violet"></div>
+  <div class="bg-beam"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<!-- ══ Nav ══ -->
+<header class="nav">
+  <div class="shell nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="32" height="32"><defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5fa2"/><stop offset="1" stop-color="#7dd3fc"/></linearGradient></defs><rect width="32" height="32" rx="9" fill="url(#bm)"/><path d="M9 21l4.5-10L18 21m-7-3h5.5M20 11v10" stroke="#07060f" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="brand-name">Alpha<span>Pilot</span></span>
+    </a>
+
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#platforms">Platforms</a>
+      <a href="#bots">Bots</a>
+      <a href="#how">How it works</a>
+      <a href="#prop">Prop firms</a>
+    </nav>
+
+    <div class="nav-cta">
+      <a class="btn btn-ghost" href="#bots">Browse bots</a>
+      <a class="btn btn-primary" href="#get">Get them free</a>
+    </div>
+
+    <button class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+  <div class="nav-mobile" id="mobile-menu" hidden>
+    <a href="#platforms">Platforms</a>
+    <a href="#bots">Bots</a>
+    <a href="#how">How it works</a>
+    <a href="#prop">Prop firms</a>
+    <a class="btn btn-primary" href="#get">Get them free</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══ Hero ══ -->
+  <section class="hero">
+    <div class="shell hero-inner">
+      <a class="pill" href="#get">
+        <span class="pill-dot" aria-hidden="true"></span>
+        100% free — no card, no subscription
+        <span class="pill-arrow" aria-hidden="true">→</span>
+      </a>
+
+      <h1 class="hero-title">
+        Fully automated<br />
+        <span class="grad">AI trading bots</span><br />
+        that never sleep
+      </h1>
+
+      <p class="hero-sub">
+        Drop a bot onto the platform you already trade on. It reads the market,
+        sizes the risk and manages every position by itself — 24 hours a day,
+        on autopilot. Free, forever.
+      </p>
+
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="#get">Get your free bot</a>
+        <a class="btn btn-glass btn-lg" href="#how">See how it works</a>
+      </div>
+
+      <dl class="stats">
+        <div><dt>24/7</dt><dd>Runs unattended</dd></div>
+        <div><dt>8</dt><dd>Platforms supported</dd></div>
+        <div><dt>$0</dt><dd>Cost, always</dd></div>
+        <div><dt>&lt;2&nbsp;min</dt><dd>To go live</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ══ Platforms ══ -->
+  <section class="section" id="platforms">
+    <div class="shell">
+      <p class="eyebrow">Works where you already trade</p>
+      <h2 class="section-title">Eight platforms, one bot library</h2>
+      <p class="section-sub">
+        Every bot ships in the native format of the platform it runs on — an EA
+        for MetaTrader, an XML strategy for Deriv, a Pine script for TradingView,
+        an API worker for the exchanges. Nothing to convert.
+      </p>
+
+      <ul class="logo-grid">
+        <li class="logo-card"><img src="/logos/metatrader5.svg" alt="MetaTrader 5" /><span>Expert Advisor</span></li>
+        <li class="logo-card"><img src="/logos/mt4.svg" alt="MetaTrader 4" /><span>Expert Advisor</span></li>
+        <li class="logo-card"><img src="/logos/deriv-wordmark.svg" alt="Deriv" /><span>Bot &amp; API</span></li>
+        <li class="logo-card"><img src="/logos/tradingview.svg" alt="TradingView" /><span>Pine &amp; alerts</span></li>
+        <li class="logo-card"><img src="/logos/binance.svg" alt="Binance" /><span>Spot &amp; futures</span></li>
+        <li class="logo-card"><img src="/logos/exness.svg" alt="Exness" /><span>MT4 &amp; MT5</span></li>
+        <li class="logo-card"><img src="/logos/ctrader.svg" alt="cTrader" /><span>cBot</span></li>
+        <li class="logo-card"><img src="/logos/oanda.svg" alt="OANDA" /><span>REST API</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ Features ══ -->
+  <section class="section" id="features">
+    <div class="shell">
+      <p class="eyebrow">Why it works</p>
+      <h2 class="section-title">Built like a desk, not a script</h2>
+
+      <div class="cards">
+        <article class="card">
+          <span class="card-icon card-icon--pink" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.5-6.5-2.1 2.1M8.6 15.4l-2.1 2.1m0-11.9 2.1 2.1m6.8 6.8 2.1 2.1"/><circle cx="12" cy="12" r="3.4"/></svg>
+          </span>
+          <h3>AI that reads context</h3>
+          <p>The model weighs trend, volatility and session before it commits — so it sits out chop instead of forcing a trade into it.</p>
+        </article>
+
+        <article class="card">
+          <span class="card-icon card-icon--blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6.5v5.2c0 4.7 3.3 8.4 8 9.3 4.7-.9 8-4.6 8-9.3V6.5z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>
+          </span>
+          <h3>Risk capped, every trade</h3>
+          <p>A hard stop, a daily loss limit and position sizing off your real balance. The bot stops itself long before the account does.</p>
+        </article>
+
+        <article class="card">
+          <span class="card-icon card-icon--violet" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.5 9 11l4 4 8-8.5"/><path d="M15 6.5h6v6"/></svg>
+          </span>
+          <h3>Runs 24/7 without you</h3>
+          <p>Install once and close the laptop. It keeps its own schedule across every session — London, New York, Tokyo, Sydney.</p>
+        </article>
+
+        <article class="card">
+          <span class="card-icon card-icon--pink" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9.5h18M7.5 14h4"/></svg>
+          </span>
+          <h3>No code, no terminal</h3>
+          <p>Download, drag onto the chart, press start. If you can open a chart you can run every bot in the library.</p>
+        </article>
+
+        <article class="card">
+          <span class="card-icon card-icon--blue" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>
+          </span>
+          <h3>Backtested, then forward-tested</h3>
+          <p>Nothing ships on a curve-fit. Every bot clears years of history, then months on a live demo, before it reaches this page.</p>
+        </article>
+
+        <article class="card">
+          <span class="card-icon card-icon--violet" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 20 7v5c0 4.4-3.2 8.2-8 9.5-4.8-1.3-8-5.1-8-9.5V7z"/><circle cx="12" cy="11" r="2.2"/><path d="M12 13.2V16"/></svg>
+          </span>
+          <h3>Your keys stay yours</h3>
+          <p>The bot runs on your machine against your own account. We never hold your funds, your logins or your API secrets.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Bots ══ -->
+  <section class="section" id="bots">
+    <div class="shell">
+      <p class="eyebrow">The library</p>
+      <h2 class="section-title">Pick the one that fits your account</h2>
+
+      <div class="bots">
+        <article class="bot">
+          <header><h3>Trend Rider</h3><span class="tag tag--blue">Low risk</span></header>
+          <p>Follows the higher-timeframe trend and pyramids only while it holds. Built for slow, steady equity curves.</p>
+          <ul class="bot-meta"><li>Forex &middot; Indices</li><li>H1 / H4</li><li>MT5 &middot; MT4 &middot; cTrader</li></ul>
+        </article>
+
+        <article class="bot bot--featured">
+          <header><h3>Volatility Breakout</h3><span class="tag tag--pink">Most popular</span></header>
+          <p>Waits for a session range to compress, then takes the break with a bracketed stop. The workhorse of the library.</p>
+          <ul class="bot-meta"><li>Gold &middot; Indices &middot; Crypto</li><li>M15 / M30</li><li>MT5 &middot; Binance &middot; Deriv</li></ul>
+        </article>
+
+        <article class="bot">
+          <header><h3>Crypto Momentum</h3><span class="tag tag--violet">24/7</span></header>
+          <p>Rides funding-rate and momentum shifts on the majors. The only market that never closes, traded the same way.</p>
+          <ul class="bot-meta"><li>BTC &middot; ETH &middot; Majors</li><li>M30 / H1</li><li>Binance &middot; Deriv</li></ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ How ══ -->
+  <section class="section" id="how">
+    <div class="shell">
+      <p class="eyebrow">Three steps</p>
+      <h2 class="section-title">Live in under two minutes</h2>
+
+      <ol class="steps">
+        <li class="step">
+          <span class="step-num">1</span>
+          <h3>Pick your platform</h3>
+          <p>Choose the platform you already trade on. You get the bot in that platform's own format — no conversion, no bridge.</p>
+        </li>
+        <li class="step">
+          <span class="step-num">2</span>
+          <h3>Drop it on the chart</h3>
+          <p>Open the pair, drag the bot on, and set the one number that matters: how much you are willing to risk.</p>
+        </li>
+        <li class="step">
+          <span class="step-num">3</span>
+          <h3>Let it run</h3>
+          <p>It takes it from there — entries, stops, targets and exits — and keeps going while you get on with your day.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ══ Prop firms ══ -->
+  <section class="section" id="prop">
+    <div class="shell">
+      <p class="eyebrow">Funded accounts</p>
+      <h2 class="section-title">Tuned for prop firm rules</h2>
+      <p class="section-sub">
+        Daily drawdown, overall drawdown, consistency and news windows are built
+        into the risk engine — so a challenge is not lost on a rule breach while
+        the strategy was still working.
+      </p>
+
+      <ul class="prop-grid">
+        <li class="prop-card"><img src="/logos/fundingpips.svg" alt="Funding Pips" /></li>
+        <li class="prop-card"><img src="/logos/ftmo.svg" alt="FTMO" /></li>
+        <li class="prop-card"><img src="/logos/fundednext.png" alt="FundedNext" /></li>
+        <li class="prop-card"><img src="/logos/the5ers.svg" alt="The5ers" /></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ CTA ══ -->
+  <section class="cta" id="get">
+    <div class="shell">
+      <div class="cta-box">
+        <h2>Every bot. Every platform. Free.</h2>
+        <p>No subscription, no upsell, no card. Take the bot, run it on your own account, keep everything it makes.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="#bots">Get your free bot</a>
+          <a class="btn btn-glass btn-lg" href="#platforms">See the platforms</a>
+        </div>
+        <p class="cta-fine">Trading carries risk. Past performance does not guarantee future results — only trade what you can afford to lose.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="shell footer-inner">
+    <div class="footer-brand">
+      <span class="brand-name">Alpha<span>Pilot</span></span>
+      <p>Free, fully automated AI trading bots for the platforms people actually trade on.</p>
+    </div>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="#platforms">Platforms</a>
+      <a href="#bots">Bots</a>
+      <a href="#how">How it works</a>
+      <a href="#prop">Prop firms</a>
+    </nav>
+  </div>
+  <div class="shell footer-legal">
+    <p>&copy; 2026 AlphaPilot. All trademarks and platform logos are the property of their respective owners and are shown for compatibility reference only.</p>
+  </div>
+</footer>
+
+<script src="/main.js" defer></script>
+</body>
+</html>
