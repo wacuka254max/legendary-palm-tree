@@ -145,7 +145,19 @@
 
   function load() {
     return D.portfolio()
-      .then(function (d) { data = d; paint(); })
+      .then(function (d) {
+        data = d;
+        paint();
+
+        // The markets rail needs an options account to open a socket against.
+        // Prefer a demo one: it opens the same price feed, and a rail quietly
+        // holding a session on the real account is not what anyone asked for.
+        if (window.EvieMarkets) {
+          var opts = d.accounts.filter(function (a) { return a.kind === "Options"; });
+          var pick = opts.filter(function (a) { return a.demo; })[0] || opts[0];
+          if (pick) window.EvieMarkets.start(pick.id);
+        }
+      })
       .catch(function (e) {
         // An expired session cannot be fixed by staring at it — the refresh
         // already ran before the call, so send them back to Connect.
