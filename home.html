@@ -10,11 +10,67 @@
 <link rel="apple-touch-icon" href="/favicon.svg" />
 <link rel="stylesheet" href="/styles.css" />
 </head>
-<!--
-  The home dashboard. Deliberately empty — Connect and Start both land here,
-  and the shell is left bare so whatever goes in later starts from a clean
-  page. It inherits the dotted ground and the palette from styles.css.
--->
 <body class="dash">
+
+<header class="nav">
+  <div class="bleed nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff3d87"/><path d="M11 10h10M11 16h7M11 22h10" stroke="#0b0b0f" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-name">Evie</span>
+    </a>
+    <div class="nav-cta" style="margin-left:auto">
+      <button class="btn btn-line" id="disconnect" type="button">Disconnect</button>
+    </div>
+  </div>
+</header>
+
+<main class="bleed dash-main">
+
+  <!-- Success, on arrival. Only shown when they have just come back from Deriv. -->
+  <div class="flash flash--ok" id="connected" hidden>
+    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 7"/></svg>
+    <span>Deriv account connected</span>
+  </div>
+
+  <h1 class="dash-title">Home</h1>
+
+  <section class="balance" id="balance" aria-live="polite">
+    <div class="balance-head">
+      <p class="balance-k">Options balance</p>
+      <!-- Double-click flips this to the demo account. -->
+      <button class="badge" id="badge" type="button"
+              title="Double-click to see your demo account"
+              aria-label="Account type. Double-click to switch between real and demo.">Real</button>
+    </div>
+    <p class="balance-v" id="amount">Checking…</p>
+    <p class="balance-id" id="account"></p>
+    <p class="balance-hint" id="hint" hidden>Double-click <strong>Real</strong> to see your demo account.</p>
+  </section>
+
+  <!-- The reason a funded account can still read zero here. -->
+  <aside class="notice" id="notice">
+    <span class="notice-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    </span>
+    <div>
+      <p class="notice-t">Seeing zero, or less than you expect?</p>
+      <p class="notice-p">
+        This is your <strong>options</strong> account balance — the only one a bot can
+        trade. Money sitting in your Deriv wallet, MT5 or another sub-account will not
+        show here until you move it across.
+      </p>
+      <a class="notice-go" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener noreferrer">
+        Transfer funds to your options account
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+      </a>
+    </div>
+  </aside>
+
+</main>
+
+<script src="/deriv.js"></script>
+<script src="/home.js"></script>
 </body>
 </html>
