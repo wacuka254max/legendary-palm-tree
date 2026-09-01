@@ -435,7 +435,10 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .nav-links a:hover { color: var(--ink); border-bottom-color: var(--pink); }
 
-.nav-cta { display: flex; gap: 8px; }
+/* Hard right, at every width. The links that used to sit between the brand
+   and these buttons carried the auto margin that pushed them over; with the
+   links gone the buttons have to claim that space themselves. */
+.nav-cta { display: flex; gap: 8px; margin-left: auto; }
 
 .nav-toggle {
   display: none;
@@ -567,14 +570,20 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 
 .marks-row {
-  display: flex;
-  flex-wrap: wrap;
+  /* A grid rather than a wrapped flex row: twelve marks of twelve different
+     widths packed into a full row and a stranded pair.
+
+     The column count is written out rather than left to auto-fit, because
+     auto-fit fits as many as will go — eleven and one at this width — and
+     twelve only looks deliberate in rows that divide it. Six and six, four
+     and four and four, three by four, two by six. Never a widow. */
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   align-items: center;
-  /* Even optical spacing whatever the row count, and it wraps rather than
-     scrolling sideways, so nothing is ever hidden off-screen. */
-  gap: clamp(24px, 3.6vw, 56px) clamp(28px, 4vw, 64px);
+  justify-items: center;
+  gap: clamp(22px, 3vw, 42px) clamp(20px, 2.4vw, 40px);
 }
-.marks-row li { display: flex; align-items: center; flex: 0 0 auto; }
+.marks-row li { display: flex; align-items: center; justify-content: center; }
 .marks-row img {
   /* A definite height, not max-height: several of these SVGs carry a viewBox
      with no width/height, so they have no intrinsic size and would collapse
@@ -589,6 +598,10 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   transition: opacity 0.18s ease;
 }
 .marks-row li:hover img { opacity: 1; }
+
+@media (max-width: 1180px) { .marks-row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .marks-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .marks-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ── Sections ───────────────────────────────────────────────────────── */
 
