@@ -416,7 +416,16 @@
        enough to read the row and then puts itself away. */
     placeTrade(type, sym, stake)
       .then(function () { txn.peek(4200); })
-      .catch(function () { /* the panel already said what went wrong */ });
+      .catch(function (e) {
+        /* This used to swallow the error on the assumption the panel had
+           already spoken. It had not: the general handler stays quiet while a
+           trade is in flight, precisely so it does not talk over this one. A
+           refusal — a balance that will not cover the stake, a barrier Deriv
+           would not take — therefore vanished, and the click looked ignored.
+           A wait for the previous trade is the one case worth no words. */
+        if (e && e.busy) return;
+        status((e && e.message) || "That trade did not go through.", "error");
+      });
   });
 
   /**

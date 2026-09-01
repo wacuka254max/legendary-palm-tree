@@ -44,6 +44,22 @@
   var TICK_MS = 1000;
   var EDGE = 0.025;
 
+  /* Deriv's app markup: the slice an application takes on every contract it
+     sends. It is added to the PRICE, not taken out of the payout, so a 1.00
+     stake is bought for 1.03 and a win pays the same as it always would. That
+     is why it shows up as a slightly larger buy price in the ledger and as a
+     slightly smaller profit — exactly where it will show up in production. */
+  var MARKUP = 0.03;
+
+  /* Deriv caps what a single contract can return. */
+  var MAX_PAYOUT = 50000;
+
+  /* Nothing on a network is instant, and a simulator that answers in the same
+     millisecond teaches the wrong rhythm: trades appear to fire in a burst and
+     a bot looks faster than it can ever be. Every reply waits the way a real
+     round trip does. */
+  function latency() { return 120 + Math.floor(Math.random() * 260); }
+
   /* ── the plan: which trades lose ─────────────────────────────────────────
    *
    * Read once at start-up and then simply asked, trade after trade, "does this
@@ -185,8 +201,11 @@
   function payoutFor(type, barrier, stake) {
     var p = probability(type, barrier);
     if (p <= 0) p = 0.05;
-    return Math.round(stake / p * (1 - EDGE) * 100) / 100;
+    return Math.min(MAX_PAYOUT, Math.round(stake / p * (1 - EDGE) * 100) / 100);
   }
+
+  /** What the contract actually costs: the stake plus this app's markup. */
+  function priceFor(stake) { return round2(stake * (1 + MARKUP)); }
 
   function round2(n) { return Math.round(n * 100) / 100; }
 
@@ -224,7 +243,18 @@
     }, 60);
   }
 
+  /** A reply, after the wire has taken its share of the time. */
   FakeSocket.prototype.emit = function (obj) {
+    var self = this;
+    var wire = JSON.stringify(obj);
+    setTimeout(function () {
+      if (self.readyState !== 1 || !self.onmessage) return;
+      self.onmessage({ data: wire });
+    }, latency());
+  };
+
+  /** Ticks are not replies — they arrive when the market says so. */
+  FakeSocket.prototype.push = function (obj) {
     if (this.readyState !== 1 || !this.onmessage) return;
     this.onmessage({ data: JSON.stringify(obj) });
   };
@@ -278,24 +308,33 @@
   };
 
   /**
-   * One tick, and with it any contract that was waiting for one.
+   * One tick, and with it whatever the contracts on this symbol are waiting for.
    *
-   * A contract settles on the NEXT tick of its own symbol — the same one-tick
-   * duration the real ones have — and it is that tick which is bent to the
-   * scripted outcome before anybody, the analysis panel included, sees it.
+   * A real one-tick contract is not bought and settled in the same breath. It
+   * STARTS on the first tick after the purchase — that tick is the entry spot —
+   * and settles on the one after it. Two ticks, about two seconds, plus the
+   * round trips either side.
+   *
+   * The sim used to settle on the very next tick, which made a trade look like
+   * it took a heartbeat and taught a pace no live account can keep. This is the
+   * real shape, and it is the settling tick that is bent to the scripted
+   * outcome, before anybody — the analysis panel included — sees it.
    */
   FakeSocket.prototype.tick = function (sym) {
     var self = this;
     var m = market(sym);
     var quote = m.step();
 
-    var due = this.pending.filter(function (c) { return c.sym === sym; });
-    if (due.length) {
-      quote = this.settleQuote(due[0], quote);
+    var starting = this.pending.filter(function (c) { return c.sym === sym && !c.started; });
+    var settling = this.pending.filter(function (c) { return c.sym === sym && c.started; });
+
+    // The settling tick has to carry the digit the outcome needs.
+    if (settling.length) {
+      quote = this.settleQuote(settling[0], quote);
       m.price = quote;
     }
 
-    this.emit({
+    this.push({
       msg_type: "tick",
       tick: {
         symbol: sym, quote: quote, pip_size: m.dec,
@@ -303,7 +342,36 @@
       }
     });
 
-    due.forEach(function (c) { self.settle(c, quote); });
+    // A contract bought a moment ago opens on this tick and lives one more.
+    starting.forEach(function (c) {
+      c.started = true;
+      c.entry = quote;
+      self.openUpdate(c);
+    });
+
+    settling.forEach(function (c) { self.settle(c, quote); });
+  };
+
+  /** Tell whoever is watching that the contract is open, and at what spot. */
+  FakeSocket.prototype.openUpdate = function (c) {
+    if (!c.watchId) return;                 // nobody subscribed to it yet
+    var m = market(c.sym);
+    this.emit({
+      msg_type: "proposal_open_contract",
+      subscription: { id: c.watchId },
+      proposal_open_contract: {
+        contract_id: c.id,
+        underlying: c.sym,
+        buy_price: c.price,
+        payout: c.payout,
+        is_sold: 0,
+        entry_tick: c.entry,
+        entry_tick_display_value: c.entry.toFixed(m.dec),
+        current_spot: c.entry,
+        current_spot_display_value: c.entry.toFixed(m.dec),
+        profit: 0
+      }
+    });
   };
 
   /** The quote that makes this contract end the way the plan says. */
@@ -338,14 +406,19 @@
       stake: stake
     };
 
+    var price = priceFor(stake);
+
     this.emit({
       msg_type: "proposal",
       echo_req: req,
       proposal: {
         id: id,
-        ask_price: stake,
+        /* The price INCLUDES the markup, which is what Deriv quotes and what
+           app.js then sends back as the buy price. */
+        ask_price: price,
         payout: payoutFor(req.contract_type, barrier, stake),
-        display_value: stake.toFixed(2),
+        display_value: price.toFixed(2),
+        commission: round2(price - stake),
         longcode: "Simulated contract."
       }
     });
@@ -362,9 +435,27 @@
     delete this.props[req.buy];
 
     var m = market(p.sym);
-    var id = "sim-" + (this.nextId++);
+    var price = priceFor(p.stake);
 
-    balance = round2(balance - p.stake);
+    /* You cannot buy what you cannot afford, and a simulator that lets you is
+       worth nothing: the whole point of setting a balance of 80 is to find out
+       what a 100 stake does. Deriv refuses at the buy, in these words, and so
+       does this — and the martingale ladder meets that wall here for the same
+       reason it will meet it live. */
+    if (price > balance) {
+      return this.emit({
+        msg_type: "buy",
+        echo_req: req,
+        error: {
+          code: "InsufficientBalance",
+          message: "Your account balance (" + balance.toFixed(2) + " " + currency +
+            ") is insufficient to buy this contract (" + price.toFixed(2) + " " + currency + ")."
+        }
+      });
+    }
+
+    var id = "sim-" + (this.nextId++);
+    balance = round2(balance - price);
 
     var contract = {
       id: id,
@@ -372,7 +463,11 @@
       contract: p.contract,
       barrier: p.barrier,
       stake: p.stake,
+      price: price,                 // what was actually paid, markup included
       payout: payoutFor(p.contract, p.barrier, p.stake),
+      /* The contract has not started yet — it opens on the next tick, and that
+         tick is its entry spot. Until then this is only a placeholder. */
+      started: false,
       entry: m.round(m.price),
       // Decided the moment it is bought, so what settles it is already known.
       shouldWin: !plan.loses()
@@ -386,7 +481,7 @@
       echo_req: req,
       buy: {
         contract_id: id,
-        buy_price: p.stake,
+        buy_price: price,
         balance_after: balance,
         longcode: "Simulated contract.",
         transaction_id: this.nextId++
@@ -404,22 +499,30 @@
     var id = "poc-" + (this.nextId++);
     c.watchId = id;
 
+    var poc = {
+      contract_id: c.id,
+      underlying: c.sym,
+      buy_price: c.price,
+      payout: c.payout,
+      is_sold: 0,
+      profit: 0
+    };
+
+    /* Before its opening tick a contract has no entry spot, and Deriv does not
+       invent one. The update that carries it comes from openUpdate() the moment
+       the tick lands. */
+    if (c.started) {
+      poc.entry_tick = c.entry;
+      poc.entry_tick_display_value = c.entry.toFixed(m.dec);
+      poc.current_spot = c.entry;
+      poc.current_spot_display_value = c.entry.toFixed(m.dec);
+    }
+
     this.emit({
       msg_type: "proposal_open_contract",
       echo_req: req,
       subscription: { id: id },
-      proposal_open_contract: {
-        contract_id: c.id,
-        underlying: c.sym,
-        buy_price: c.stake,
-        payout: c.payout,
-        is_sold: 0,
-        entry_tick: c.entry,
-        entry_tick_display_value: c.entry.toFixed(m.dec),
-        current_spot: c.entry,
-        current_spot_display_value: c.entry.toFixed(m.dec),
-        profit: 0
-      }
+      proposal_open_contract: poc
     });
   };
 
@@ -428,7 +531,10 @@
     this.pending = this.pending.filter(function (x) { return x !== c; });
 
     var won = c.shouldWin;
-    var profit = won ? round2(c.payout - c.stake) : -c.stake;
+    /* Against what was PAID, not against the stake: the markup is part of the
+       cost of the trade, so a win returns a little less and a loss costs a
+       little more than the stake alone. */
+    var profit = won ? round2(c.payout - c.price) : -c.price;
     if (won) balance = round2(balance + c.payout);
 
     this.emit({
@@ -437,7 +543,7 @@
       proposal_open_contract: {
         contract_id: c.id,
         underlying: c.sym,
-        buy_price: c.stake,
+        buy_price: c.price,
         payout: won ? c.payout : 0,
         is_sold: 1,
         status: won ? "won" : "lost",
