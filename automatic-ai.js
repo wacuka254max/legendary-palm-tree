@@ -130,20 +130,30 @@
 
   selectEl.addEventListener("change", describeChoice);
 
-  /* Double-clicking the A in "Account" reveals the demo accounts, and doing it
-     again hides them. Not while a session is running: swapping the account
-     under a live bot is not a thing anyone means to do. */
-  var revealEl = $("reveal");
+  /* Three clicks on the "A" of Automatic bring the account picker onto the
+     page, demo included; three more take it away again. Hidden otherwise, so
+     this page runs the real account and only the real account — picking a demo
+     by accident is a session of practice trades somebody believes are real,
+     and the reverse is worse.
+
+     Three, not two: a double click is something people do to a word by
+     accident. And never while a bot is running — swapping the account under a
+     live run is not a thing anyone means to do. */
+  var revealEl = $("acct-key");
   if (revealEl) {
-    revealEl.addEventListener("dblclick", function () {
+    revealEl.addEventListener("click", function (e) {
+      if (e.detail < 3) return;               // the browser counts them for us
       if (running) return;
+
       if (!showDemo && !allAccounts.some(function (a) { return a.demo; })) {
         return ui.showStatus("This login has no demo options account.", "warning");
       }
+
       showDemo = !showDemo;
       revealEl.classList.toggle("acct-reveal--on", showDemo);
+      $("acct-fld").hidden = !showDemo;
       renderAccounts();
-      ui.showStatus(showDemo ? "Demo accounts shown." : "Demo accounts hidden.", "info");
+      ui.showStatus(showDemo ? "Accounts shown — demo included." : "Back to the real account.", "info");
     });
   }
 
@@ -180,6 +190,13 @@
       );
       startBtn.disabled = true;
       riskEl.textContent = "";
+
+      /* Blank, not the demo's figure. A balance beside a badge reading Real is
+         a claim about how much money is at stake, and showing a practice
+         balance there is the wrong claim to make. */
+      balanceEl.textContent = "—";
+      acctBadge.textContent = "Real";
+      acctBadge.classList.remove("badge--demo");
       return;
     }
 

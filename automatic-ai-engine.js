@@ -471,7 +471,15 @@
         });
       }
 
-      // Fallback: if still no good market, pick one with most data
+      /* Fallback: no market has a strong bias, so take the one with the most
+         data — and take the side that is actually ahead on it.
+
+         Over 4 and Under 5 are complements: every digit is either above 4 or
+         below 5, so their shares add to 1 and one of them is always at least
+         half. Defaulting to OVER here, as this did, meant that whenever no
+         market cleared 60% the bot could take the WEAKER side of a market it
+         had already measured — paying for a coin flip it knew was tilted the
+         other way. */
       if (!bestMarket) {
         let maxTicks = 0;
         this.markets.forEach(market => {
@@ -479,13 +487,12 @@
           if (analysis && analysis.totalTicks > maxTicks) {
             maxTicks = analysis.totalTicks;
             bestMarket = market;
-            // Default to OVER if we have to pick
-            bestTradeType = 'OVER';
+            bestTradeType = analysis.over4Count >= analysis.under5Count ? 'OVER' : 'UNDER';
           }
         });
       }
 
-      // Final fallback: random market
+      // Final fallback: nothing measured at all yet.
       if (!bestMarket) {
         bestMarket = this.markets[Math.floor(Math.random() * this.markets.length)];
         bestTradeType = 'OVER';
@@ -583,12 +590,16 @@
       let market, digit, contractType, barrier, displayTarget;
 
       if (this.recoveryMode) {
-        // Recovery mode: use analyzed market for digit over 4 or under 5
-        if (!this.recoveryMarket || !this.recoveryTradeType) {
-          const recovery = this.analyzeMarketsForRecovery();
-          this.recoveryMarket = recovery.market;
-          this.recoveryTradeType = recovery.tradeType;
-        }
+        /* Re-read the market before EVERY recovery trade, not just the first.
+
+           A recovery can run for several trades, and the bias it was chosen on
+           moves while it does — each new tick shifts the counts. Deciding once
+           on entry meant the second and third rungs of a ladder were still
+           trading a lead that had since flipped, at three and nine times the
+           stake. It now takes whichever side is ahead at the moment it buys. */
+        const recovery = this.analyzeMarketsForRecovery();
+        this.recoveryMarket = recovery.market;
+        this.recoveryTradeType = recovery.tradeType;
 
         market = this.recoveryMarket;
         

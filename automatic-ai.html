@@ -40,7 +40,10 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 </header>
 
 <main class="bleed dash-main">
-  <h1 class="dash-title">Automatic AI</h1>
+  <!-- The "A" of Automatic is the handle for the account picker: three clicks
+       and it appears in Settings. Hidden by default so this page runs the real
+       account and only the real account. -->
+  <h1 class="dash-title"><span class="acct-reveal" id="acct-key" title="Account">A</span>utomatic AI</h1>
 
   <div class="run">
 
@@ -48,35 +51,30 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <section class="panel-solid">
       <h2 class="grp-t">Settings</h2>
 
-      <label class="fld">
-        <!-- Double-clicking the A reveals the demo accounts. Deliberately
-             unadvertised: the demo is for testing a change, not something to
-             be offered beside the real account every time. -->
-        <span class="fld-k"><span class="acct-reveal" id="reveal" title="Account">A</span>ccount</span>
+      <label class="fld" id="acct-fld" hidden>
+        <span class="fld-k">Account</span>
         <select class="fld-i" id="account"></select>
       </label>
 
-      <div class="fld-row">
-        <label class="fld">
-          <span class="fld-k">Stake</span>
-          <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
-        </label>
-        <label class="fld">
-          <span class="fld-k">Martingale</span>
-          <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" />
-        </label>
-      </div>
-
-      <div class="fld-row">
-        <label class="fld">
-          <span class="fld-k">Take profit</span>
-          <input class="fld-i" id="tp" type="number" min="0" step="1" value="100" inputmode="decimal" />
-        </label>
-        <label class="fld">
-          <span class="fld-k">Stop loss</span>
-          <input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" />
-        </label>
-      </div>
+      <!-- One to a line. Paired across a row they read as two halves of one
+           setting, and stake beside martingale is exactly the pair you do not
+           want misread. -->
+      <label class="fld">
+        <span class="fld-k">Stake</span>
+        <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Martingale</span>
+        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Take profit</span>
+        <input class="fld-i" id="tp" type="number" min="0" step="1" value="100" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Stop loss</span>
+        <input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" />
+      </label>
 
       <div class="run-actions">
         <button class="btn btn-blue btn-lg" id="start" type="button">Start</button>

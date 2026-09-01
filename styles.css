@@ -725,6 +725,9 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .fld-i:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
 .fld-i:disabled { opacity: 0.55; cursor: not-allowed; }
+/* `display` on .fld beats [hidden] on its own. */
+.fld[hidden] { display: none; }
+
 .fld-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 12px; }
 
 /* Pushed to the bottom of the card, so Settings and Session line up however
