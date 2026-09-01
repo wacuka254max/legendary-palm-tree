@@ -93,7 +93,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
        three tiles and the answer to "which account am I on?" hidden. The sheet
        stays for narrow screens, where a panel this tall would push the tiles
        off the fold. -->
-  <section class="acctp" id="acctp" hidden>
+  <section class="acctp" id="acctp">
     <div class="acctp-head">
       <div>
         <p class="acctp-k">Account details</p>
@@ -102,7 +102,17 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
       <button class="btn btn-line btn-sm btn-danger" id="disconnect-inline" type="button">Disconnect</button>
     </div>
 
-    <div class="acctp-body" id="acctp-body"></div>
+    <!-- The groups are here before the portfolio is, so the panel is its own
+         size from the first paint and the accounts appear inside it rather
+         than the whole card appearing around them. -->
+    <div class="acctp-body" id="acctp-body">
+      <section class="grp"><h3 class="grp-t">Real</h3>
+        <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
+      </section>
+      <section class="grp"><h3 class="grp-t">Demo</h3>
+        <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
+      </section>
+    </div>
 
     <p class="acctp-note">
       A bot can only trade the <strong>options</strong> account. Money in a
@@ -128,9 +138,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
        <span>Price changes (5 minutes)</span>
        <span class="mk-live" id="mk-live" aria-hidden="true"></span>
      </h2>
-     <ul class="mk-list" id="mk-list">
-       <li class="mk mk--none">Waiting for prices…</li>
-     </ul>
+     <ul class="mk-list" id="mk-list"></ul>
    </aside>
 
   </div>

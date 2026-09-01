@@ -118,39 +118,49 @@
     if (i > 0) { s.t.splice(0, i); s.p.splice(0, i); }
   }
 
+  /* The ten rows exist before any price does.
+
+     They used to be written only once data arrived, so a refresh showed an
+     empty card that grew to full height a second later and shoved the page
+     down as it went. Now the rail is its final size from the first paint and
+     each row fills itself in where it already stands — the card never moves,
+     the numbers just stop being dashes. */
+  function skeleton() {
+    if (!listEl || listEl.querySelector(".mk[data-sym]")) return;
+    listEl.innerHTML = MARKETS.map(function (m) {
+      return '<li class="mk" data-sym="' + m.sym + '">' +
+               '<span class="mk-name">' + m.name + "</span>" +
+               '<span class="mk-slot" data-spark></span>' +
+               '<span class="mk-pct mk-pct--idle" data-pct>&mdash;</span>' +
+             "</li>";
+    }).join("");
+  }
+
   function draw() {
     if (!listEl) return;
+    skeleton();
     var nowS = Math.floor(Date.now() / 1000);
 
-    var rows = MARKETS.map(function (m) {
+    MARKETS.forEach(function (m) {
+      var row = listEl.querySelector('.mk[data-sym="' + m.sym + '"]');
+      if (!row) return;
+
       var s = series[m.sym];
-      if (!s || s.p.length < 2) return null;
+      if (!s || s.p.length < 2) return;        // leave the dash where it is
       trim(s, nowS);
-      if (s.p.length < 2) return null;
+      if (s.p.length < 2) return;
 
       var first = s.p[0];
       var last = s.p[s.p.length - 1];
       var pct = first ? ((last - first) / first) * 100 : 0;
-      // A flat market is not an up market: the sign follows the movement,
-      // and the colour follows the sign.
       var up = pct >= 0;
 
-      return '<li class="mk">' +
-               '<span class="mk-name">' + m.name + "</span>" +
-               spark(s.p, up) +
-               '<span class="mk-pct ' + (up ? "mk-pct--up" : "mk-pct--down") + '">' +
-                 (up ? "+" : "") + pct.toFixed(2) + "%" +
-               "</span>" +
-             "</li>";
-    }).filter(Boolean);
+      row.querySelector("[data-spark]").innerHTML = spark(s.p, up);
 
-    /* Only ever says it is waiting when it genuinely has nothing. Once a
-       price is known the rail keeps showing it, live or from the last
-       window — it must not blink back to a placeholder on a reconnect. */
-    if (rows.length) listEl.innerHTML = rows.join("");
-    else if (!listEl.querySelector(".mk:not(.mk--none)")) {
-      listEl.innerHTML = '<li class="mk mk--none">Waiting for prices…</li>';
-    }
+      var pctEl = row.querySelector("[data-pct]");
+      pctEl.textContent = (up ? "+" : "") + pct.toFixed(2) + "%";
+      pctEl.className = "mk-pct " + (up ? "mk-pct--up" : "mk-pct--down");
+    });
   }
 
   /* ── the socket ────────────────────────────────────────────────────── */
@@ -242,7 +252,14 @@
 
   function start(accountId) {
     listEl = el("mk-list");
-    if (!listEl || !accountId || !global.EvieDeriv) return;
+    if (!listEl) return;
+
+    /* The rows go up before anything else is known — before the account, the
+       socket, or the first price. The rail is then its full height from the
+       first paint whatever happens next, including nothing happening at all. */
+    skeleton();
+
+    if (!accountId || !global.EvieDeriv) return;
 
     /* start() is called twice by design — once on the remembered account
        before the portfolio returns, once after it comes back. Without this it
@@ -296,6 +313,17 @@
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", prime);
   else prime();
+
+  /* A dashboard that cannot connect should still look like a dashboard. */
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      listEl = el("mk-list");
+      skeleton();
+    });
+  } else {
+    listEl = el("mk-list");
+    skeleton();
+  }
 
   global.EvieMarkets = { start: start };
 })(window);

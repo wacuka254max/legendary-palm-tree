@@ -128,8 +128,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
    nothing in the gap. */
 .dash-main { padding-top: clamp(84px, 9vh, 100px); padding-bottom: 56px; }
 .dash-title {
-  max-width: 1180px;
-  margin-inline: auto;
   margin-bottom: clamp(14px, 1.8vw, 20px);
   font-size: clamp(1.45rem, 2.4vw, 1.8rem);
   font-weight: 700;
@@ -829,21 +827,19 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 
 /* On a wide screen the rail fills the space the tiles were leaving empty on
    the right. Below 1180px it drops underneath them, full width. */
-/* Two columns that stay together.
+/* Two columns across the whole width.
 
-   The left column's content was capped at 660px while its track kept growing
-   with the window, so on a wide screen the tiles sat at the far left, the rail
-   at the far right, and a third of the page was the gulf between them. The
-   whole grid is bounded instead, and centred once the window is wider than it
-   — so the two columns keep company and the spare width becomes an even
-   margin rather than a hole in the middle. */
+   The gulf that used to sit between them was never the grid's fault: the left
+   column's CONTENT was capped at 660px while its track kept growing, so the
+   tiles stayed small and the space went nowhere. The caps are gone, so the
+   tiles and the account panel fill whatever they are given, and the rail keeps
+   the fixed width a list of ten sparklines wants. Nothing is centred and
+   nothing is held back — the page uses the screen it is on. */
 .dash-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: clamp(16px, 2vw, 26px);
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 400px);
+  gap: clamp(16px, 2vw, 28px);
   align-items: start;
-  max-width: 1180px;
-  margin-inline: auto;
 }
 .dash-col { min-width: 0; }
 
@@ -903,6 +899,15 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .mk-spark { display: block; width: 96px; height: 34px; }
 
+/* The slot the sparkline drops into. It holds the row's height before any
+   price has arrived, which is what stops the rail growing under the cursor
+   on a refresh. */
+.mk-slot { display: block; width: 96px; height: 34px; }
+
+/* A row waiting for its first price: present, sized, and plainly not a
+   number yet. */
+.mk-pct--idle { color: var(--ink-faint); background: var(--surface-2); }
+
 .mk-pct {
   padding: 4px 0;
   font-size: 11.5px;
@@ -915,13 +920,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .mk-pct--up { color: var(--ok); background: rgba(95, 211, 154, 0.12); }
 .mk-pct--down { color: var(--pink); background: rgba(255, 61, 135, 0.12); }
 
-.mk--none {
-  display: block;
-  padding: 14px 12px;
-  font-size: 12.5px;
-  color: var(--ink-faint);
-  border-top: 0;
-}
 
 @media (max-width: 1180px) {
   /* No room beside the tiles — the rail goes under them, full width. */
@@ -1032,8 +1030,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 
 .dash-foot {
-  max-width: 1180px;
-  margin-inline: auto;
   margin-top: 28px;
   padding-top: 16px;
   border-top: 1px solid var(--line);
@@ -1139,3 +1135,7 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
    about the account rather than an action available on it. */
 .btn-danger { color: var(--danger); }
 .btn-danger:hover { color: var(--danger); border-color: var(--danger); }
+
+/* A row that is waiting for the portfolio call. Same height as a real one, so
+   the panel does not resize when the accounts land. */
+.acct--wait { color: var(--ink-faint); }

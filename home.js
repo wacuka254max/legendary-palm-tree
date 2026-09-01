@@ -106,12 +106,12 @@
 
   /* The panel carries its own note and buttons in the markup, so it only ever
      needs the accounts themselves. */
+  /* The panel is already on the page holding its own shape; this only
+     replaces what is inside it. Nothing appears, nothing moves. */
   function fillPanel() {
     var body = $("acctp-body");
-    var panel = $("acctp");
-    if (!body || !panel || !data) return;
+    if (!body || !data) return;
     body.innerHTML = accountsHtml();
-    panel.hidden = false;
   }
 
   function openSheet() {
