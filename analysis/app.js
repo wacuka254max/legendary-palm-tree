@@ -102,6 +102,7 @@
   /* Set while a trade is in flight so whoever asked for it — a click or the
      bot — is handed the result rather than having to watch the panel. */
   var resultWaiter = null;
+  var resultFailer = null;
 
   var pending = {};            // sym -> needs repaint
   var painter = null;
@@ -144,6 +145,16 @@
 
     runState: function (on) {
       trading = on;
+
+      /* A run that ends without having produced a result FAILED — Deriv
+         refused it, or the socket went. Whoever is waiting has to be told, or
+         they wait for the timeout instead: which is exactly how the bot came
+         to place one trade and then sit there, unresponsive to Stop. */
+      if (!on && resultWaiter) {
+        var fail = resultFailer;
+        resultWaiter = null; resultFailer = null;
+        if (fail) fail(new Error("Deriv did not accept that trade."));
+      }
       Array.prototype.forEach.call(document.querySelectorAll(".act"), function (b) {
         b.disabled = on;
       });
@@ -178,7 +189,11 @@
         exit: exit
       });
 
-      if (resultWaiter) { var w = resultWaiter; resultWaiter = null; w(r); }
+      if (resultWaiter) {
+        var w = resultWaiter;
+        resultWaiter = null; resultFailer = null;
+        w(r);
+      }
     }
   };
 
@@ -423,7 +438,10 @@
 
     entryHint = lastSpot[sym] || null;
 
-    var settled = new Promise(function (resolve) { resultWaiter = resolve; });
+    var settled = new Promise(function (resolve, reject) {
+      resultWaiter = resolve;
+      resultFailer = reject;
+    });
 
     trader.run({
       type: type,
@@ -436,13 +454,17 @@
       market: sym
     });
 
-    // A trade that never reports back must not hang the bot for ever.
+    /* A one-tick contract settles in seconds. If nothing has come back in
+       forty-five, something is wrong and saying so beats waiting. */
     return Promise.race([
       settled,
       new Promise(function (_, rej) {
         setTimeout(function () {
-          if (resultWaiter) { resultWaiter = null; rej(new Error("The trade did not settle.")); }
-        }, 90000);
+          if (resultWaiter) {
+            resultWaiter = null; resultFailer = null;
+            rej(new Error("The trade did not settle."));
+          }
+        }, 45000);
       })
     ]);
   }

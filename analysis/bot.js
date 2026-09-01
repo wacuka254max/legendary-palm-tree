@@ -42,6 +42,11 @@
 
   var running = false;
   var stopping = false;
+  /* Resolved the moment Stop is pressed. The loop races it against whatever it
+     is waiting on, so pressing Stop is felt at once rather than whenever the
+     current trade happens to finish. */
+  var stopSignal = null;
+  var fireStop = null;
   var session = { trades: 0, wins: 0, losses: 0, profit: 0 };
 
   /* ── the panel ──────────────────────────────────────────────────────── */
@@ -118,7 +123,17 @@
 
   /* ── the loop ───────────────────────────────────────────────────────── */
 
-  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function sleep(ms) {
+    // Interruptible: a wait between trades must not outlive a Stop.
+    return Promise.race([
+      new Promise(function (r) { setTimeout(r, ms); }),
+      stopSignal
+    ]);
+  }
+
+  function armStop() {
+    stopSignal = new Promise(function (r) { fireStop = r; });
+  }
 
   async function loop() {
     var pair = PAIRS.filter(function (p) { return p.id === el("bot-pair").value; })[0];
@@ -140,13 +155,22 @@
 
       var r;
       try {
-        r = await host.place(side.type, sym, stake);
+        /* Race the trade against Stop. If the user stops mid-trade the loop
+           leaves now; the trade itself still settles and still lands in the
+           transactions panel, it simply is not waited on. */
+        r = await Promise.race([
+          host.place(side.type, sym, stake),
+          stopSignal.then(function () { return null; })
+        ]);
       } catch (e) {
-        // A blip, not an ending. The socket reconnects underneath us.
+        // A refusal is a blip, not an ending — the socket reconnects under us.
         say((e && e.message) || "Trade failed — retrying.", "warning");
-        await sleep(2000);
+        await sleep(2500);
         continue;
       }
+
+      if (!r) break;          // stopped while the trade was in flight
+      if (stopping) break;
 
       session.trades++;
       session.profit = Math.round((session.profit + r.profit) * 100) / 100;
@@ -210,7 +234,15 @@
 
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem(POS_KEY) || "null"); } catch (e) {}
-    if (saved) place(card, saved.x, saved.y);
+    if (saved) {
+      place(card, saved.x, saved.y);
+    } else {
+      // Centred to begin with; it is the thing being introduced, and it can be
+      // dragged out of the way the moment it is in the way.
+      place(card,
+        Math.round((global.innerWidth - card.offsetWidth) / 2),
+        Math.round((global.innerHeight - card.offsetHeight) / 2));
+    }
 
     global.addEventListener("resize", function () {
       var r = card.getBoundingClientRect();
@@ -244,8 +276,16 @@
     });
 
     el("bot-run").addEventListener("click", function () {
-      if (running) { stopping = true; say("Stopping after this trade…", "warning"); return; }
+      if (running) {
+        stopping = true;
+        if (fireStop) fireStop();      // felt immediately, not after the trade
+        say("Stopped.", "warning");
+        setRunning(false);
+        return;
+      }
       session = { trades: 0, wins: 0, losses: 0, profit: 0 };
+      stopping = false;
+      armStop();
       paintStats();
       setRunning(true);
       say("Starting…", "info");
@@ -254,6 +294,7 @@
 
     el("bot-close").addEventListener("click", function () {
       stopping = true;
+      if (fireStop) fireStop();
       card.hidden = true;
       var open = el("bot-open");
       if (open) open.hidden = false;
@@ -267,6 +308,7 @@
       });
     }
 
+    armStop();
     draggable(card, el("bot-head"));
     paintStats();
   }
