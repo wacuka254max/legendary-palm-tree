@@ -7,7 +7,8 @@
 <meta name="robots" content="noindex,nofollow" />
 <meta name="theme-color" content="#f3f4f7" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
 <script>
 /* Applied before paint: a saved dark choice must not flash a light page first.
    Light is the default when nothing has been chosen. */
@@ -104,9 +105,14 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     </section>
 
   </div>
+  <footer class="dash-foot">
+    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
+  </footer>
+
 </main>
 
 <script src="/deriv.js"></script>
+<script src="/prefs.js"></script>
 <script src="/automatic-ai-engine.js"></script>
 <script src="/automatic-ai.js"></script>
 <script src="/theme.js"></script>

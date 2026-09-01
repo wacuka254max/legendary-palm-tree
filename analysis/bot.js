@@ -89,6 +89,17 @@
       var e = el(id);
       if (e) e.disabled = on;
     });
+    /* What was set stays set across a reload: the market, the side, and the
+       take profit or stop loss someone armed. The run itself cannot survive a
+       reload — the socket and the ladder go with the page — but the setup does,
+       so restarting is one click rather than four. Tab-scoped: closing the tab
+       ends the session and the next one starts on the defaults. */
+    var prefs = global.EviePrefs ? global.EviePrefs.scope("bot") : null;
+    if (prefs) {
+      prefs.fields(["bot-market", "bot-pair", "bot-tp", "bot-sl"]);
+      prefs.switches(["bot-tp-tog", "bot-sl-tog"]);
+    }
+
     paintOpener();
   }
 

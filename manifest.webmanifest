@@ -1,0 +1,29 @@
+{
+  "id": "/",
+  "name": "Evie — free automated AI trading bots",
+  "short_name": "Evie",
+  "description": "Free, fully automated AI trading bots. Connect a Deriv account, read the market, and let a bot trade it.",
+
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+
+  "background_color": "#0b0b0f",
+  "theme_color": "#0b0b0f",
+
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+
+  "shortcuts": [
+    { "name": "Analysis", "short_name": "Analysis", "url": "/analysis.html" },
+    { "name": "Automatic AI", "short_name": "Auto AI", "url": "/automatic-ai.html" }
+  ],
+
+  "categories": ["finance", "business"],
+  "lang": "en",
+  "dir": "ltr",
+  "prefer_related_applications": false
+}

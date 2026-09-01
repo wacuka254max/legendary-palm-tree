@@ -1059,3 +1059,73 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   .perch-v { font-size: 12px; }
   .perch .btn { padding: 6px 9px; font-size: 12px; }
 }
+
+/* ══ Install ═══════════════════════════════════════════════════════════════
+   The button is hidden in the markup and shown by install.js, so a browser
+   with no install path never renders a button that cannot do anything. */
+
+.btn-install { display: inline-flex; align-items: center; gap: 7px; }
+.btn-install[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  /* The label is the first thing to go when the bar gets tight — the tray
+     icon carries the meaning on its own at that size. */
+  .btn-install span { display: none; }
+}
+
+/* How-to, for the browsers that keep installing in a menu of their own. */
+.how {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 6, 10, 0.55);
+}
+.how-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+.how-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.how-head h3 { margin: 0; font-size: 1rem; }
+.how-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.how-card > p { margin: 8px 0 14px; font-size: 0.85rem; color: var(--ink-soft); }
+.how-steps { margin: 0 0 16px; padding-left: 20px; list-style: decimal; font-size: 0.86rem; }
+.how-steps li { margin-bottom: 8px; }
+.how-ok { width: 100%; }
+
+/* ══ Disclaimer ════════════════════════════════════════════════════════════
+   The same sentence on every page, at the bottom of each. Quiet, but never
+   behind a click: the pages above it place real money. */
+
+.disclaimer {
+  margin: 0 0 10px;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--ink-faint);
+}
+
+.dash-foot {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.dash-foot .disclaimer { margin: 0; }

@@ -279,4 +279,10 @@
       ui.showStatus((e && e.message) || "Could not read your Deriv accounts.", "error");
       startBtn.disabled = true;
     });
+
+  /* Stake, martingale and the two limits survive a reload but not the tab —
+     see prefs.js. Bound last so the page's own handlers hear the restore. */
+  if (window.EviePrefs) {
+    window.EviePrefs.scope("automatic-ai").fields(["stake", "mart", "tp", "sl"]);
+  }
 })();

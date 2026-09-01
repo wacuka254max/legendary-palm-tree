@@ -306,6 +306,7 @@
     var sym = b.getAttribute("data-sym");
     active[sym] = !active[sym];
     b.classList.toggle("is-on", active[sym]);
+    if (prefs) prefs.set("active", active);
 
     if (active[sym]) subscribe(sym);
     else unsubscribe(sym);
@@ -712,8 +713,14 @@
 
   /* Restore the last view first: which symbols were on, and the window each
      was showing. The page therefore opens on data, not on a placeholder. */
-  var cached = readCache();
-  if (cached && cached.active && Object.keys(cached.active).length) active = cached.active;
+  var prefs = window.EviePrefs ? window.EviePrefs.scope("analysis") : null;
+
+  /* Which symbols are on belongs to the TAB, not to the browser: the opening
+     trio is meant to be a fresh suggestion each time the page is opened, and a
+     choice made in one tab should not decide what the next one opens on. The
+     price cache stays where it is — it only seeds the charts. */
+  var savedActive = prefs && prefs.get("active");
+  if (savedActive && Object.keys(savedActive).length) active = savedActive;
 
   renderSyms();
 
@@ -787,6 +794,7 @@
       activate: function (sym) {
         if (active[sym]) return;
         active[sym] = true;
+        if (prefs) prefs.set("active", active);
         var b = document.querySelector('.sym[data-sym="' + sym + '"]');
         if (b) b.classList.add("is-on");
         subscribe(sym);
@@ -814,4 +822,12 @@
   }
 
   window.addEventListener("beforeunload", function () { session.close(); });
+
+  /* Last, so every handler above is already listening: a stored value is
+     replayed as a real change and the page reacts to it exactly as it would to
+     someone typing it. Lives for the tab, not the browser — see prefs.js. */
+  if (prefs) {
+    prefs.fields(["stake", "ref", "count", "mart"]);
+    prefs.switches(["mart-tog"]);
+  }
 })();

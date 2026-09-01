@@ -7,7 +7,8 @@
 <meta name="robots" content="noindex,nofollow" />
 <meta name="theme-color" content="#f3f4f7" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
 <script>
 /* Applied before paint: a saved dark choice must not flash a light page first.
    Light is the default when nothing has been chosen. */
@@ -30,6 +31,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <!-- The real balance, top right. Nothing else: the demo account, the
          wallets and the per-account detail all live behind the badge. -->
     <div class="perch">
+      <button class="btn btn-line btn-install" type="button" data-install hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Install app</span></button>
       <button class="btn btn-line theme-b" data-theme-toggle type="button" aria-pressed="false" title="Switch to dark">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         <span data-theme-label>Dark</span>
@@ -103,6 +105,10 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 
   </div>
 
+  <footer class="dash-foot">
+    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
+  </footer>
+
 </main>
 
 <!-- Full account detail. Opened by double-clicking the Real badge. -->
@@ -131,5 +137,6 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <script src="/markets.js"></script>
 <script src="/home.js"></script>
 <script src="/theme.js"></script>
+<script src="/install.js"></script>
 </body>
 </html>

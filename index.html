@@ -13,7 +13,8 @@
 <meta property="og:image" content="/og.svg" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="/favicon.svg" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
 <script>
 /* The landing page is dark, always. Six of the platform marks it shows are
    white on transparent — on a light page they would simply not be there. The
@@ -41,6 +42,7 @@ document.documentElement.setAttribute("data-theme","dark");
     </nav>
 
     <div class="nav-cta">
+      <button class="btn btn-line btn-install" type="button" data-install hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Install app</span></button>
       <a class="btn btn-solid js-connect" href="/home.html">Connect</a>
     </div>
 
@@ -52,6 +54,7 @@ document.documentElement.setAttribute("data-theme","dark");
     <a href="#platforms">Platforms</a>
     <a href="#how">How it works</a>
     <a href="#prop">Prop firms</a>
+    <button class="btn btn-line btn-install" type="button" data-install hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Install app</span></button>
     <a class="btn btn-solid js-connect" href="/home.html">Connect</a>
   </div>
 </header>
@@ -271,6 +274,7 @@ document.documentElement.setAttribute("data-theme","dark");
     </nav>
   </div>
   <div class="bleed footer-legal">
+    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
     <p>&copy; 2026 Evie. Trading carries risk; past performance does not guarantee future results. All trademarks and platform logos are the property of their respective owners and are shown for compatibility reference only.</p>
   </div>
 </footer>
@@ -284,5 +288,6 @@ document.documentElement.setAttribute("data-theme","dark");
 <script src="/deriv.js"></script>
 <script src="/main.js" defer></script>
 <script src="/connect.js"></script>
+<script src="/install.js"></script>
 </body>
 </html>
