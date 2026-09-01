@@ -752,8 +752,10 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 
 @media (max-width: 900px) {
-  .nav-links, .nav-cta { display: none; }
-  .nav-toggle { display: flex; }
+  /* The bar is the brand and the two buttons now — there is no menu left to
+     fold away, so the buttons stay put rather than hiding behind a hamburger
+     that would open on nothing. */
+  .nav-cta { gap: 6px; }
 }
 
 @media (max-width: 620px) {

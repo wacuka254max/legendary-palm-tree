@@ -6,12 +6,30 @@
 <title>Evie | Free Fully Automated AI Trading Bots</title>
 <meta name="description" content="Evie builds free, fully automated AI trading bots that run 24/7 on MetaTrader 5, MetaTrader 4, Deriv, TradingView, Binance, Exness, cTrader and OANDA — and hold to the rules on Funding Pips, FTMO, FundedNext and The5ers. No subscription, no code." />
 <meta name="theme-color" content="#0b0b0f" />
-<meta name="robots" content="index,follow" />
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
+
+<!-- One address for this page, and it is the www one. Without this, the same
+     content served from the bare domain and from the Vercel preview URL is
+     three pages competing with each other for the same search result. -->
+<link rel="canonical" href="https://www.evietrader.site/" />
+
 <meta property="og:type" content="website" />
+<meta property="og:site_name" content="Evie" />
+<meta property="og:url" content="https://www.evietrader.site/" />
 <meta property="og:title" content="Evie | Free Fully Automated AI Trading Bots" />
 <meta property="og:description" content="Free, fully automated AI trading bots that run 24/7 across MT5, MT4, Deriv, TradingView, Binance and more. No subscription, no code." />
-<meta property="og:image" content="/og.svg" />
+<!-- PNG, and absolute. Facebook, X, WhatsApp and LinkedIn will not render an
+     SVG card, and they do not resolve relative paths. -->
+<meta property="og:image" content="https://www.evietrader.site/og.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Evie — free, fully automated AI trading bots" />
+<meta property="og:locale" content="en_US" />
+
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Evie | Free Fully Automated AI Trading Bots" />
+<meta name="twitter:description" content="Free, fully automated AI trading bots that run 24/7 across MT5, MT4, Deriv, TradingView, Binance and more." />
+<meta name="twitter:image" content="https://www.evietrader.site/og.png" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
@@ -22,6 +40,53 @@
 document.documentElement.setAttribute("data-theme","dark");
 </script>
 <link rel="stylesheet" href="/styles.css" />
+
+<!-- What the page is, in the form search engines read directly rather than
+     infer. Kept to what is actually true on the page: a free web application
+     and the organisation behind it. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.evietrader.site/#organization",
+      "name": "Evie",
+      "url": "https://www.evietrader.site/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.evietrader.site/icons/icon-512.png",
+        "width": 512,
+        "height": 512
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.evietrader.site/#website",
+      "url": "https://www.evietrader.site/",
+      "name": "Evie",
+      "description": "Free, fully automated AI trading bots for MT5, MT4, Deriv, TradingView, Binance, Exness, cTrader and OANDA.",
+      "publisher": { "@id": "https://www.evietrader.site/#organization" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Evie",
+      "url": "https://www.evietrader.site/",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web browser, Android, iOS, Windows, macOS",
+      "description": "Connect a Deriv account, read the market, and let a bot trade it. Free, fully automated AI trading bots with take profit, stop loss and martingale recovery.",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      },
+      "publisher": { "@id": "https://www.evietrader.site/#organization" }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -35,27 +100,10 @@ document.documentElement.setAttribute("data-theme","dark");
       <span class="brand-name">Evie</span>
     </a>
 
-    <nav class="nav-links" aria-label="Primary">
-      <a href="#platforms">Platforms</a>
-      <a href="#how">How it works</a>
-      <a href="#prop">Prop firms</a>
-    </nav>
-
     <div class="nav-cta">
       <button class="btn btn-line btn-install" type="button" data-install hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Install app</span></button>
       <a class="btn btn-solid js-connect" href="/home.html">Connect</a>
     </div>
-
-    <button class="nav-toggle" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-  <div class="nav-mobile" id="mobile-menu" hidden>
-    <a href="#platforms">Platforms</a>
-    <a href="#how">How it works</a>
-    <a href="#prop">Prop firms</a>
-    <button class="btn btn-line btn-install" type="button" data-install hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Install app</span></button>
-    <a class="btn btn-solid js-connect" href="/home.html">Connect</a>
   </div>
 </header>
 
@@ -72,7 +120,7 @@ document.documentElement.setAttribute("data-theme","dark");
         </p>
         <div class="actions">
           <a class="btn btn-blue btn-lg js-connect" href="/home.html">Start</a>
-          <a class="btn btn-line btn-lg" href="#how">See how it works</a>
+          <a class="btn btn-line btn-lg" href="#features">What it does</a>
         </div>
       </div>
 
@@ -105,32 +153,6 @@ document.documentElement.setAttribute("data-theme","dark");
         <li><img src="/logos/ftmo.svg" alt="FTMO" /></li>
         <li><img src="/logos/fundednext.png" alt="FundedNext" /></li>
         <li><img src="/logos/the5ers.svg" alt="The5ers" /></li>
-      </ul>
-    </div>
-  </section>
-
-  <!-- ══ Platforms ══ -->
-  <section class="section" id="platforms">
-    <div class="bleed">
-      <header class="section-head">
-        <p class="eyebrow">Works where you already trade</p>
-        <h2 class="section-title">Eight platforms, one bot library</h2>
-        <p class="section-sub">
-          Every bot ships in the native format of the platform it runs on — an EA
-          for MetaTrader, an XML strategy for Deriv, a Pine script for TradingView,
-          an API worker for the exchanges. Nothing to convert.
-        </p>
-      </header>
-
-      <ul class="logo-grid">
-        <li class="logo-card"><img src="/logos/metatrader5.svg" alt="MetaTrader 5" /><span>Expert Advisor</span></li>
-        <li class="logo-card"><img src="/logos/mt4.svg" alt="MetaTrader 4" /><span>Expert Advisor</span></li>
-        <li class="logo-card"><img src="/logos/deriv-wordmark.svg" alt="Deriv" /><span>Bot &amp; API</span></li>
-        <li class="logo-card"><img src="/logos/tradingview.svg" alt="TradingView" /><span>Pine &amp; alerts</span></li>
-        <li class="logo-card"><img src="/logos/binance.svg" alt="Binance" /><span>Spot &amp; futures</span></li>
-        <li class="logo-card"><img src="/logos/exness.svg" alt="Exness" /><span>MT4 &amp; MT5</span></li>
-        <li class="logo-card"><img src="/logos/ctrader.svg" alt="cTrader" /><span>cBot</span></li>
-        <li class="logo-card"><img src="/logos/oanda.svg" alt="OANDA" /><span>REST API</span></li>
       </ul>
     </div>
   </section>
@@ -195,56 +217,6 @@ document.documentElement.setAttribute("data-theme","dark");
     </div>
   </section>
 
-  <!-- ══ How ══ -->
-  <section class="section" id="how">
-    <div class="bleed">
-      <header class="section-head">
-        <p class="eyebrow">Three steps</p>
-        <h2 class="section-title">Live in under two minutes</h2>
-      </header>
-
-      <ol class="steps">
-        <li class="step">
-          <span class="step-num">01</span>
-          <h3>Pick your platform</h3>
-          <p>Choose the platform you already trade on. You get the bot in that platform's own format — no conversion, no bridge.</p>
-        </li>
-        <li class="step">
-          <span class="step-num">02</span>
-          <h3>Drop it on the chart</h3>
-          <p>Open the pair, drag the bot on, and set the one number that matters: how much you are willing to risk.</p>
-        </li>
-        <li class="step">
-          <span class="step-num">03</span>
-          <h3>Let it run</h3>
-          <p>It takes it from there — entries, stops, targets and exits — and keeps going while you get on with your day.</p>
-        </li>
-      </ol>
-    </div>
-  </section>
-
-  <!-- ══ Prop firms ══ -->
-  <section class="section section--alt" id="prop">
-    <div class="bleed">
-      <header class="section-head">
-        <p class="eyebrow">Funded accounts</p>
-        <h2 class="section-title">Tuned for prop firm rules</h2>
-        <p class="section-sub">
-          Daily drawdown, overall drawdown, consistency and news windows are built
-          into the risk engine — so a challenge is not lost on a rule breach while
-          the strategy was still working.
-        </p>
-      </header>
-
-      <ul class="prop-grid">
-        <li class="prop-card"><img src="/logos/fundingpips.svg" alt="Funding Pips" /></li>
-        <li class="prop-card"><img src="/logos/ftmo.svg" alt="FTMO" /></li>
-        <li class="prop-card"><img src="/logos/fundednext.png" alt="FundedNext" /></li>
-        <li class="prop-card"><img src="/logos/the5ers.svg" alt="The5ers" /></li>
-      </ul>
-    </div>
-  </section>
-
   <!-- ══ CTA ══ -->
   <section class="cta" id="get">
     <div class="bleed cta-inner">
@@ -254,7 +226,6 @@ document.documentElement.setAttribute("data-theme","dark");
       </div>
       <div class="actions">
         <a class="btn btn-blue btn-lg js-connect" href="/home.html">Start</a>
-        <a class="btn btn-line btn-lg" href="#platforms">See the platforms</a>
       </div>
     </div>
   </section>
@@ -267,11 +238,6 @@ document.documentElement.setAttribute("data-theme","dark");
       <span class="brand-name">Evie</span>
       <p>Free, fully automated AI trading bots for the platforms people actually trade on.</p>
     </div>
-    <nav class="footer-links" aria-label="Footer">
-      <a href="#platforms">Platforms</a>
-      <a href="#how">How it works</a>
-      <a href="#prop">Prop firms</a>
-    </nav>
   </div>
   <div class="bleed footer-legal">
     <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
