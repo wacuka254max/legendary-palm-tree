@@ -53,28 +53,38 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <select class="fld-i" id="account"></select>
       </label>
       <label class="fld">
-        <span class="fld-k">Stake amount (USD)</span>
+        <span class="fld-k">Stake (USD)</span>
         <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
       </label>
       <label class="fld">
-        <span class="fld-k">Reference digit (0–9)</span>
+        <span class="fld-k">Reference digit</span>
         <input class="fld-i" id="ref" type="number" min="0" max="9" step="1" value="5" inputmode="numeric" />
       </label>
       <label class="fld">
         <span class="fld-k">Analysis count</span>
         <input class="fld-i" id="count" type="number" min="10" max="5000" step="10" value="130" inputmode="numeric" />
       </label>
-      <div class="fld fld--btn">
-        <button class="btn btn-line" id="apply" type="button">Apply settings</button>
+
+      <div class="fld fld--mart">
+        <span class="fld-k">
+          Martingale
+          <button class="tog" id="mart-tog" type="button" role="switch" aria-checked="false" aria-label="Martingale">
+            <span class="tog-dot"></span>
+          </button>
+        </span>
+        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" disabled />
       </div>
     </div>
-
-    <p class="risk" id="risk"></p>
 
     <div class="syms">
       <span class="fld-k">Active symbols</span>
       <div class="syms-row" id="syms"></div>
     </div>
+
+    <p class="tools-foot">
+      <span class="risk" id="risk"></span>
+      <span class="next-stake" id="next-stake"></span>
+    </p>
 
     <p class="status" id="status" role="status" aria-live="polite"></p>
   </section>

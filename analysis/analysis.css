@@ -37,40 +37,84 @@
   --cur:   #818cf8;
 }
 
-/* ── settings ───────────────────────────────────────────────────────── */
+/* ── settings ───────────────────────────────────────────────────────────
+   Kept deliberately short. On a 768px-tall laptop the whole panel plus the
+   first row of cards has to be on screen at once, so every field is one
+   compact row and nothing here is allowed to grow. */
 
 .tools {
-  padding: clamp(18px, 2.2vw, 24px);
+  padding: clamp(12px, 1.4vw, 18px) clamp(14px, 1.6vw, 20px);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
-.tools-head {
+.tools-head { margin-bottom: 10px; }
+.tools-t { font-size: clamp(0.95rem, 1.5vw, 1.1rem); font-weight: 700; }
+
+/* Fields flow in one line and wrap only when they must. */
+.tools-grid { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.fld { flex: 1 1 150px; min-width: 130px; margin-top: 0; display: block; }
+
+.fld-k {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  white-space: nowrap;
 }
-.tools-t { font-size: clamp(1.1rem, 2vw, 1.35rem); font-weight: 700; }
-
-.tools-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
-  gap: 12px;
-  align-items: end;
+.fld-i {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  background: var(--base);
+  border: 1px solid var(--line-hi);
+  border-radius: 9px;
 }
-.fld--btn { display: flex; align-items: flex-end; }
-.fld--btn .btn { width: 100%; }
+.fld-i:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+.fld-i:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.syms { margin-top: 18px; }
-.syms-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+/* The multiplier sits under its own switch, so the pair reads as one control. */
+.fld--mart { flex: 0 1 190px; }
+
+.tog {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  padding: 0;
+  flex: none;
+  background: var(--surface-2);
+  border: 1px solid var(--line-hi);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.tog-dot {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 12px; height: 12px;
+  background: var(--ink-faint);
+  border-radius: 50%;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+/* On is green, and the knob moves as well as the colour changing, so it does
+   not rest on hue alone. */
+.tog[aria-checked="true"] { background: rgba(20, 160, 90, 0.18); border-color: var(--up); }
+.tog[aria-checked="true"] .tog-dot { transform: translateX(16px); background: var(--up); }
+
+.syms { margin-top: 10px; }
+.syms-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
 
 .sym {
-  padding: 9px 15px;
+  padding: 6px 12px;
   font: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink-muted);
   background: var(--surface-2);
@@ -81,6 +125,19 @@
 }
 .sym:hover { color: var(--ink); border-color: var(--ink-faint); }
 .sym.is-on { color: var(--on-accent); background: var(--blue); border-color: var(--blue); }
+
+/* Risk note and next stake share one line rather than stacking. */
+.tools-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  min-height: 1em;
+}
+.next-stake { font-size: 12px; font-weight: 650; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.next-stake.is-recovering { color: var(--over); }
 
 /* ── the cards ──────────────────────────────────────────────────────── */
 
@@ -252,9 +309,9 @@
 .grp-note.is-up { color: var(--up); }
 .grp-note.is-down { color: var(--down); }
 
-.risk { margin-top: 14px; font-size: 12.5px; color: var(--ink-faint); }
+.risk { font-size: 12px; color: var(--ink-faint); }
 .risk--real { color: var(--pink); }
-.status { margin-top: 10px; font-size: 13px; color: var(--ink-muted); min-height: 1.2em; }
+.status { margin-top: 6px; font-size: 12.5px; color: var(--ink-muted); min-height: 1.2em; }
 .status--error { color: var(--pink); }
 .status--success { color: var(--up); }
 .status--warning { color: #e3b341; }
@@ -442,4 +499,30 @@
 
   /* The parked handle covers the page bottom, so the last card is not hidden. */
   .dash-main { padding-bottom: 76px; }
+}
+
+/* ── Fitting a laptop ───────────────────────────────────────────────────
+   On a 1366x768 screen the tools panel and the first row of cards should
+   both be on screen without scrolling. These only load on this page, so
+   the roomier spacing elsewhere is untouched. */
+
+@media (min-width: 1000px) {
+  /* The nav is 68px; 100px of clearance was 30 more than it needed. */
+  .dash-main { padding-top: 84px; padding-bottom: 24px; }
+
+  .tools-head { margin-bottom: 8px; }
+  .tools { padding: 12px 16px; }
+  .syms { margin-top: 8px; }
+  .tools-foot { margin-top: 8px; }
+
+  .mkt { padding: 12px 14px; }
+  .mkt-h { margin-bottom: 10px; font-size: 13.5px; }
+  .dgts { gap: 5px; margin-bottom: 10px; }
+  .dgt { padding: 6px 2px; }
+  .dgt b { font-size: 14px; }
+  .rows { gap: 5px; }
+  .pbar { padding: 6px 8px; }
+  .act { padding: 6px 10px; }
+  .ticks { margin-top: 9px; gap: 4px; }
+  .tk { width: 23px; height: 23px; font-size: 11px; }
 }

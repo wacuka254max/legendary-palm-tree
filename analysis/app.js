@@ -53,7 +53,11 @@
   var active = { R_10: true }; // which symbols have a card
   var subs = {};               // sym -> subscription id
   var trading = false;
-  var settings = { stake: 1, ref: 5, count: 130 };
+  var settings = { stake: 1, ref: 5, count: 130, martingale: false, multiplier: 3.1 };
+
+  /* The stake the NEXT trade will use. It only differs from the base stake
+     while martingale is recovering a loss, and every win puts it back. */
+  var nextStake = 1;
 
   var pending = {};            // sym -> needs repaint
   var painter = null;
@@ -103,6 +107,13 @@
     },
 
     result: function (r) {
+      /* The ladder. A loss multiplies the next stake so the win after it
+         recovers what came before; a win puts it back to the base. Off, the
+         stake never moves. */
+      if (settings.martingale && !r.win) nextStake = nextStake * settings.multiplier;
+      else nextStake = settings.stake;
+      showNextStake();
+
       var t = C.TYPES[r.type];
       txn.add({
         label: t.label + (t.barrier ? " " + r.barrier : ""),
@@ -313,12 +324,15 @@
 
     var type = b.getAttribute("data-type");
     var sym = b.getAttribute("data-sym");
-    var stake = parseFloat($("stake").value);
+    var stake = settings.martingale ? nextStake : settings.stake;
 
     if (isNaN(stake) || stake < window.EvieTrader.MIN_STAKE) {
       return status("Deriv's minimum stake is " + window.EvieTrader.MIN_STAKE.toFixed(2) + ".", "error");
     }
 
+    /* One trade per click. The ladder lives here rather than inside the
+       trader, because each click is its own run and the recovery has to
+       survive between them. */
     trader.run({
       type: type,
       barrier: C.TYPES[type].barrier ? C.clampBarrier(type, settings.ref) : null,
@@ -336,29 +350,81 @@
     return (a && a.currency) || "USD";
   }
 
-  /* ── settings ───────────────────────────────────────────────────────── */
+  /* ── settings ───────────────────────────────────────────────────────
+     No Apply button: what is typed is what is used. Each change is read,
+     validated and kept, and the page says so — a settings panel that needs
+     a second confirming click is a panel that can silently disagree with
+     what is on screen. */
 
-  $("apply").addEventListener("click", function () {
+  function showNextStake() {
+    var el = $("next-stake");
+    if (!settings.martingale) { el.textContent = ""; return; }
+    var recovering = nextStake > settings.stake + 1e-9;
+    el.textContent = "Next stake " + nextStake.toFixed(2) +
+      (recovering ? " — recovering" : "");
+    el.className = "next-stake" + (recovering ? " is-recovering" : "");
+  }
+
+  var saveTimer = null;
+
+  /** Read the inputs, keep what is valid, and say what happened. */
+  function saveSettings(reason) {
     var ref = parseInt($("ref").value, 10);
     var count = parseInt($("count").value, 10);
     var stake = parseFloat($("stake").value);
+    var mult = parseFloat($("mart").value);
 
     if (isNaN(ref) || ref < 0 || ref > 9) return status("Reference digit must be 0 to 9.", "error");
     if (isNaN(count) || count < 10) return status("Analysis count must be at least 10.", "error");
     if (isNaN(stake) || stake < window.EvieTrader.MIN_STAKE) {
       return status("Deriv's minimum stake is " + window.EvieTrader.MIN_STAKE.toFixed(2) + ".", "error");
     }
+    if (isNaN(mult) || mult < 1) return status("Martingale must be 1 or more.", "error");
 
     var countChanged = count !== settings.count;
-    settings = { stake: stake, ref: ref, count: count };
+    var stakeChanged = stake !== settings.stake;
 
-    // A longer window needs history we do not hold, so re-request it; a shorter
-    // one only needs trimming, which setCount does.
+    settings.ref = ref;
+    settings.count = count;
+    settings.stake = stake;
+    settings.multiplier = mult;
+
+    // Changing the base stake abandons any ladder in progress — continuing to
+    // multiply an old number after the user has picked a new one is not
+    // recovery, it is a stake nobody chose.
+    if (stakeChanged || !settings.martingale) nextStake = stake;
+
+    /* A longer window needs history we do not hold, so re-request it; a
+       shorter one only needs trimming, which setCount does. */
     if (countChanged) { unsubscribeAll(); subscribeAll(); }
-    else Object.keys(analysers).forEach(function (s) { analysers[s].setCount(count); paint(s); });
+    else Object.keys(analysers).forEach(function (sym) { analysers[sym].setCount(count); paint(sym); });
 
     renderCards();
-    status("Settings applied — reference digit " + ref + ", " + count + " ticks.", "success");
+    showNextStake();
+    status(reason || "Saved.", "success");
+  }
+
+  /* Typing is debounced — saving on every keystroke would fire "Saved" at
+     someone halfway through typing 130. */
+  function queueSave(reason) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () { saveSettings(reason); }, 500);
+  }
+
+  ["stake", "ref", "count", "mart"].forEach(function (id) {
+    $(id).addEventListener("input", function () { queueSave("Settings saved."); });
+    $(id).addEventListener("change", function () { clearTimeout(saveTimer); saveSettings("Settings saved."); });
+  });
+
+  $("mart-tog").addEventListener("click", function () {
+    settings.martingale = $("mart-tog").getAttribute("aria-checked") !== "true";
+    $("mart-tog").setAttribute("aria-checked", String(settings.martingale));
+    $("mart").disabled = !settings.martingale;
+    nextStake = settings.stake;
+    showNextStake();
+    status(settings.martingale
+      ? "Martingale on — a loss multiplies the next stake by " + settings.multiplier + "."
+      : "Martingale off — the stake stays at " + settings.stake.toFixed(2) + ".", "success");
   });
 
   /* ── accounts ───────────────────────────────────────────────────────── */
@@ -404,6 +470,7 @@
 
   renderSyms();
   renderCards();
+  showNextStake();
 
   D.portfolio().then(function (d) {
     accounts = d.accounts
