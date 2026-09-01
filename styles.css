@@ -990,3 +990,39 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 
 /* The light/dark button. Icon plus word, so it is not a mystery glyph. */
 .theme-b { display: inline-flex; align-items: center; gap: 7px; }
+
+/* ── The header on a small screen ───────────────────────────────────────
+   A balance like "USD 10,000.00" plus a badge plus two buttons will not fit
+   375px at full size. Everything shrinks together and the theme button
+   drops to its icon; nothing is removed, because each part is the answer to
+   a question someone opens this page to ask. */
+
+@media (max-width: 640px) {
+  .nav-inner { gap: 8px; height: 58px; }
+  .brand-mark { width: 26px; height: 26px; }
+  .brand-name { font-size: 16px; }
+
+  .perch { gap: 6px; min-width: 0; }
+  .perch-v {
+    font-size: 13px;
+    letter-spacing: -0.03em;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .badge { padding: 4px 8px; font-size: 9.5px; letter-spacing: 0.06em; }
+  .perch .btn { padding: 7px 11px; font-size: 12.5px; }
+
+  /* The moon says it on its own at this size. */
+  .theme-b [data-theme-label] { display: none; }
+  .theme-b { padding: 7px 9px; }
+
+  /* The pages behind the connection clear the shorter bar. */
+  .dash-main { padding-top: 76px; }
+}
+
+@media (max-width: 400px) {
+  .brand-name { display: none; }   /* the mark alone still says Evie */
+  .perch-v { font-size: 12px; }
+  .perch .btn { padding: 6px 9px; font-size: 12px; }
+}

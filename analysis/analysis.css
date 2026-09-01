@@ -347,7 +347,9 @@
   right: 0;
   top: 68px;                 /* under the fixed nav */
   bottom: 0;
-  z-index: 40;
+  /* Above the bot: raising the transactions is how you check what the bot has
+     been doing, so it must not open behind it. */
+  z-index: 80;
   width: 340px;
   display: flex;
   flex-direction: column;

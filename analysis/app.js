@@ -106,7 +106,8 @@
 
   /* Which bot run a trade belongs to, so the bot can read its own totals off
      the ledger instead of keeping a second copy that can disagree with it. */
-  var currentRun = 0;
+  var currentRun = 0;   // the run the trade in flight belongs to (0 = manual)
+  var runSeq = 0;       // the last run number handed out
 
   var pending = {};            // sym -> needs repaint
   var painter = null;
@@ -437,11 +438,16 @@
    * buttons and the bot go through, so they can never disagree about stake,
    * barrier or which account is being used.
    */
-  function placeTrade(type, sym, stake) {
+  function placeTrade(type, sym, stake, forRun) {
     if (!session.isLive()) return Promise.reject(new Error("Not connected."));
     if (trading) return Promise.reject(new Error("A trade is already running."));
 
     entryHint = lastSpot[sym] || null;
+
+    /* Only a trade the bot asked for belongs to its run. Tagging manual
+       clicks with the current run id folded them into the bot's win rate and
+       P/L, which is one way those figures came out wrong. */
+    currentRun = forRun || 0;
 
     var settled = new Promise(function (resolve, reject) {
       resultWaiter = resolve;
@@ -686,7 +692,16 @@
 
       /* The bot names its run, and asks for that run's totals. Whatever it
          shows is therefore exactly what the transactions list shows. */
-      startRun: function () { currentRun++; return currentRun; },
+      /* A new run starts from nothing: a fresh id, an empty ledger, and the
+         martingale back at the base stake. Carrying any of those over is how a
+         run began already showing someone else's trades. */
+      startRun: function () {
+        runSeq++;
+        txn.reset();
+        nextStake = settings.stake;
+        showNextStake();
+        return runSeq;
+      },
       runTotals: function (id) { return txn.totalsFor(id); }
     });
   }

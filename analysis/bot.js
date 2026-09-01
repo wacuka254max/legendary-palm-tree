@@ -200,7 +200,7 @@
              not cancelled — it settles and is recorded either way, it simply
              stops being waited on. */
           r = await Promise.race([
-            host.place(side.type, sym, stake),
+            host.place(side.type, sym, stake, runId),
             stopSignal.then(function () { return null; })
           ]);
         } catch (e) {
@@ -340,6 +340,9 @@
         say("Stopped.", "warning");
         return;
       }
+      /* Start is a clean slate: a new run id, an emptied ledger, the
+         martingale back at the base stake, and the card's own figures
+         cleared. Nothing from the last run is carried into this one. */
       stopping = false;
       armStop();
       runId = host.startRun();
@@ -369,6 +372,16 @@
     armStop();
     draggable(card, el("bot-head"));
     syncStats();
+
+    /* On a narrow screen the card would sit on top of the analysis the moment
+       the page opened. It starts closed there, and the button brings it up
+       when there is actually something to trade. */
+    if (global.innerWidth < 900) {
+      card.hidden = true;
+      var opener = el("bot-open");
+      if (opener) opener.hidden = false;
+    }
+
     paintOpener();
   }
 
