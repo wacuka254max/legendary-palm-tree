@@ -470,44 +470,99 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* The spec card beside the headline — flat surface, plain rows. */
+/* ══ The hero tape ═════════════════════════════════════════════════════════
+   A market moving, rather than a card claiming things about one. The old
+   panel listed a symbol, a timeframe and a risk figure that were decoration
+   dressed as data; this states nothing it cannot back up and still says the
+   thing that matters — something is running. */
+
 .hero-panel {
+  position: relative;
+  overflow: hidden;
+  min-height: clamp(240px, 30vw, 340px);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  overflow: hidden;
 }
-.panel-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 13px clamp(16px, 1.6vw, 22px);
-  font-size: 14px;
-  color: var(--ink-faint);
-  border-bottom: 1px solid var(--line);
-}
-.panel-row:last-child { border-bottom: 0; }
-.panel-row .val { color: var(--ink); font-weight: 600; }
-.panel-row .val.ok { color: var(--ok); }
 
-.panel-head {
-  background: var(--surface-2);
-  color: var(--ink);
-  font-weight: 700;
-  font-size: 15px;
+.tape {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
 }
+
+.tape-grid line {
+  stroke: var(--line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* One width of travel, linear, forever. Linear matters: any easing would put
+   a pause at each end of the cycle, and a market that hesitates on a beat
+   reads as a loop rather than as a feed. */
+.tape-run { animation: tape-slide 18s linear infinite; }
+
+@keyframes tape-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-600px); }
+}
+
+.tape-line {
+  fill: none;
+  stroke: var(--pink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* The line keeps its weight however the card is stretched — without this
+     the non-uniform viewBox scaling would thin it out on a wide screen. */
+  vector-effect: non-scaling-stroke;
+}
+
+/* A flat tint under the curve, not a gradient: this page does not have one
+   anywhere and a chart is not the place to start. */
+.tape-fill { fill: var(--pink); opacity: 0.09; }
+
 .live {
-  padding: 3px 9px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ok);
-  background: var(--raise);
-  border: 1px solid var(--line-hi);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 999px;
 }
-.panel-foot { background: var(--raise); }
+
+/* The dot, drawn rather than marked up, so the badge stays one element. */
+.live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* Motion is decoration here. Anyone who has asked for less of it gets the
+   same picture, held still. */
+@media (prefers-reduced-motion: reduce) {
+  .tape-run, .live::before { animation: none; }
+}
 
 /* Full-width mark strip across the bottom of the hero — every platform and
    prop firm in one quiet row, so the fold answers "does it work with mine?" */
