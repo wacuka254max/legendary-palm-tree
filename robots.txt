@@ -1,16 +1,11 @@
 # Evie — https://www.evietrader.site/
 #
-# The front door and the four plain pages are meant to be found — what this is,
-# what the risk is, what happens to your data, and the terms. Everything behind
-# the Deriv connection is somebody's own dashboard, carries no useful search
-# result, and is marked noindex in its own head as well as here.
+# One page is meant to be found: the front door. Everything behind the Deriv
+# connection is somebody's own dashboard, carries no useful search result, and
+# is marked noindex in its own head as well as here.
 
 User-agent: *
 Allow: /$
-Allow: /about.html
-Allow: /risk.html
-Allow: /terms.html
-Allow: /privacy.html
 Allow: /og.png
 Allow: /logos/
 Allow: /icons/

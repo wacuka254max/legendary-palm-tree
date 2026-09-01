@@ -1,33 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- One URL, deliberately. The dashboard pages behind the Deriv connection are
+     noindex and do not belong in a sitemap; listing them would ask Google to
+     crawl pages it is told not to keep. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.evietrader.site/</loc>
     <lastmod>2026-09-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://www.evietrader.site/about.html</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.evietrader.site/risk.html</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://www.evietrader.site/terms.html</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://www.evietrader.site/privacy.html</loc>
-    <lastmod>2026-09-01</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
   </url>
 </urlset>
