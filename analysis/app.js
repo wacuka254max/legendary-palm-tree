@@ -697,7 +697,16 @@
 
   function openSession(id) {
     if (!id) return;
-    try { localStorage.setItem(ACCOUNT_KEY, id); } catch (e) {}
+
+    /* Only a real account is remembered. The next visit opens on whatever is
+       remembered before the portfolio has come back, so a remembered demo
+       would put the page on a demo socket with the picker hidden and the badge
+       still reading Real — the mismatch this page is built to make impossible. */
+    var acct = allAccounts.filter(function (a) { return a.id === id; })[0];
+    try {
+      if (acct && acct.demo) localStorage.removeItem(ACCOUNT_KEY);
+      else localStorage.setItem(ACCOUNT_KEY, id);
+    } catch (e) {}
 
     /* Whatever was subscribed before belongs to the old socket. Clearing the
        ids here means the reconnect below re-requests them rather than trying
@@ -738,9 +747,6 @@
       ? allAccounts
       : allAccounts.filter(function (a) { return !a.demo; });
 
-    // A login with nothing but a demo would otherwise show an empty picker.
-    if (!accounts.length) accounts = allAccounts;
-
     $("account").innerHTML = accounts.map(function (a) {
       return '<option value="' + esc(a.id) + '">' + esc(a.id) + " · " +
         (a.demo ? "Demo" : "Real") + " · " + esc(money(a.balance, a.currency)) + "</option>";
@@ -764,6 +770,15 @@
       $("acct-fld").hidden = !showDemo;
       renderAccounts();
 
+      if (showDemo && accounts.length && !session.isLive()) {
+        /* A login with no real account had nothing to open a session on, so
+           revealing the demo is the moment there is finally something to
+           trade. Without this the picker fills in and the page stays dead. */
+        $("account").value = accounts[0].id;
+        describeAccount();
+        openSession(accounts[0].id);
+      }
+
       if (!showDemo) {
         /* Coming back out, the real account is the one that must be live.
            Re-rendering the picker already drops the demo option and leaves the
@@ -777,6 +792,15 @@
           $("account").value = real.id;
           describeAccount();
           if (session.accountId !== real.id) openSession(real.id);
+        } else {
+          // Nothing real to fall back to: end the demo session rather than
+          // leave it running behind a hidden picker.
+          session.close();
+          $("balance").textContent = "—";
+          $("acct-badge").textContent = "Real";
+          $("acct-badge").classList.remove("badge--demo");
+          $("risk").textContent = "This login has no real options account.";
+          $("risk").className = "risk";
         }
       }
 
@@ -834,7 +858,31 @@
 
     if (!allAccounts.length) return status("This login has no Deriv options account.", "error");
 
+    /* The page opens on the remembered account before the portfolio comes
+       back, which is what keeps it quick — and means a remembered DEMO would
+       briefly hold a demo socket on every visit. Now that the accounts are
+       known, forget it. */
+    var wasDemo = allAccounts.filter(function (a) { return a.id === remembered && a.demo; })[0];
+    if (wasDemo) {
+      remembered = null;
+      try { localStorage.removeItem(ACCOUNT_KEY); } catch (e) {}
+    }
+
     renderAccounts();
+
+    /* No real account is not the same as no account, and the difference
+       matters in the header: showing the demo's balance next to a badge
+       reading Real is a lie about how much money is at stake. The perch stays
+       blank until there is a real balance to put in it. */
+    if (!accounts.length) {
+      session.close();
+      $("balance").textContent = "—";
+      $("acct-badge").textContent = "Real";
+      $("acct-badge").classList.remove("badge--demo");
+      $("risk").textContent = "This login has no real options account.";
+      $("risk").className = "risk";
+      return status("This login has no real options account — nothing to trade.", "warning");
+    }
 
     // Keep the remembered account if it is still one of the ones on offer.
     var keep = accounts.filter(function (a) { return a.id === remembered; })[0];

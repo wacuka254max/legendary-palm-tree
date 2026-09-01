@@ -14,11 +14,6 @@
 .sim-body.sim-running .bot,
 .sim-body.sim-running .bot-open { visibility: visible; }
 
-.badge--sim {
-  color: var(--over, #d97706);
-  border-color: currentColor;
-}
-
 .setup {
   position: fixed;
   inset: 0;
