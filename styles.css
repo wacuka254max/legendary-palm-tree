@@ -121,10 +121,13 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 
 .dash { min-height: 100svh; }
 
-.dash-main { padding-top: clamp(104px, 13vh, 132px); padding-bottom: 64px; }
+/* Clearing the fixed header and no more. The old value was a third of the
+   viewport height on a laptop, which put the first card below the fold with
+   nothing in the gap. */
+.dash-main { padding-top: clamp(84px, 9vh, 100px); padding-bottom: 56px; }
 .dash-title {
-  margin-bottom: clamp(22px, 3vw, 30px);
-  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  margin-bottom: clamp(14px, 1.8vw, 20px);
+  font-size: clamp(1.45rem, 2.4vw, 1.8rem);
   font-weight: 700;
 }
 
@@ -160,35 +163,39 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .badge:hover { color: var(--blue-hi); border-color: var(--blue-hi); }
 
 /* The two things you can actually do from here. */
+/* Three across rather than two and a stray, and each one the size of the
+   thing it is — a link with a name and a line under it. They were card-sized
+   before, which made a dashboard of three links look like a whole page. */
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: 12px;
-  max-width: 720px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 10px;
+  max-width: 660px;
+  margin-bottom: 18px;
 }
 .tile {
   display: grid;
-  gap: 6px;
-  padding: clamp(22px, 2.6vw, 28px);
+  gap: 4px;
+  padding: 16px 16px 18px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 .tile:hover { background: var(--surface-2); border-color: var(--line-hi); }
 .tile-icon {
   display: grid;
   place-items: center;
-  width: 42px; height: 42px;
-  margin-bottom: 10px;
+  width: 32px; height: 32px;
+  margin-bottom: 8px;
   background: var(--surface-2);
   border: 1px solid var(--line-hi);
-  border-radius: 11px;
+  border-radius: 9px;
 }
-.tile-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
-.tile-t { font-size: 1.1rem; font-weight: 650; }
-.tile-s { font-size: 0.92rem; color: var(--ink-muted); }
+.tile-icon svg { width: 17px; height: 17px; }
+.tile-h { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tile-t { font-size: 0.95rem; font-weight: 650; }
+.tile-s { font-size: 0.82rem; line-height: 1.5; color: var(--ink-muted); }
 
 /* What the tile actually is. Outlined rather than filled, so it labels the
    heading without competing with it. */
@@ -211,8 +218,8 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 /* The MetaTrader mark is a WIDE wordmark, not a square glyph. Squeezed into
    the 42px icon box it came out 24x4 and unreadable, so this tile's box grows
    to fit the logo instead of the logo shrinking to fit the box. */
-.tile--off .tile-icon { width: auto; min-width: 42px; padding: 0 12px; }
-.tile-logo { height: 20px; width: auto; max-width: 150px; object-fit: contain; }
+.tile--off .tile-icon { width: auto; min-width: 32px; padding: 0 10px; }
+.tile-logo { height: 15px; width: auto; max-width: 130px; object-fit: contain; }
 
 /* The MetaTrader wordmark ships white, which disappears on the light theme.
    Two files, one per ground; the theme picks which one is painted. */
@@ -1050,3 +1057,63 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   font-weight: 500;
   color: var(--ink-faint);
 }
+
+/* ══ The account, on the page ══════════════════════════════════════════════
+   The same portfolio the sheet shows, sitting in the column beside the tiles
+   instead of behind a double click. On a wide screen that space was empty and
+   the answer to "which account am I on?" was hidden; here it is simply read.
+
+   Below 1180px it is not rendered at all — the rail moves under the tiles at
+   that width, and a second tall block under that would push the disclaimer
+   somewhere nobody scrolls. The badge still opens the sheet there. */
+
+.acctp { display: none; }
+
+@media (min-width: 1180px) {
+  .acctp {
+    display: block;
+    margin-top: 14px;
+    padding: 16px 18px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    max-width: 660px;
+  }
+  .acctp[hidden] { display: none; }
+}
+
+.acctp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.acctp-k {
+  margin: 0 0 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.acctp-t { margin: 0; font-size: 0.95rem; font-weight: 650; }
+
+.acctp-note {
+  margin: 12px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+.acctp-note strong { color: var(--ink-muted); font-weight: 650; }
+
+/* Smaller than the standalone button it replaces: inside a panel it is one
+   line among several, not the thing the page is asking you to do. */
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.notice-go--sm { margin-top: 12px; padding: 8px 13px; font-size: 12px; }
+
+/* The account rows are denser here than in the sheet: a panel is read at a
+   glance beside other things, where the sheet has the screen to itself. */
+.acctp .grp + .grp { margin-top: 12px; }
+.acctp .acct { padding: 7px 0; font-size: 12px; }
+.acctp .sheet-who { margin-bottom: 10px; font-size: 12.5px; }

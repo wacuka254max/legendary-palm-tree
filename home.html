@@ -87,11 +87,38 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     </div>
   </div>
 
-  <a class="notice-go" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener noreferrer">
-    Transfer funds to your options account
-    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
-  </a>
 
+  <!-- The account, on the page. It used to live only behind a double click on
+       the badge, which left a wide screen with a column of empty space beside
+       three tiles and the answer to "which account am I on?" hidden. The sheet
+       stays for narrow screens, where a panel this tall would push the tiles
+       off the fold. -->
+  <section class="acctp" id="acctp" hidden>
+    <div class="acctp-head">
+      <div>
+        <p class="acctp-k">Account details</p>
+        <h2 class="acctp-t">Your Deriv portfolio</h2>
+      </div>
+      <button class="btn btn-line btn-sm" id="disconnect-inline" type="button">Disconnect</button>
+    </div>
+
+    <div class="acctp-body" id="acctp-body"></div>
+
+    <p class="acctp-note">
+      A bot can only trade the <strong>options</strong> account. Money in a
+      wallet or MT5 has to be moved across first, and an MT5 balance is not
+      reported here at all.
+    </p>
+
+    <p class="acctp-note">
+      Cannot see your full balance here? Move it across in your Deriv portfolio.
+    </p>
+
+    <a class="notice-go notice-go--sm" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener noreferrer">
+      Transfer funds to your options account
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+    </a>
+  </section>
    </div>
 
    <!-- Live volatility prices. On a wide screen this fills the space to the

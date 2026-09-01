@@ -59,6 +59,7 @@
 
   function paint() {
     amountEl.textContent = data && data.real ? money(data.real.amount, data.real.currency) : "—";
+    fillPanel();
   }
 
   function fail(message) {
@@ -83,24 +84,34 @@
            '<ul class="accts">' + body + "</ul></section>";
   }
 
-  function fillSheet() {
-    if (!data) return;
-
+  /* The accounts, as markup. Written once and used twice — the sheet on a
+     narrow screen and the panel on a wide one — so the two can never come to
+     disagree about what this login holds. */
+  function accountsHtml() {
     var reals = data.accounts.filter(function (a) { return !a.demo; });
     var demos = data.accounts.filter(function (a) { return a.demo; });
 
-    var who = "";
-    if (data.nickname) {
-      who = '<p class="sheet-who">' + esc(data.nickname) + "</p>";
-    }
-
-    sheetBody.innerHTML =
-      who +
+    return (data.nickname ? '<p class="sheet-who">' + esc(data.nickname) + "</p>" : "") +
       group("Real", reals, "No real accounts on this login.") +
-      group("Demo", demos, "No demo account on this login.") +
+      group("Demo", demos, "No demo account on this login.");
+  }
+
+  function fillSheet() {
+    if (!data) return;
+    sheetBody.innerHTML = accountsHtml() +
       '<p class="sheet-note">A bot can only trade the <strong>options</strong> account. ' +
       "Money in a wallet or MT5 has to be moved across first, and an MT5 balance is " +
       "not reported here at all.</p>";
+  }
+
+  /* The panel carries its own note and buttons in the markup, so it only ever
+     needs the accounts themselves. */
+  function fillPanel() {
+    var body = $("acctp-body");
+    var panel = $("acctp");
+    if (!body || !panel || !data) return;
+    body.innerHTML = accountsHtml();
+    panel.hidden = false;
   }
 
   function openSheet() {
@@ -133,13 +144,14 @@
 
   /* ── disconnect, inside the sheet ───────────────────────────────────────── */
 
-  var dc = $("disconnect");
-  if (dc) {
+  ["disconnect", "disconnect-inline"].forEach(function (id) {
+    var dc = $(id);
+    if (!dc) return;
     dc.addEventListener("click", function () {
       D.disconnect();
       window.location.replace("/");
     });
-  }
+  });
 
   /* ── the simulator's door ───────────────────────────────────────────────
      Three clicks on the "o" of Home. `detail` counts the clicks in a run for
