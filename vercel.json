@@ -1,13 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
 
-  "headers": [
+  "redirects": [
     {
-      "//": "The vercel.app address serves the same site as the domain. To a search engine that is a second copy competing with the first, and the one it picks is not ours to choose. This tells crawlers to leave that copy alone. It is a header rather than a redirect on purpose: the Deriv OAuth callback is registered against a URL, and bouncing that host would break the one flow the site cannot do without.",
-      "source": "/(.*)",
+      "//": "The testing address is retired. Anything still pointing at it — an old bookmark, a link somewhere, a crawler that saw it once — lands on the real domain instead, on the same path. A permanent redirect rather than a noindex header: this makes the duplicate stop existing rather than merely asking search engines to look away, and it hands whatever the old address had earned to the domain.",
+      "source": "/:path*",
       "has": [{ "type": "host", "value": "glowing-happiness-two.vercel.app" }],
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
-    },
+      "destination": "https://www.evietrader.site/:path*",
+      "permanent": true
+    }
+  ],
+
+  "headers": [
     {
       "//": "Every preview build Vercel makes is another copy of the site on its own address. None of them should ever be indexed.",
       "source": "/(.*)",
