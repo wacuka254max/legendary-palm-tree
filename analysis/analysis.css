@@ -535,3 +535,111 @@
   color: var(--ink-faint);
   opacity: 0.85;
 }
+
+/* ── The floating bot ───────────────────────────────────────────────────
+   Fixed, draggable by its header, and above everything except a modal. */
+
+.bot {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  z-index: 70;
+  width: 268px;
+  background: var(--surface);
+  border: 1px solid var(--line-hi);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.bot[hidden] { display: none; }
+/* No transition while dragging, or the card lags behind the pointer. */
+.bot.is-dragging { user-select: none; cursor: grabbing; }
+
+.bot-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px 9px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  cursor: grab;
+  touch-action: none;   /* the pointer events are the drag, not a scroll */
+}
+.bot.is-dragging .bot-head { cursor: grabbing; }
+/* Six solid dots, drawn with shadows rather than a radial-gradient — the
+   page has no gradients anywhere and this is not the place to start. */
+.bot-grip {
+  width: 2px; height: 2px; flex: none;
+  margin: 0 6px 0 0;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  box-shadow:
+    0 5px var(--ink-faint), 0 10px var(--ink-faint),
+    5px 0 var(--ink-faint), 5px 5px var(--ink-faint), 5px 10px var(--ink-faint);
+  align-self: center;
+  transform: translateY(-5px);
+}
+.bot-t { font-size: 12.5px; font-weight: 700; margin-right: auto; }
+.bot-x {
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
+  color: var(--ink-faint);
+  background: transparent; border: 0; border-radius: 7px; cursor: pointer;
+}
+.bot-x:hover { color: var(--ink); background: var(--surface); }
+
+.bot-body { padding: 12px; display: grid; gap: 10px; }
+.bot-f { display: grid; gap: 5px; }
+.bot-k {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.bot-note { font-size: 10.5px; line-height: 1.45; color: var(--ink-faint); margin-top: -4px; }
+.bot-f .fld-i { padding: 7px 9px; font-size: 13px; }
+
+.bot-run { width: 100%; padding: 9px; font-size: 13.5px; }
+.bot-run.is-running { background: var(--down); }
+
+.bot-stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px; padding-top: 10px; border-top: 1px solid var(--line);
+}
+.bot-stats dt {
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.bot-stats dd { margin: 2px 0 0; }
+.bot-v { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bot-v.is-up { color: var(--up); }
+.bot-v.is-down { color: var(--down); }
+
+.bot-status { font-size: 11px; line-height: 1.45; color: var(--ink-muted); min-height: 1.4em; }
+.bot-status--warning { color: var(--over); }
+.bot-status--success { color: var(--up); }
+.bot-status--error { color: var(--down); }
+
+/* What brings it back once closed. */
+.bot-open {
+  position: fixed;
+  right: 24px; bottom: 24px;
+  z-index: 70;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 15px;
+  font: inherit; font-size: 13px; font-weight: 650;
+  color: var(--on-accent);
+  background: var(--blue);
+  border: 0; border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.5);
+}
+.bot-open[hidden] { display: none; }
+
+@media (max-width: 1199px) {
+  /* Clear of the transactions sheet parked at the bottom. */
+  .bot-open { bottom: 66px; }
+}
+@media (max-width: 420px) {
+  .bot { width: calc(100vw - 24px); }
+}

@@ -99,6 +99,10 @@
     }, 2000);
   }
 
+  /* Set while a trade is in flight so whoever asked for it — a click or the
+     bot — is handed the result rather than having to watch the panel. */
+  var resultWaiter = null;
+
   var pending = {};            // sym -> needs repaint
   var painter = null;
 
@@ -173,6 +177,8 @@
         entry: entry,
         exit: exit
       });
+
+      if (resultWaiter) { var w = resultWaiter; resultWaiter = null; w(r); }
     }
   };
 
@@ -403,8 +409,21 @@
     /* One trade per click. The ladder lives here rather than inside the
        trader, because each click is its own run and the recovery has to
        survive between them. */
-    // The spot the contract is entering on, before the next tick replaces it.
+    placeTrade(type, sym, stake).catch(function () { /* the panel already said */ });
+  });
+
+  /**
+   * Place one trade and resolve with its result. The single path both the
+   * buttons and the bot go through, so they can never disagree about stake,
+   * barrier or which account is being used.
+   */
+  function placeTrade(type, sym, stake) {
+    if (!session.isLive()) return Promise.reject(new Error("Not connected."));
+    if (trading) return Promise.reject(new Error("A trade is already running."));
+
     entryHint = lastSpot[sym] || null;
+
+    var settled = new Promise(function (resolve) { resultWaiter = resolve; });
 
     trader.run({
       type: type,
@@ -416,7 +435,17 @@
       currency: currencyOf(),
       market: sym
     });
-  });
+
+    // A trade that never reports back must not hang the bot for ever.
+    return Promise.race([
+      settled,
+      new Promise(function (_, rej) {
+        setTimeout(function () {
+          if (resultWaiter) { resultWaiter = null; rej(new Error("The trade did not settle.")); }
+        }, 90000);
+      })
+    ]);
+  }
 
   function currencyOf() {
     var a = accounts.filter(function (x) { return x.id === $("account").value; })[0];
@@ -602,6 +631,33 @@
     }
     status((e && e.message) || "Could not read your Deriv accounts.", "error");
   });
+
+  /* What the floating bot is allowed to touch. Deliberately small: it reads
+     the same analysis the cards show and places trades through the same
+     function the buttons use, so it can only ever do what a person could. */
+  if (window.EvieBot) {
+    window.EvieBot.attach({
+      markets: MARKETS,
+      isLive: function () { return session.isLive(); },
+      busy: function () { return trading; },
+      settings: settings,
+      nextStake: function () { return settings.martingale ? nextStake : settings.stake; },
+      statsFor: function (sym) {
+        return analysers[sym] ? analysers[sym].stats(settings.ref) : null;
+      },
+      isActive: function (sym) { return !!active[sym]; },
+      activate: function (sym) {
+        if (active[sym]) return;
+        active[sym] = true;
+        var b = document.querySelector('.sym[data-sym="' + sym + '"]');
+        if (b) b.classList.add("is-on");
+        subscribe(sym);
+        renderCards();
+      },
+      place: placeTrade,
+      types: C.TYPES
+    });
+  }
 
   window.addEventListener("beforeunload", function () { session.close(); });
 })();
