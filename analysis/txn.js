@@ -48,6 +48,33 @@
     }
   };
 
+  /**
+   * Raise the sheet, hold it long enough to read, then put it back.
+   *
+   * Only on the narrow layout, where the sheet is parked at the bottom and a
+   * result would otherwise land out of sight. On the wide layout the rail is
+   * already open and there is nothing to do. A second call while a peek is in
+   * progress restarts the clock rather than stacking timers.
+   */
+  Txn.prototype.peek = function (ms) {
+    var self = this;
+    var handle = this.q("[data-handle]");
+    // The handle is only shown on the narrow layout; on the rail it is hidden.
+    if (!handle || !handle.offsetParent) return;
+
+    var wasOpen = this.root.classList.contains("is-open");
+    clearTimeout(this.peekTimer);
+    if (wasOpen) return;            // already showing; nothing to reveal
+
+    this.root.classList.add("is-open");
+    handle.setAttribute("aria-expanded", "true");
+
+    this.peekTimer = setTimeout(function () {
+      self.root.classList.remove("is-open");
+      handle.setAttribute("aria-expanded", "false");
+    }, ms || 3800);
+  };
+
   Txn.prototype.reset = function () {
     this.rows = [];
     this.render();

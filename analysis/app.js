@@ -214,6 +214,7 @@
         '<span class="mkt-c">Current: <b data-cur>—</b></span></h2>' +
       '<ul class="dgts" data-digits></ul>' +
       '<div class="rows" data-rows></div>' +
+      '<p class="mkt-hint">Click a type to place that trade</p>' +
       '<ol class="ticks" data-ticks></ol>';
     return el;
   }
@@ -430,7 +431,12 @@
     /* One trade per click. The ladder lives here rather than inside the
        trader, because each click is its own run and the recovery has to
        survive between them. */
-    placeTrade(type, sym, stake).catch(function () { /* the panel already said */ });
+    /* A hand-placed trade should show its own result. On a phone the
+       transactions are parked at the bottom, so the sheet comes up for long
+       enough to read the row and then puts itself away. */
+    placeTrade(type, sym, stake)
+      .then(function () { txn.peek(4200); })
+      .catch(function () { /* the panel already said what went wrong */ });
   });
 
   /**
@@ -440,7 +446,16 @@
    */
   function placeTrade(type, sym, stake, forRun) {
     if (!session.isLive()) return Promise.reject(new Error("Not connected."));
-    if (trading) return Promise.reject(new Error("A trade is already running."));
+    /* Both flags, because they can disagree. The page's own `trading` is
+       cleared by the settle timeout, but the trader stays busy until its
+       chain finishes — and trader.run() returns SILENTLY when it is already
+       going, leaving a caller waiting on a result that will never come. That
+       is precisely how a stop-then-start wedged the bot. */
+    if (trading || (trader && trader.running)) {
+      var busy = new Error("A trade is already running.");
+      busy.busy = true;          // the bot waits on this rather than counting it
+      return Promise.reject(busy);
+    }
 
     entryHint = lastSpot[sym] || null;
 
@@ -466,16 +481,21 @@
     });
 
     /* A one-tick contract settles in seconds. If nothing has come back in
-       forty-five, something is wrong and saying so beats waiting. */
+       twenty-five, something is wrong: give up on it, release the page, and
+       let the caller retry rather than leaving everything marked busy. */
     return Promise.race([
       settled,
       new Promise(function (_, rej) {
         setTimeout(function () {
           if (resultWaiter) {
             resultWaiter = null; resultFailer = null;
+            /* Release the page too. Without this the run stays marked busy for
+               ever and every later trade is refused for already running —
+               which looks exactly like the bot quietly giving up. */
+            ui.runState(false);
             rej(new Error("The trade did not settle."));
           }
-        }, 45000);
+        }, 25000);
       })
     ]);
   }
@@ -695,9 +715,11 @@
       /* A new run starts from nothing: a fresh id, an empty ledger, and the
          martingale back at the base stake. Carrying any of those over is how a
          run began already showing someone else's trades. */
+      /* A new run takes a fresh id and a fresh ladder. It does NOT clear the
+         transactions: the id keeps its figures to its own trades, so the log
+         can go on being the record of everything traded on this page. */
       startRun: function () {
         runSeq++;
-        txn.reset();
         nextStake = settings.stake;
         showNextStake();
         return runSeq;

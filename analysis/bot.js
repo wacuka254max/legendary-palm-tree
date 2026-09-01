@@ -178,14 +178,26 @@
        balance, and a martingale ladder eventually gets there — retrying that
        for ever is not persistence, it is a loop that never ends. */
     var fails = 0;
-    var MAX_FAILS = 5;
+    var busyFor = 0;
+    var MAX_FAILS = 8;
 
     try {
       host.activate(sym);
 
+      var waitedFor = 0;
+
       while (alive()) {
-        if (!host.isLive()) { say("Waiting for Deriv…", "warning"); await sleep(1200); continue; }
-        if (host.busy()) { await sleep(300); continue; }
+        if (!host.isLive()) { say("Reconnecting to Deriv…", "warning"); await sleep(1200); continue; }
+
+        if (host.busy()) {
+          waitedFor += 300;
+          // Never silently. A bot that appears to have stopped should say
+          // what it is waiting on.
+          if (waitedFor > 3000) say("Waiting for the last trade to settle…", "warning");
+          await sleep(300);
+          continue;
+        }
+        waitedFor = 0;
 
         var side = pickSide(pair, sym);
         if (!side) { say("Waiting for enough ticks…", "warning"); await sleep(1200); continue; }
@@ -205,6 +217,22 @@
           ]);
         } catch (e) {
           if (!alive()) break;
+
+          /* Being told the page is busy is a WAIT, not a refusal. But it must
+             not be waited on in silence for ever: if the last trade never
+             reports, the run is wedged and saying so beats looking alive. */
+          if (e && e.busy) {
+            busyFor += 400;
+            if (busyFor > 2000) say("Waiting for the last trade to settle…", "warning");
+            if (busyFor > 40000) {
+              ended = { msg: "The last trade never settled — stopped.", kind: "error" };
+              break;
+            }
+            await sleep(400);
+            continue;
+          }
+          busyFor = 0;
+
           fails++;
           if (fails >= MAX_FAILS) {
             ended = {
@@ -215,14 +243,15 @@
             break;
           }
           say((e && e.message) || "Trade refused — retrying.", "warning");
-          await sleep(2500);
+          await sleep(2000);
           continue;
         }
 
         if (!r) break;          // stopped while the trade was in flight
         if (!alive()) break;
 
-        fails = 0;              // a trade got through; the count starts over
+        fails = 0;              // a trade got through; the counts start over
+        busyFor = 0;
         syncStats();
 
         var stop = stopReason(totals);

@@ -280,6 +280,15 @@
 .pbar--match { background: rgba(168, 85, 247, 0.10); }
 .pbar--differ { background: rgba(148, 163, 184, 0.10); }
 
+/* Says what the coloured buttons above it are for. Quiet, because it is a
+   label rather than an instruction anyone needs twice. */
+.mkt-hint {
+  margin-top: 8px;
+  font-size: 10.5px;
+  text-align: center;
+  color: var(--ink-faint);
+}
+
 /* ── recent ticks ───────────────────────────────────────────────────── */
 
 .ticks {
