@@ -54,6 +54,9 @@
 /* Fields flow in one line and wrap only when they must. */
 .tools-grid { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
 .fld { flex: 1 1 150px; min-width: 130px; margin-top: 0; display: block; }
+/* `display: block` above beats [hidden] on its own, which is why the
+   account field was still on the page after being hidden. */
+.fld[hidden] { display: none; }
 
 .fld-k {
   display: flex;

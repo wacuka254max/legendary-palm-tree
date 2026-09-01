@@ -684,15 +684,12 @@
   function describeAccount() {
     var a = accounts.filter(function (x) { return x.id === $("account").value; })[0];
     if (!a) return;
-    /* The account says what it is. Normally that is Real or Demo; the
-       simulation's account calls itself Simulation, so the badge tells the
-       truth on that page without this one knowing a simulation exists. */
-    $("acct-badge").textContent = a.label || (a.demo ? "Demo" : "Real");
+    $("acct-badge").textContent = a.demo ? "Demo" : "Real";
     $("acct-badge").classList.toggle("badge--demo", a.demo);
     $("balance").textContent = money(a.balance, a.currency);
-    $("risk").textContent = a.risk || (a.demo
+    $("risk").textContent = a.demo
       ? "Demo account — trades here are practice money."
-      : "Real account — every trade placed here uses your own money.");
+      : "Real account — every trade placed here uses your own money.";
     $("risk").className = "risk" + (a.demo ? "" : " risk--real");
   }
 

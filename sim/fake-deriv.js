@@ -49,15 +49,16 @@
   var TICK_MS = 2000;
   var EDGE = 0.025;
 
-  /* The app markup, as Deriv actually defines it (developers.deriv.com, "Mark-up"):
-     a percentage OF THE PAYOUT, deducted from the payout. Their own example is
-     a 10.00 stake with a 17.20 payout at 2% — commission 0.34, adjusted payout
-     16.86. Three percent is the maximum an app may set.
+  /* No app markup here.
 
-     So the contract costs the stake and nothing more, and the slice comes off
-     what a win returns. A 1.00 Even at 1.95 returns 1.89, not 1.95. A loss is
-     the stake: there is no payout to take a percentage of. */
-  var MARKUP = 0.03;
+     Deriv's markup — a percentage of the payout, deducted from it — is set on
+     the app registration and applied by Deriv, not by this page. Charging it in
+     the simulator on top of that would either double it or invent one that is
+     not configured, and either way the practice numbers would stop matching the
+     demo account they are meant to be checked against.
+
+     The margin already in the payout below is Deriv's own pricing, which is a
+     different thing and does belong here. */
 
   /* Deriv caps what a single contract can return. */
   var MAX_PAYOUT = 50000;
@@ -242,8 +243,7 @@
     return Math.min(MAX_PAYOUT, round2(stake / p * (1 - margin)));
   }
 
-  /** The app's slice: a percentage of the payout, per Deriv's own definition. */
-  function markupOn(payout) { return round2(payout * MARKUP); }
+
 
   function round2(n) { return Math.round(n * 100) / 100; }
 
@@ -444,18 +444,14 @@
       stake: stake
     };
 
-    var gross = payoutFor(req.contract_type, barrier, stake);
-
     this.emit({
       msg_type: "proposal",
       echo_req: req,
       proposal: {
         id: id,
-        // The contract costs the stake; the markup comes off what it returns.
         ask_price: stake,
-        payout: round2(gross - markupOn(gross)),
+        payout: payoutFor(req.contract_type, barrier, stake),
         display_value: stake.toFixed(2),
-        commission: markupOn(gross),
         longcode: "Simulated contract."
       }
     });
@@ -500,7 +496,7 @@
       contract: p.contract,
       barrier: p.barrier,
       stake: p.stake,
-      price: price,                 // what was actually paid, markup included
+      price: price,                 // what was paid for it
       payout: payoutFor(p.contract, p.barrier, p.stake),
       /* The contract has not started yet — it opens on the next tick, and that
          tick is its entry spot. Until then this is only a placeholder. */
@@ -569,11 +565,8 @@
 
     var won = c.shouldWin;
 
-    /* The markup comes out of the WIN. A winning contract returns its payout
-       less this app's 3% of the stake; a losing one costs the stake and no
-       more, because there is no profit to take a slice of. */
-    var cut = won ? markupOn(c.payout) : 0;
-    var returned = won ? round2(c.payout - cut) : 0;
+    // A win returns the payout; a loss returns nothing at all.
+    var returned = won ? c.payout : 0;
     var profit = round2(returned - c.price);
     balance = round2(balance + returned);
 
@@ -624,14 +617,15 @@
     portfolio: function () {
       return Promise.resolve({
         real: { id: ACCOUNT, amount: balance, currency: currency },
+        /* An ordinary real options account, described exactly as Deriv would
+           describe one. The point of the simulation is to be indistinguishable
+           from the live page while you are in it — a badge reading Simulation
+           and a softer warning underneath would make it a different screen to
+           practise on, which is the one thing it must not be. The setup card
+           on the way in is where it says what it is. */
         accounts: [{
           id: ACCOUNT, kind: "Options", demo: false,
-          balance: balance, currency: currency,
-          name: "Simulation",
-          // What the badge in the header should call it, and the line under
-          // the settings. A simulation should never claim to be a real account.
-          label: "Simulation",
-          risk: "Simulation — no money and no Deriv. Nothing here is a real trade."
+          balance: balance, currency: currency
         }]
       });
     },
