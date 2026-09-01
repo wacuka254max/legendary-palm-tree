@@ -89,6 +89,17 @@
       var e = el(id);
       if (e) e.disabled = on;
     });
+    paintOpener();
+  }
+
+  /* The button that stands in for a closed card has to say whether the bot is
+     still working — closing it hides the card, it does not stop the run. */
+  function paintOpener() {
+    var open = el("bot-open");
+    if (!open) return;
+    open.classList.toggle("is-running", running);
+    var label = el("bot-open-label");
+    if (label) label.textContent = running ? "Bot running" : "Open bot";
   }
 
   /* ── deciding ───────────────────────────────────────────────────────── */
@@ -338,14 +349,13 @@
       loop(++generation);
     });
 
+    /* Close HIDES. It does not stop: a run in progress carries on, which is
+       the point on a small screen where the card is covering the analysis or
+       the transactions the user wants to watch it against. */
     el("bot-close").addEventListener("click", function () {
-      stopping = true;
-      generation++;
-      if (fireStop) fireStop();
-      setRunning(false);
       card.hidden = true;
       var open = el("bot-open");
-      if (open) open.hidden = false;
+      if (open) { open.hidden = false; paintOpener(); }
     });
 
     var open = el("bot-open");
@@ -359,6 +369,7 @@
     armStop();
     draggable(card, el("bot-head"));
     syncStats();
+    paintOpener();
   }
 
   global.EvieBot = { attach: attach, PAIRS: PAIRS };

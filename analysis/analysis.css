@@ -316,12 +316,24 @@
 .status--success { color: var(--up); }
 .status--warning { color: #e3b341; }
 
-@media (max-width: 420px) {
-  /* Two rows of five stay legible; the pair rows stack their halves rather
-     than squeezing three columns into a phone. */
-  .row { grid-template-columns: minmax(0, 1fr); justify-items: stretch; }
-  .acts { justify-content: center; }
-  .pbar { text-align: center; }
+@media (max-width: 480px) {
+  /* The three columns STAY. A percentage belongs beside the button it is
+     about — stacked above and below, the eye has to travel to pair them up.
+     Everything shrinks instead. */
+  .row { gap: 4px; }
+  .pbar { padding: 6px 5px; font-size: 10px; letter-spacing: -0.01em; }
+  .act { padding: 6px 7px; font-size: 10px; }
+  .acts { gap: 3px; }
+  .dgts { gap: 4px; }
+  .dgt { padding: 6px 1px; }
+  .dgt b { font-size: 13px; }
+  .dgt span { font-size: 9.5px; }
+}
+
+@media (max-width: 360px) {
+  /* Only the labels give way, never the layout. */
+  .pbar { font-size: 9px; padding: 6px 3px; }
+  .act { font-size: 9px; padding: 6px 5px; }
 }
 
 /* ── Transactions ───────────────────────────────────────────────────────
@@ -355,14 +367,14 @@
 
 .txn-head {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: 8px;
-  padding-bottom: 10px;
+  grid-template-columns: var(--tx-cols);
+  gap: 10px;
+  padding: 0 2px 9px;
   border-bottom: 1px solid var(--line);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   color: var(--ink-faint);
 }
 .txn-head-r { text-align: right; }
@@ -383,15 +395,21 @@
   border: 2px solid var(--surface);
 }
 
+/* One definition of the columns, used by the header and every row, so the
+   three never drift apart at any width. */
+.txn { --tx-cols: minmax(0, 1.15fr) minmax(0, 0.9fr) minmax(0, 1.05fr); }
+
 .tx {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.1fr);
-  gap: 8px;
-  padding: 10px 0;
+  grid-template-columns: var(--tx-cols);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 2px;
   border-bottom: 1px solid var(--line);
   font-size: 12px;
 }
-.tx-none { padding: 22px 0; font-size: 12.5px; color: var(--ink-faint); text-align: center; }
+.tx:last-child { border-bottom: 0; }
+.tx-none { padding: 26px 0; font-size: 12.5px; color: var(--ink-faint); text-align: center; }
 
 .tx-type { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; align-items: center; }
 .tx-dot { width: 8px; height: 8px; border-radius: 50%; grid-row: span 2; }
@@ -401,11 +419,13 @@
 .tx-type-s { grid-column: 2; font-size: 10.5px; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Entry above, exit below — the two spots the contract settled between. */
-.tx-spot { display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+.tx-spot { display: grid; gap: 2px; font-variant-numeric: tabular-nums; min-width: 0; }
+.tx-spot span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tx-in { color: var(--ink-muted); }
 .tx-out { color: var(--ink-faint); }
 
-.tx-money { display: grid; gap: 2px; text-align: right; font-variant-numeric: tabular-nums; }
+.tx-money { display: grid; gap: 2px; text-align: right; font-variant-numeric: tabular-nums; min-width: 0; }
+.tx-money span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tx-buy { color: var(--ink-muted); }
 .tx-pl { font-weight: 650; }
 .tx-pl.is-up, .sum-v.is-up { color: var(--up); }
@@ -416,15 +436,15 @@
 .sum {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px 8px;
+  gap: 14px 10px;
   margin-top: 14px;
-  padding: 16px 14px;
+  padding: 16px 12px;
   background: var(--raise);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
 }
 .sum-c { display: grid; gap: 4px; text-align: center; min-width: 0; }
-.sum-k { font-size: 10px; font-weight: 600; color: var(--ink-faint); line-height: 1.25; }
+.sum-k { font-size: 9.5px; font-weight: 600; color: var(--ink-faint); line-height: 1.3; }
 .sum-v { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
 .txn-reset { width: 100%; margin-top: 12px; }
@@ -635,6 +655,12 @@
   box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.5);
 }
 .bot-open[hidden] { display: none; }
+
+/* Green while a run continues behind the closed card. */
+.bot-open-dot { display: none; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+.bot-open.is-running { background: var(--up); }
+.bot-open.is-running .bot-open-dot { display: block; animation: bot-pulse 1.6s ease-in-out infinite; }
+@keyframes bot-pulse { 50% { opacity: 0.35; } }
 
 @media (max-width: 1199px) {
   /* Clear of the transactions sheet parked at the bottom. */
