@@ -47,7 +47,6 @@
   var txn = new window.EvieTxn({ root: document.getElementById("txn"), nameOf: nameOf });
 
   var session = new window.EvieSession();
-  var trader = null;
   var accounts = [];
   var analysers = {};          // sym -> Analyser
   var active = { R_10: true }; // which symbols have a card
@@ -101,13 +100,14 @@
 
   /* Set while a trade is in flight so whoever asked for it — a click or the
      bot — is handed the result rather than having to watch the panel. */
-  var resultWaiter = null;
-  var resultFailer = null;
+  var inFlight = false;   // exactly one trade at a time, and one flag saying so
 
   /* Which bot run a trade belongs to, so the bot can read its own totals off
      the ledger instead of keeping a second copy that can disagree with it. */
-  var currentRun = 0;   // the run the trade in flight belongs to (0 = manual)
   var runSeq = 0;       // the last run number handed out
+
+  /** Deriv's floor. A stake under this is refused, so stop before sending. */
+  var MIN_STAKE = 0.35;
 
   var pending = {};            // sym -> needs repaint
   var painter = null;
@@ -139,67 +139,18 @@
     return sym;
   }
 
-  /* ── what the trader talks to ───────────────────────────────────────── */
+  /* ── the page state a trade changes ─────────────────────────────────── */
 
   var ui = {
     status: status,
 
-    /* The panel keeps the running total, so there is nothing to do here —
-       but the trader calls it, so it has to exist. */
-    net: function () {},
-
+    /** While a trade is in flight the cards must not offer another. */
     runState: function (on) {
       trading = on;
-
-      /* A run that ends without having produced a result FAILED — Deriv
-         refused it, or the socket went. Whoever is waiting has to be told, or
-         they wait for the timeout instead: which is exactly how the bot came
-         to place one trade and then sit there, unresponsive to Stop. */
-      if (!on && resultWaiter) {
-        var fail = resultFailer;
-        resultWaiter = null; resultFailer = null;
-        if (fail) fail(new Error("Deriv did not accept that trade."));
-      }
       Array.prototype.forEach.call(document.querySelectorAll(".act"), function (b) {
         b.disabled = on;
       });
       $("account").disabled = on;
-    },
-
-    result: function (r) {
-      /* The ladder. A loss multiplies the next stake so the win after it
-         recovers what came before; a win puts it back to the base. Off, the
-         stake never moves. */
-      if (settings.martingale && !r.win) nextStake = nextStake * settings.multiplier;
-      else nextStake = settings.stake;
-      showNextStake();
-
-      var t = C.TYPES[r.type];
-
-      /* Prefer what Deriv reported; fall back to the ticks we were already
-         streaming. A one-tick contract enters on the quote that was live when
-         it was bought and exits on the next one, which is exactly what these
-         two hold. */
-      var entry = r.entry || entryHint;
-      var exit = r.exit || lastSpot[r.market] || null;
-
-      txn.add({
-        label: t.label + (t.barrier ? " " + r.barrier : ""),
-        market: r.market,
-        win: r.win,
-        stake: r.stake,
-        profit: r.profit,
-        payout: r.payout,
-        entry: entry,
-        exit: exit,
-        run: currentRun
-      });
-
-      if (resultWaiter) {
-        var w = resultWaiter;
-        resultWaiter = null; resultFailer = null;
-        w(r);
-      }
     }
   };
 
@@ -424,8 +375,8 @@
     var sym = b.getAttribute("data-sym");
     var stake = settings.martingale ? nextStake : settings.stake;
 
-    if (isNaN(stake) || stake < window.EvieTrader.MIN_STAKE) {
-      return status("Deriv's minimum stake is " + window.EvieTrader.MIN_STAKE.toFixed(2) + ".", "error");
+    if (isNaN(stake) || stake < MIN_STAKE) {
+      return status("Deriv's minimum stake is " + MIN_STAKE.toFixed(2) + ".", "error");
     }
 
     /* One trade per click. The ladder lives here rather than inside the
@@ -444,60 +395,167 @@
    * buttons and the bot go through, so they can never disagree about stake,
    * barrier or which account is being used.
    */
+  /**
+   * ONE trade, start to finish, on the shared socket.
+   *
+   * Deliberately self-contained — this replaced going through the trader's run
+   * machine, which carried its own busy flag, its own queue and its own
+   * timeouts. Two flags that could disagree, and a run() that returned in
+   * silence when it was already going, is what left the bot waiting on a
+   * result nothing would ever send. There is nothing here to disagree with:
+   * one contract, its own listener, its own timer, removed when it ends.
+   *
+   * The same four steps Deriv requires, and the same ones Automatic AI takes:
+   *   proposal → buy → subscribe to the contract → settled.
+   */
   function placeTrade(type, sym, stake, forRun) {
     if (!session.isLive()) return Promise.reject(new Error("Not connected."));
-    /* Both flags, because they can disagree. The page's own `trading` is
-       cleared by the settle timeout, but the trader stays busy until its
-       chain finishes — and trader.run() returns SILENTLY when it is already
-       going, leaving a caller waiting on a result that will never come. That
-       is precisely how a stop-then-start wedged the bot. */
-    if (trading || (trader && trader.running)) {
+
+    if (inFlight) {
       var busy = new Error("A trade is already running.");
-      busy.busy = true;          // the bot waits on this rather than counting it
+      busy.busy = true;        // a wait, not a refusal
       return Promise.reject(busy);
     }
 
-    entryHint = lastSpot[sym] || null;
+    inFlight = true;
+    ui.runState(true);
 
-    /* Only a trade the bot asked for belongs to its run. Tagging manual
-       clicks with the current run id folded them into the bot's win rate and
-       P/L, which is one way those figures came out wrong. */
-    currentRun = forRun || 0;
-
-    var settled = new Promise(function (resolve, reject) {
-      resultWaiter = resolve;
-      resultFailer = reject;
-    });
-
-    trader.run({
+    var spec = {
       type: type,
       barrier: C.TYPES[type].barrier ? C.clampBarrier(type, settings.ref) : null,
       stake: stake,
-      count: 1,
-      martingale: false,
-      multiplier: 1,
       currency: currencyOf(),
       market: sym
-    });
+    };
 
-    /* A one-tick contract settles in seconds. If nothing has come back in
-       twenty-five, something is wrong: give up on it, release the page, and
-       let the caller retry rather than leaving everything marked busy. */
-    return Promise.race([
-      settled,
-      new Promise(function (_, rej) {
-        setTimeout(function () {
-          if (resultWaiter) {
-            resultWaiter = null; resultFailer = null;
-            /* Release the page too. Without this the run stays marked busy for
-               ever and every later trade is refused for already running —
-               which looks exactly like the bot quietly giving up. */
-            ui.runState(false);
-            rej(new Error("The trade did not settle."));
+    var entry = lastSpot[sym] || null;
+    var decimals = A.PIP_DECIMALS[sym] != null ? A.PIP_DECIMALS[sym] : 2;
+
+    return new Promise(function (resolve, reject) {
+      var stage = "proposal";
+      var contractId = null;
+      var subId = null;
+      var done = false;
+      var seenEntry = entry;
+
+      function finish(fn, arg) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        session.off(onMsg);
+        if (subId) session.send({ forget: subId });
+        inFlight = false;
+        ui.runState(false);
+        fn(arg);
+      }
+
+      /* A one-tick contract settles in seconds. Past this it is not coming,
+         and the page must be released either way so the next attempt can run. */
+      var timer = setTimeout(function () {
+        finish(reject, new Error("Deriv did not settle that trade."));
+      }, 25000);
+
+      function spot(c, strs, nums) {
+        var i, v;
+        for (i = 0; i < strs.length; i++) {
+          v = c[strs[i]];
+          if (typeof v === "string" && v !== "") return v;
+        }
+        for (i = 0; i < nums.length; i++) {
+          v = c[nums[i]];
+          if (typeof v === "number" && isFinite(v)) return v.toFixed(decimals);
+        }
+        return null;
+      }
+
+      function onMsg(d) {
+        if (done) return;
+
+        if (d.error) {
+          // Only our own request's failure ends this trade.
+          var er = d.echo_req || {};
+          if (er.proposal || er.buy || er.proposal_open_contract) {
+            return finish(reject, new Error(d.error.message || "Deriv refused the trade."));
           }
-        }, 25000);
-      })
-    ]);
+          return;
+        }
+
+        if (stage === "proposal" && d.msg_type === "proposal" && d.proposal) {
+          stage = "buy";
+          session.send({ buy: d.proposal.id, price: d.proposal.ask_price });
+          return;
+        }
+
+        if (stage === "buy" && d.msg_type === "buy" && d.buy) {
+          stage = "settle";
+          contractId = d.buy.contract_id;
+          session.send({ proposal_open_contract: 1, contract_id: contractId, subscribe: 1 });
+          return;
+        }
+
+        if (d.msg_type === "proposal_open_contract" && d.proposal_open_contract) {
+          var c = d.proposal_open_contract;
+          if (stage !== "settle") return;
+          if (contractId && c.contract_id !== contractId) return;
+          if (d.subscription && d.subscription.id) subId = d.subscription.id;
+
+          // The entry spot is reported when the contract OPENS, not at the end.
+          var e = spot(c, ["entry_tick_display_value", "entry_spot_display_value"],
+                          ["entry_tick", "entry_spot"]);
+          if (e != null) seenEntry = e;
+
+          if (!c.is_sold) return;
+
+          var profit = parseFloat(c.profit) || 0;
+          var paid = parseFloat(c.buy_price) || stake;
+          var exit = spot(c, ["exit_tick_display_value", "current_spot_display_value"],
+                             ["exit_tick", "current_spot"]) || lastSpot[sym] || null;
+
+          finish(resolve, {
+            win: profit > 0,
+            profit: profit,
+            stake: paid,
+            /* What came BACK: a loss returns nothing, so it is not stake plus a
+               negative profit. */
+            payout: profit > 0 ? paid + profit : 0,
+            entry: seenEntry,
+            exit: exit,
+            digit: typeof exit === "string"
+              ? parseInt(exit.charAt(exit.length - 1), 10) : null,
+            type: type,
+            barrier: spec.barrier,
+            market: sym,
+            run: forRun || 0
+          });
+        }
+      }
+
+      session.on(onMsg);
+      session.send(C.proposal(spec));
+    }).then(function (r) {
+      record(r);
+      return r;
+    });
+  }
+
+  /** Put a settled trade in the ledger and move the martingale on. */
+  function record(r) {
+    if (settings.martingale && !r.win) nextStake = nextStake * settings.multiplier;
+    else nextStake = settings.stake;
+    showNextStake();
+
+    var t = C.TYPES[r.type];
+    txn.add({
+      label: t.label + (t.barrier ? " " + r.barrier : ""),
+      market: r.market,
+      win: r.win,
+      stake: r.stake,
+      profit: r.profit,
+      payout: r.payout,
+      entry: r.entry,
+      exit: r.exit,
+      run: r.run
+    });
   }
 
   function currencyOf() {
@@ -531,8 +589,8 @@
 
     if (isNaN(ref) || ref < 0 || ref > 9) return status("Reference digit must be 0 to 9.", "error");
     if (isNaN(count) || count < 10) return status("Analysis count must be at least 10.", "error");
-    if (isNaN(stake) || stake < window.EvieTrader.MIN_STAKE) {
-      return status("Deriv's minimum stake is " + window.EvieTrader.MIN_STAKE.toFixed(2) + ".", "error");
+    if (isNaN(stake) || stake < MIN_STAKE) {
+      return status("Deriv's minimum stake is " + MIN_STAKE.toFixed(2) + ".", "error");
     }
     if (isNaN(mult) || mult < 1) return status("Martingale must be 1 or more.", "error");
 
@@ -609,7 +667,6 @@
     session.resubscribe = function () { subscribeAll(); session.send({ balance: 1, subscribe: 1 }); };
 
     session.open(id).then(function () {
-      if (!trader) trader = new window.EvieTrader(session, ui);
       status("Live — " + activeCount() + " market(s).", "success");
     }).catch(function (e) {
       if (e && e.expired) {
@@ -692,7 +749,7 @@
     window.EvieBot.attach({
       markets: MARKETS,
       isLive: function () { return session.isLive(); },
-      busy: function () { return trading; },
+      busy: function () { return inFlight; },
       settings: settings,
       nextStake: function () { return settings.martingale ? nextStake : settings.stake; },
       statsFor: function (sym) {

@@ -39,6 +39,14 @@
   }
 
   Session.prototype.onMessage = function (fn) { this.handlers.push(fn); };
+
+  /* A trade adds its own listener and takes it away when it ends, so a
+     finished contract cannot answer for a later one. */
+  Session.prototype.on = function (fn) { this.handlers.push(fn); };
+  Session.prototype.off = function (fn) {
+    var i = this.handlers.indexOf(fn);
+    if (i > -1) this.handlers.splice(i, 1);
+  };
   Session.prototype.onOpen = function (fn) { this.openHandlers.push(fn); };
 
   Session.prototype.isOpen = function () {
@@ -99,7 +107,9 @@
         ws.onmessage = function (ev) {
           var d;
           try { d = JSON.parse(ev.data); } catch (e) { return; }
-          self.handlers.forEach(function (fn) { fn(d); });
+          /* A copy: a trade removes its own listener the moment it settles,
+             and splicing the array being walked would skip the next one. */
+          self.handlers.slice().forEach(function (fn) { fn(d); });
         };
 
         ws.onerror = function () { /* onclose does the reconnecting */ };
