@@ -205,6 +205,28 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   white-space: nowrap;
 }
 
+/* Present, and plainly not ready. Dimmed rather than hidden so it is clear
+   the feature exists and is coming, and not clickable so nobody tries. */
+.tile--off { opacity: 0.62; cursor: not-allowed; }
+.tile--off:hover { background: var(--surface); border-color: var(--line); }
+/* The MetaTrader mark is a WIDE wordmark, not a square glyph. Squeezed into
+   the 42px icon box it came out 24x4 and unreadable, so this tile's box grows
+   to fit the logo instead of the logo shrinking to fit the box. */
+.tile--off .tile-icon { width: auto; min-width: 42px; padding: 0 12px; }
+.tile-logo { height: 20px; width: auto; max-width: 150px; object-fit: contain; }
+
+.tag-off {
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--over, #d97706);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 /* A blank canvas for a page that has not been built yet. */
 .panel { min-height: 220px; border: 1px dashed var(--line-hi); border-radius: var(--radius); }
 
@@ -919,27 +941,32 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   overflow: hidden;
 }
 
+/* A heading, not a button. It used to fold the rail away, which is how a
+   panel meant to be watched came to be hidden — there is nothing to collapse
+   any more. */
 .mk-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  width: 100%;
-  padding: 15px 18px;
-  font: inherit;
-  font-size: 13.5px;
+  margin: 0;
+  padding: 14px 16px;
+  font-size: 13px;
   font-weight: 650;
   color: var(--ink);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  text-align: left;
+  border-bottom: 1px solid var(--line);
 }
-.mk-chev { color: var(--ink-faint); transition: transform 0.2s ease; }
-.markets.is-open .mk-chev { transform: rotate(180deg); }
 
-.mk-list { display: none; padding: 0 6px 6px; }
-.markets.is-open .mk-list { display: block; }
+/* A quiet pulse while prices are arriving. */
+.mk-live {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  animation: mk-pulse 2s ease-in-out infinite;
+}
+@keyframes mk-pulse { 50% { opacity: 0.3; } }
+
+.mk-list { display: block; padding: 4px 6px 6px; }
 
 .mk {
   display: grid;

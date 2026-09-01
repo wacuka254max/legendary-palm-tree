@@ -74,6 +74,9 @@
   var closed = false;
   var attempt = 0;
   var pinger = null;
+  var watchdog = null;
+  var connecting = false;
+  var lastTickAt = 0;
 
   function el(id) { return document.getElementById(id); }
 
@@ -141,9 +144,13 @@
              "</li>";
     }).filter(Boolean);
 
-    listEl.innerHTML = rows.length
-      ? rows.join("")
-      : '<li class="mk mk--none">Waiting for prices…</li>';
+    /* Only ever says it is waiting when it genuinely has nothing. Once a
+       price is known the rail keeps showing it, live or from the last
+       window — it must not blink back to a placeholder on a reconnect. */
+    if (rows.length) listEl.innerHTML = rows.join("");
+    else if (!listEl.querySelector(".mk:not(.mk--none)")) {
+      listEl.innerHTML = '<li class="mk mk--none">Waiting for prices…</li>';
+    }
   }
 
   /* ── the socket ────────────────────────────────────────────────────── */
@@ -163,7 +170,19 @@
         }));
       });
       attempt = 0;
+      lastTickAt = Date.now();
       redrawTimer = setInterval(draw, REDRAW_MS);
+
+      /* A socket can stay open and stop sending. Nothing notices that on its
+         own, so if no tick has arrived in forty seconds the connection is
+         treated as dead and replaced. */
+      clearInterval(watchdog);
+      watchdog = setInterval(function () {
+        if (closed || !ws) return;
+        if (Date.now() - lastTickAt > 40000) {
+          try { ws.close(); } catch (e) {}   // onclose schedules the retry
+        }
+      }, 10000);
       // Deriv closes a silent socket; a ping keeps the prices coming.
       clearInterval(pinger);
       pinger = setInterval(function () {
@@ -180,6 +199,7 @@
       if (d.error) return;
 
       if (d.msg_type === "history" && d.history) {
+        lastTickAt = Date.now();
         var sym = (d.echo_req && d.echo_req.ticks_history) || "";
         if (!sym) return;
         series[sym] = {
@@ -191,6 +211,7 @@
       }
 
       if (d.msg_type === "tick" && d.tick && d.tick.symbol) {
+        lastTickAt = Date.now();
         var s = series[d.tick.symbol] || (series[d.tick.symbol] = { t: [], p: [] });
         s.t.push(Number(d.tick.epoch));
         s.p.push(Number(d.tick.quote));
@@ -200,12 +221,15 @@
 
     ws.onclose = function () {
       if (redrawTimer) { clearInterval(redrawTimer); redrawTimer = null; }
+      clearInterval(watchdog); watchdog = null;
+      clearInterval(pinger); pinger = null;
+      ws = null;
       /* Keep coming back, backing off to a few seconds. Deriv drops idle
          connections, and a rail that gives up after one try is a rail that is
          blank for anyone who leaves the page open. */
       if (closed) return;
       attempt++;
-      setTimeout(function () { if (!closed) restart(); },
+      setTimeout(function () { if (!closed) connect(); },
         Math.min(1000 * Math.pow(2, attempt - 1), 8000));
     };
 
@@ -214,37 +238,45 @@
 
   var lastAccount = null;
 
-  function restart() {
-    if (!lastAccount || !global.EvieDeriv) return;
-    global.EvieDeriv.tradeSocket(lastAccount).then(open).catch(function () {});
-  }
-
   /* ── in ────────────────────────────────────────────────────────────── */
 
   function start(accountId) {
     listEl = el("mk-list");
     if (!listEl || !accountId || !global.EvieDeriv) return;
+
+    /* start() is called twice by design — once on the remembered account
+       before the portfolio returns, once after it comes back. Without this it
+       opened a SECOND socket over the first, and both wrote the same series.
+       Same account, already going: nothing to do. */
+    if (lastAccount === accountId && (ws || connecting)) return;
+
     lastAccount = accountId;
+    closed = false;
 
     // Draw the last known prices at once, so the rail is never an empty box.
     var cached = readCache();
     if (cached) { series = cached; draw(); }
 
-    global.EvieDeriv.tradeSocket(accountId)
-      .then(open)
-      .catch(function () {
-        listEl.innerHTML = '<li class="mk mk--none">Prices unavailable.</li>';
-      });
+    connect();
+  }
 
-    // The panel folds away; a rail nobody wants should not be unavoidable.
-    var head = el("mk-head");
-    var panel = el("markets");
-    if (head && panel) {
-      head.addEventListener("click", function () {
-        var open_ = panel.classList.toggle("is-open");
-        head.setAttribute("aria-expanded", String(open_));
+  /**
+   * Open, and keep trying. The first attempt used to be the only one: a failure
+   * there printed "Prices unavailable" and the rail never came back for as long
+   * as the page stayed open.
+   */
+  function connect() {
+    if (closed || !lastAccount || connecting) return;
+    connecting = true;
+
+    global.EvieDeriv.tradeSocket(lastAccount)
+      .then(function (url) { connecting = false; open(url); })
+      .catch(function () {
+        connecting = false;
+        attempt++;
+        setTimeout(function () { if (!closed) connect(); },
+          Math.min(1000 * Math.pow(2, attempt - 1), 8000));
       });
-    }
   }
 
   global.addEventListener("beforeunload", function () {

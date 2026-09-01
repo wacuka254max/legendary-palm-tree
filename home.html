@@ -71,6 +71,14 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
       <span class="tile-h"><span class="tile-t">Automatic AI</span><span class="tag-bot">Bots</span></span>
       <span class="tile-s">Hand it the account and let it trade.</span>
     </a>
+
+    <div class="tile tile--off" aria-disabled="true">
+      <span class="tile-icon" aria-hidden="true">
+        <img src="/logos/metatrader5.svg" alt="" class="tile-logo" />
+      </span>
+      <span class="tile-h"><span class="tile-t">MT5 Bots</span><span class="tag-off">Under maintenance</span></span>
+      <span class="tile-s">Expert Advisors for MetaTrader 5. Back shortly.</span>
+    </div>
   </div>
 
   <a class="notice-go" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener noreferrer">
@@ -82,11 +90,11 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 
    <!-- Live volatility prices. On a wide screen this fills the space to the
         right of the tiles; below 1180px it drops under them. -->
-   <aside class="markets is-open" id="markets">
-     <button class="mk-head" id="mk-head" type="button" aria-expanded="true" aria-controls="mk-list">
+   <aside class="markets" id="markets">
+     <h2 class="mk-head" id="mk-head">
        <span>Price changes (5 minutes)</span>
-       <svg class="mk-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-     </button>
+       <span class="mk-live" id="mk-live" aria-hidden="true"></span>
+     </h2>
      <ul class="mk-list" id="mk-list">
        <li class="mk mk--none">Waiting for prices…</li>
      </ul>
