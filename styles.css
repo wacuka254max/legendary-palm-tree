@@ -207,13 +207,19 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 
 /* Present, and plainly not ready. Dimmed rather than hidden so it is clear
    the feature exists and is coming, and not clickable so nobody tries. */
-.tile--off { opacity: 0.62; cursor: not-allowed; }
+.tile--off { opacity: 0.72; cursor: not-allowed; }
 .tile--off:hover { background: var(--surface); border-color: var(--line); }
 /* The MetaTrader mark is a WIDE wordmark, not a square glyph. Squeezed into
    the 42px icon box it came out 24x4 and unreadable, so this tile's box grows
    to fit the logo instead of the logo shrinking to fit the box. */
 .tile--off .tile-icon { width: auto; min-width: 42px; padding: 0 12px; }
 .tile-logo { height: 20px; width: auto; max-width: 150px; object-fit: contain; }
+
+/* The MetaTrader wordmark ships white, which disappears on the light theme.
+   Two files, one per ground; the theme picks which one is painted. */
+.tile-logo--pale { display: none; }
+:root[data-theme="dark"] .tile-logo--ink { display: none; }
+:root[data-theme="dark"] .tile-logo--pale { display: block; }
 
 .tag-off {
   padding: 3px 9px;
