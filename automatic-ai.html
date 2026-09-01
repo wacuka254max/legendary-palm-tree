@@ -5,9 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Automatic AI | Evie</title>
 <meta name="robots" content="noindex,nofollow" />
-<meta name="theme-color" content="#0b0b0f" />
+<meta name="theme-color" content="#f3f4f7" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/favicon.svg" />
+<script>
+/* Applied before paint: a saved dark choice must not flash a light page first.
+   Light is the default when nothing has been chosen. */
+(function(){try{var t=localStorage.getItem("evie_theme");
+document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){}})();
+</script>
 <link rel="stylesheet" href="/styles.css" />
 </head>
 <body class="dash">
@@ -21,6 +27,10 @@
       <span class="brand-name">Evie</span>
     </a>
     <div class="perch">
+      <button class="btn btn-line theme-b" data-theme-toggle type="button" aria-pressed="false" title="Switch to dark">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <span data-theme-label>Dark</span>
+      </button>
       <span class="perch-v" id="balance">—</span>
       <span class="badge" id="acct-badge">Real</span>
       <a class="btn btn-line" href="/home.html">Home</a>
@@ -99,5 +109,6 @@
 <script src="/deriv.js"></script>
 <script src="/automatic-ai-engine.js"></script>
 <script src="/automatic-ai.js"></script>
+<script src="/theme.js"></script>
 </body>
 </html>

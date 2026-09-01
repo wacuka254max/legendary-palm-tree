@@ -10,8 +10,51 @@
    gutter, so nothing is boxed into a narrow centred column.
    ══════════════════════════════════════════════════════════════════════ */
 
+/* ── Theme ──────────────────────────────────────────────────────────────
+   Light is the default, the way the analysis tools it mirrors are. Dark is
+   one class away: everything below is a token, so the palette swaps and
+   nothing else moves.
+
+   data-theme on <html> wins over the system preference, because a person
+   who has pressed the button has said what they want.                     */
+
 :root {
   /* Surfaces — four flat steps from the page up to a raised card. */
+  --base:      #f3f4f7;
+  --raise:     #ffffff;
+  --surface:   #ffffff;
+  --surface-2: #f1f3f6;
+
+  --line:      #e2e6ec;
+  --line-hi:   #cdd3dc;
+
+  --ink:       #14161a;
+  --ink-muted: #59616d;
+  --ink-faint: #838b97;
+
+  /* Accents deep enough to carry white text on a light page. */
+  --pink:      #e11d74;
+  --pink-hi:   #c4165f;
+  --blue:      #0d8ecf;
+  --blue-hi:   #0a76ae;
+  --ok:        #14a05a;
+
+  /* Text sitting ON an accent fill. */
+  --on-accent: #ffffff;
+  /* The ring around a "leading" control — must contrast with the fill. */
+  --ring:      rgba(0, 0, 0, 0.45);
+
+  /* The dotted ground, and the tint of an alternating band. */
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='1.5' cy='1.5' r='1.5' fill='%23000000' fill-opacity='0.06'/%3E%3C/svg%3E");
+  --alt-tint: rgba(0, 0, 0, 0.025);
+
+  /* The full-bleed gutter — the only horizontal rhythm on the page. */
+  --gutter:    clamp(20px, 4.5vw, 72px);
+  --radius:    16px;
+  --radius-sm: 12px;
+}
+
+:root[data-theme="dark"] {
   --base:      #0b0b0f;
   --raise:     #121218;
   --surface:   #16161d;
@@ -24,18 +67,18 @@
   --ink-muted: #a3a3ae;
   --ink-faint: #6e6e7a;
 
-  /* Both accents are bright enough to carry a solid button with dark text
-     on it, and are used at the same strength so neither reads as secondary. */
+  /* Brighter, because they sit on near-black and carry dark text. */
   --pink:      #ff3d87;
   --pink-hi:   #ff5c9c;
   --blue:      #38c6ff;
   --blue-hi:   #5bd2ff;
   --ok:        #5fd39a;
 
-  /* The full-bleed gutter — the only horizontal rhythm on the page. */
-  --gutter:    clamp(20px, 4.5vw, 72px);
-  --radius:    16px;
-  --radius-sm: 12px;
+  --on-accent: #0b0b0f;
+  --ring:      rgba(255, 255, 255, 0.55);
+
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='1.5' cy='1.5' r='1.5' fill='%23ffffff' fill-opacity='0.07'/%3E%3C/svg%3E");
+  --alt-tint: rgba(255, 255, 255, 0.026);
 }
 
 * { box-sizing: border-box; }
@@ -55,7 +98,7 @@ body {
      the tile is a constant 26px at every screen size, which is why this needs
      no breakpoints. */
   background-color: var(--base);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='1.5' cy='1.5' r='1.5' fill='%23ffffff' fill-opacity='0.07'/%3E%3C/svg%3E");
+  background-image: var(--dots);
   background-size: 26px 26px;
   background-attachment: fixed;
   font-family: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
@@ -325,10 +368,10 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .btn-lg { padding: 14px 28px; font-size: 15.5px; }
 
 /* Two bright solid fills, equal weight — pink for "free", blue to start. */
-.btn-solid { background: var(--pink); color: #0b0b0f; }
+.btn-solid { background: var(--pink); color: var(--on-accent); }
 .btn-solid:hover { background: var(--pink-hi); }
 
-.btn-blue { background: var(--blue); color: #0b0b0f; }
+.btn-blue { background: var(--blue); color: var(--on-accent); }
 .btn-blue:hover { background: var(--blue-hi); }
 
 .btn-line { border-color: var(--line-hi); color: var(--ink); }
@@ -395,7 +438,7 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .nav-mobile[hidden] { display: none; }
 .nav-mobile a { padding: 12px 2px; font-size: 16px; font-weight: 500; color: var(--ink-muted); }
 .nav-mobile a:hover { color: var(--ink); }
-.nav-mobile .btn { margin-top: 10px; color: #0b0b0f; }
+.nav-mobile .btn { margin-top: 10px; color: var(--on-accent); }
 
 /* ── Hero ───────────────────────────────────────────────────────────── */
 
@@ -524,7 +567,7 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .section { padding: clamp(64px, 9vh, 110px) 0; border-bottom: 1px solid var(--line); }
 /* Translucent rather than the solid --raise, so the dotted ground still
    reads through the alternating bands instead of being painted over. */
-.section--alt { background: rgba(255, 255, 255, 0.026); }
+.section--alt { background: var(--alt-tint); }
 
 .section-head { max-width: 62ch; margin-bottom: clamp(32px, 4.5vw, 52px); }
 
@@ -944,3 +987,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   .dash-grid { grid-template-columns: minmax(0, 1fr); }
   .markets { max-width: 520px; }
 }
+
+/* The light/dark button. Icon plus word, so it is not a mystery glyph. */
+.theme-b { display: inline-flex; align-items: center; gap: 7px; }

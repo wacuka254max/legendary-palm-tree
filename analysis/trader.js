@@ -25,6 +25,29 @@
   /** Deriv's floor. A stake under this is rejected, so stop before sending. */
   var MIN_STAKE = 0.35;
 
+  /**
+   * A spot as Deriv displays it.
+   *
+   * Prefer the *_display_value strings, which already carry the market's
+   * trailing zeros. Fall back to the numeric fields, formatted to the same
+   * decimal count — a raw number would print 1234.5 where Deriv shows
+   * 1234.50, and the last digit is the whole contract.
+   */
+  function pick(c, stringKeys, numberKeys, decimals) {
+    var i, v;
+    for (i = 0; i < stringKeys.length; i++) {
+      v = c[stringKeys[i]];
+      if (typeof v === "string" && v !== "") return v;
+    }
+    for (i = 0; i < numberKeys.length; i++) {
+      v = c[numberKeys[i]];
+      if (typeof v === "number" && isFinite(v)) return v.toFixed(decimals);
+    }
+    return null;
+  }
+
+  var PIP_DECIMALS = { R_10: 3, R_25: 3, R_50: 4, R_75: 4, R_100: 2 };
+
   function Trader(session, ui) {
     this.s = session;
     this.ui = ui;
@@ -60,10 +83,24 @@
       var c = d.proposal_open_contract;
       if (this.pending.stage !== "settle") return;
       if (this.pending.contractId && c.contract_id !== this.pending.contractId) return;
+
+      /* Read the spots from EVERY update, not just the settling one. The entry
+         spot is reported when the contract opens and is frequently absent from
+         the final message — waiting for is_sold to read it is why both spots
+         came out blank. Whatever has been seen most recently wins, so a value
+         that arrives late still lands. */
+      var seenEntry = pick(c, ["entry_tick_display_value", "entry_spot_display_value"],
+                              ["entry_tick", "entry_spot"], this.decimals);
+      var seenExit = pick(c, ["exit_tick_display_value", "current_spot_display_value"],
+                             ["exit_tick", "current_spot"], this.decimals);
+      if (seenEntry != null) this.pending.entry = seenEntry;
+      if (seenExit != null) this.pending.exit = seenExit;
+
       if (!c.is_sold) return;
 
       var profit = parseFloat(c.profit) || 0;
       var stake = parseFloat(c.buy_price) || this.pending.stake;
+      var exit = this.pending.exit;
 
       this.pending.resolve({
         win: profit > 0,
@@ -73,13 +110,10 @@
            stake+profit in that case — it is zero, and the running total has to
            reflect that or "total payout" becomes meaningless. */
         payout: profit > 0 ? stake + profit : 0,
-        // The two spots Deriv settled between, as it displays them.
-        entry: c.entry_tick_display_value || c.entry_spot_display_value || null,
-        exit: c.exit_tick_display_value || c.exit_spot_display_value || null,
+        entry: this.pending.entry,
+        exit: exit,
         // Deriv reports the settling tick; it is what makes a result checkable.
-        digit: typeof c.exit_tick_display_value === "string"
-          ? parseInt(c.exit_tick_display_value.slice(-1), 10)
-          : null
+        digit: typeof exit === "string" ? parseInt(exit.charAt(exit.length - 1), 10) : null
       });
     }
   };
@@ -102,10 +136,14 @@
         finish(reject, new Error("Deriv did not settle that trade in time."));
       }, 60000);
 
+      self.decimals = PIP_DECIMALS[spec.market] != null ? PIP_DECIMALS[spec.market] : 2;
+
       self.pending = {
         stage: "proposal",
         stake: spec.stake,
         contractId: null,
+        entry: null,
+        exit: null,
         resolve: function (v) { finish(resolve, v); },
         reject: function (e) { finish(reject, e); }
       };
