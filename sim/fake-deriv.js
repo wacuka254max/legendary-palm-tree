@@ -41,14 +41,18 @@
   var START = { R_10: 6500, R_25: 2400, R_50: 240, R_75: 95000, R_100: 1200 };
   var VOL = { R_10: 0.10, R_25: 0.25, R_50: 0.50, R_75: 0.75, R_100: 1.00 };
 
-  var TICK_MS = 1000;
+  /* Volatility 10 through 100 tick every TWO seconds. Only the 1s variants —
+     which this page deliberately does not carry — tick every second. Generating
+     one a second ran the whole simulation at double speed: a one-tick contract
+     settled in half the time it can, and the bot looked twice as quick as it
+     will ever be. */
+  var TICK_MS = 2000;
   var EDGE = 0.025;
 
-  /* Deriv's app markup: the slice an application takes on every contract it
-     sends. It is added to the PRICE, not taken out of the payout, so a 1.00
-     stake is bought for 1.03 and a win pays the same as it always would. That
-     is why it shows up as a slightly larger buy price in the ledger and as a
-     slightly smaller profit — exactly where it will show up in production. */
+  /* The app markup: 3% of the stake, taken OUT OF THE PROFIT. The contract
+     costs the stake and nothing more — a 1.00 trade is bought for 1.00 — and a
+     win that would have paid 0.95 pays 0.92 instead. A loss is the stake, with
+     nothing added: there is no profit to take a slice of. */
   var MARKUP = 0.03;
 
   /* Deriv caps what a single contract can return. */
@@ -204,8 +208,8 @@
     return Math.min(MAX_PAYOUT, Math.round(stake / p * (1 - EDGE) * 100) / 100);
   }
 
-  /** What the contract actually costs: the stake plus this app's markup. */
-  function priceFor(stake) { return round2(stake * (1 + MARKUP)); }
+  /** The slice this app takes when a contract wins. */
+  function markupOn(stake) { return round2(stake * MARKUP); }
 
   function round2(n) { return Math.round(n * 100) / 100; }
 
@@ -406,19 +410,16 @@
       stake: stake
     };
 
-    var price = priceFor(stake);
-
     this.emit({
       msg_type: "proposal",
       echo_req: req,
       proposal: {
         id: id,
-        /* The price INCLUDES the markup, which is what Deriv quotes and what
-           app.js then sends back as the buy price. */
-        ask_price: price,
+        // The contract costs the stake; the markup comes off the win.
+        ask_price: stake,
         payout: payoutFor(req.contract_type, barrier, stake),
-        display_value: price.toFixed(2),
-        commission: round2(price - stake),
+        display_value: stake.toFixed(2),
+        commission: markupOn(stake),
         longcode: "Simulated contract."
       }
     });
@@ -435,7 +436,7 @@
     delete this.props[req.buy];
 
     var m = market(p.sym);
-    var price = priceFor(p.stake);
+    var price = p.stake;
 
     /* You cannot buy what you cannot afford, and a simulator that lets you is
        worth nothing: the whole point of setting a balance of 80 is to find out
@@ -531,11 +532,14 @@
     this.pending = this.pending.filter(function (x) { return x !== c; });
 
     var won = c.shouldWin;
-    /* Against what was PAID, not against the stake: the markup is part of the
-       cost of the trade, so a win returns a little less and a loss costs a
-       little more than the stake alone. */
-    var profit = won ? round2(c.payout - c.price) : -c.price;
-    if (won) balance = round2(balance + c.payout);
+
+    /* The markup comes out of the WIN. A winning contract returns its payout
+       less this app's 3% of the stake; a losing one costs the stake and no
+       more, because there is no profit to take a slice of. */
+    var cut = won ? markupOn(c.stake) : 0;
+    var returned = won ? round2(c.payout - cut) : 0;
+    var profit = round2(returned - c.price);
+    balance = round2(balance + returned);
 
     this.emit({
       msg_type: "proposal_open_contract",
@@ -544,7 +548,7 @@
         contract_id: c.id,
         underlying: c.sym,
         buy_price: c.price,
-        payout: won ? c.payout : 0,
+        payout: returned,
         is_sold: 1,
         status: won ? "won" : "lost",
         profit: profit,
@@ -554,7 +558,7 @@
         exit_tick_display_value: quote.toFixed(m.dec),
         current_spot: quote,
         current_spot_display_value: quote.toFixed(m.dec),
-        sell_price: won ? c.payout : 0
+        sell_price: returned
       }
     });
 

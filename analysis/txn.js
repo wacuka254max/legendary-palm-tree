@@ -84,7 +84,12 @@
     this.rows.unshift(r);
     // A session can run long; the panel keeps what a person would scroll.
     if (this.rows.length > 200) this.rows.pop();
+    /* Only this render paints the top row as arriving. render() rebuilds the
+       whole list, so without the flag every row would slide in again each time
+       a trade settled — a panel that jumps rather than one that receives. */
+    this.arriving = true;
     this.render();
+    this.arriving = false;
   };
 
   /**
@@ -139,8 +144,8 @@
     var t = this.totals();
 
     body.innerHTML = this.rows.length
-      ? this.rows.map(function (r) {
-          return '<li class="tx">' +
+      ? this.rows.map(function (r, i) {
+          return '<li class="tx' + (i === 0 && self.arriving ? " tx--in" : "") + '">' +
             '<span class="tx-type">' +
               '<span class="tx-dot tx-dot--' + (r.win ? "win" : "loss") + '"></span>' +
               '<span class="tx-type-t">' + esc(r.label) + "</span>" +

@@ -420,6 +420,25 @@
   font-size: 12px;
 }
 .tx:last-child { border-bottom: 0; }
+
+/* The newest trade arrives from the right rather than appearing.
+   Two reasons it is worth the twenty lines: a result that simply appears at
+   the top of a list is easy to miss when you were looking at a card, and the
+   movement says WHICH row is new when three rows in a row read "Even 1.00".
+   Only the row that has just landed carries the class — see txn.js. */
+@keyframes tx-in {
+  from { opacity: 0; transform: translateX(26px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.tx--in { animation: tx-in 340ms cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+
+/* The row is briefly wider than its column while it travels. */
+.txn-rows { overflow-x: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tx--in { animation: none; }
+}
 .tx-none { padding: 26px 0; font-size: 12.5px; color: var(--ink-faint); text-align: center; }
 
 .tx-type { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; align-items: center; }
