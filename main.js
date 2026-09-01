@@ -5,8 +5,6 @@
   "use strict";
 
   var nav = document.querySelector(".nav");
-  var toggle = document.querySelector(".nav-toggle");
-  var menu = document.getElementById("mobile-menu");
 
   /* ── Nav gets a solid background once the hero scrolls under it ── */
   if (nav) {
@@ -17,33 +15,8 @@
     window.addEventListener("scroll", onScroll, { passive: true });
   }
 
-  /* ── Mobile menu ── */
-  if (toggle && menu) {
-    var setOpen = function (open) {
-      toggle.setAttribute("aria-expanded", String(open));
-      menu.hidden = !open;
-    };
-
-    toggle.addEventListener("click", function () {
-      setOpen(toggle.getAttribute("aria-expanded") !== "true");
-    });
-
-    // Tapping any link closes it, so the anchor jump isn't hidden behind the panel.
-    menu.addEventListener("click", function (e) {
-      if (e.target.closest("a")) setOpen(false);
-    });
-
-    // The menu only exists below 900px — leaving it open through a resize
-    // would strand a panel on a desktop layout that has no way to close it.
-    window.addEventListener("resize", function () {
-      if (window.innerWidth > 900) setOpen(false);
-    });
-  }
-
   /* ── Reveal sections as they come into view ── */
-  var targets = document.querySelectorAll(
-    ".section > .shell > *, .hero-inner > *, .cta-box"
-  );
+  var targets = document.querySelectorAll(".hero-inner > *");
 
   if (!("IntersectionObserver" in window)) return; // no observer → content stays visible
 

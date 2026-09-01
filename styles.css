@@ -138,7 +138,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   white-space: nowrap;
 }
 
-.dash-sub { max-width: 56ch; margin-top: -8px; margin-bottom: 28px; color: var(--ink-muted); }
 
 /* Real vs demo. Blue is the live account; the demo is deliberately quieter so
    the two can never be mistaken for one another at a glance. */
@@ -234,7 +233,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 
 /* A blank canvas for a page that has not been built yet. */
-.panel { min-height: 220px; border: 1px dashed var(--line-hi); border-radius: var(--radius); }
 
 /* ── Detail sheet ───────────────────────────────────────────────────────── */
 
@@ -424,52 +422,7 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .brand-mark { display: block; width: 30px; height: 30px; flex: none; }
 .brand-name { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
 
-.nav-links { display: flex; gap: 28px; margin-inline: auto; }
-.nav-links a {
-  font-size: 14.5px;
-  font-weight: 500;
-  color: var(--ink-muted);
-  padding-bottom: 2px;
-  border-bottom: 2px solid transparent;
-  transition: color 0.18s ease, border-color 0.18s ease;
-}
-.nav-links a:hover { color: var(--ink); border-bottom-color: var(--pink); }
-
-/* Hard right, at every width. The links that used to sit between the brand
-   and these buttons carried the auto margin that pushed them over; with the
-   links gone the buttons have to claim that space themselves. */
 .nav-cta { display: flex; gap: 8px; margin-left: auto; }
-
-.nav-toggle {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  width: 42px; height: 42px;
-  margin-left: auto;
-  padding: 0 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  cursor: pointer;
-}
-.nav-toggle span { display: block; height: 2px; width: 100%; background: var(--ink); border-radius: 2px; transition: transform 0.2s ease, opacity 0.15s ease; }
-.nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
-.nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-.nav-mobile {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px var(--gutter) 20px;
-  background: var(--base);
-  border-top: 1px solid var(--line);
-}
-.nav-mobile[hidden] { display: none; }
-.nav-mobile a { padding: 12px 2px; font-size: 16px; font-weight: 500; color: var(--ink-muted); }
-.nav-mobile a:hover { color: var(--ink); }
-.nav-mobile .btn { margin-top: 10px; color: var(--on-accent); }
 
 /* ── Hero ───────────────────────────────────────────────────────────── */
 
@@ -603,141 +556,9 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 @media (max-width: 760px) { .marks-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 460px) { .marks-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-/* ── Sections ───────────────────────────────────────────────────────── */
-
-.section { padding: clamp(64px, 9vh, 110px) 0; border-bottom: 1px solid var(--line); }
-/* Translucent rather than the solid --raise, so the dotted ground still
-   reads through the alternating bands instead of being painted over. */
-.section--alt { background: var(--alt-tint); }
-
-.section-head { max-width: 62ch; margin-bottom: clamp(32px, 4.5vw, 52px); }
-
-.eyebrow {
-  margin-bottom: 14px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--pink);
-}
-
-.section-title { font-size: clamp(1.75rem, 3.4vw, 2.6rem); font-weight: 700; max-width: 20ch; }
-.section-sub { margin-top: 16px; font-size: clamp(0.97rem, 1.3vw, 1.05rem); color: var(--ink-muted); }
-
-/* ── Platform logos ─────────────────────────────────────────────────── */
-
-.logo-grid {
-  display: grid;
-  /* 8 across on a wide screen, down to 2 on a phone — no media query. */
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
-  gap: 12px;
-}
-
-.logo-card {
-  display: grid;
-  place-items: center;
-  gap: 14px;
-  min-height: 128px;
-  padding: 24px 16px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  transition: background 0.18s ease, border-color 0.18s ease;
-}
-.logo-card:hover { background: var(--surface-2); border-color: var(--line-hi); }
-.logo-card img { max-height: 28px; max-width: 80%; width: auto; object-fit: contain; }
-.logo-card span {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  text-align: center;
-}
-
-/* ── Feature cards ──────────────────────────────────────────────────── */
-
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: 12px;
-}
-
-.card {
-  padding: clamp(22px, 2.4vw, 30px);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  transition: border-color 0.18s ease;
-}
-.card:hover { border-color: var(--line-hi); }
-.card h3 { margin: 18px 0 9px; font-size: 1.1rem; font-weight: 650; }
-.card p { font-size: 0.94rem; color: var(--ink-muted); }
-
-.card-icon {
-  display: grid;
-  place-items: center;
-  width: 42px; height: 42px;
-  border: 1px solid var(--line-hi);
-  border-radius: 11px;
-  background: var(--surface-2);
-}
+/* Tile icons on the dashboard. */
 .icon-pink { color: var(--pink); }
 .icon-blue { color: var(--blue); }
-
-/* ── Steps ──────────────────────────────────────────────────────────── */
-
-.steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: clamp(16px, 2.4vw, 34px);
-}
-
-.step { padding-top: 22px; border-top: 2px solid var(--pink); }
-.step-num {
-  display: block;
-  margin-bottom: 14px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--ink-faint);
-}
-.step h3 { margin-bottom: 9px; font-size: 1.1rem; font-weight: 650; }
-.step p { font-size: 0.94rem; color: var(--ink-muted); }
-
-/* ── Prop firms ─────────────────────────────────────────────────────── */
-
-.prop-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
-  gap: 12px;
-}
-
-.prop-card {
-  display: grid;
-  place-items: center;
-  min-height: 112px;
-  padding: 24px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  transition: background 0.18s ease, border-color 0.18s ease;
-}
-.prop-card:hover { background: var(--surface-2); border-color: var(--line-hi); }
-.prop-card img { max-height: 28px; max-width: 78%; width: auto; object-fit: contain; }
-
-/* ── Closing CTA ────────────────────────────────────────────────────── */
-
-.cta { padding: clamp(56px, 8vh, 96px) 0; border-bottom: 1px solid var(--line); }
-.cta-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 28px;
-}
-.cta h2 { font-size: clamp(1.7rem, 3.2vw, 2.4rem); font-weight: 700; max-width: 18ch; }
-.cta p { margin-top: 12px; max-width: 52ch; font-size: 1rem; color: var(--ink-muted); }
 
 /* ── Footer ─────────────────────────────────────────────────────────── */
 
@@ -745,9 +566,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .footer-inner { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; align-items: flex-start; }
 .footer-brand { max-width: 42ch; }
 .footer-brand p { margin-top: 10px; font-size: 0.9rem; color: var(--ink-faint); }
-.footer-links { display: flex; flex-wrap: wrap; gap: 22px; }
-.footer-links a { font-size: 0.9rem; color: var(--ink-muted); }
-.footer-links a:hover { color: var(--ink); }
 .footer-legal { margin-top: 30px; padding-top: 22px; }
 .footer-legal p { font-size: 0.76rem; color: var(--ink-faint); border-top: 1px solid var(--line); padding-top: 22px; }
 
