@@ -75,7 +75,8 @@
   var txn = new window.EvieTxn({ root: document.getElementById("txn"), nameOf: nameOf });
 
   var session = new window.EvieSession();
-  var accounts = [];
+  var accounts = [];            // what the picker is offering
+  var allAccounts = [];         // everything this login has, demo included
   var analysers = {};          // sym -> Analyser
   var active = defaultActive();  // which symbols have a card
   var subs = {};               // sym -> subscription id
@@ -683,12 +684,15 @@
   function describeAccount() {
     var a = accounts.filter(function (x) { return x.id === $("account").value; })[0];
     if (!a) return;
-    $("acct-badge").textContent = a.demo ? "Demo" : "Real";
+    /* The account says what it is. Normally that is Real or Demo; the
+       simulation's account calls itself Simulation, so the badge tells the
+       truth on that page without this one knowing a simulation exists. */
+    $("acct-badge").textContent = a.label || (a.demo ? "Demo" : "Real");
     $("acct-badge").classList.toggle("badge--demo", a.demo);
     $("balance").textContent = money(a.balance, a.currency);
-    $("risk").textContent = a.demo
+    $("risk").textContent = a.risk || (a.demo
       ? "Demo account — trades here are practice money."
-      : "Real account — every trade placed here uses your own money.";
+      : "Real account — every trade placed here uses your own money.");
     $("risk").className = "risk" + (a.demo ? "" : " risk--real");
   }
 
@@ -717,6 +721,71 @@
   }
 
   $("account").addEventListener("change", function () { describeAccount(); openSession($("account").value); });
+
+  /* ── the account picker ─────────────────────────────────────────────────
+     Real accounts only, and the picker is not on the page at all until the
+     "a" of "analysis" is clicked three times. Trading the wrong account is the
+     one mistake this page cannot take back, and a dropdown sitting open with a
+     demo one line below the real one is how that mistake gets made.
+
+     Three clicks, not two: a double click is something a person does to a word
+     by accident. */
+
+  var showDemo = false;
+
+  /** Paint the picker. Real accounts only, unless the demo has been revealed. */
+  function renderAccounts() {
+    var keep = $("account").value;
+
+    accounts = showDemo
+      ? allAccounts
+      : allAccounts.filter(function (a) { return !a.demo; });
+
+    // A login with nothing but a demo would otherwise show an empty picker.
+    if (!accounts.length) accounts = allAccounts;
+
+    $("account").innerHTML = accounts.map(function (a) {
+      return '<option value="' + esc(a.id) + '">' + esc(a.id) + " · " +
+        (a.demo ? "Demo" : "Real") + " · " + esc(money(a.balance, a.currency)) + "</option>";
+    }).join("");
+
+    if (keep && accounts.some(function (a) { return a.id === keep; })) $("account").value = keep;
+  }
+
+  var key = $("acct-key");
+  if (key) {
+    key.addEventListener("click", function (e) {
+      if (e.detail < 3) return;               // the browser counts them for us
+      if (inFlight) return;                   // not mid-trade
+
+      if (!showDemo && !allAccounts.some(function (a) { return a.demo; })) {
+        return status("This login has no demo options account.", "warning");
+      }
+
+      showDemo = !showDemo;
+      key.classList.toggle("acct-reveal--on", showDemo);
+      $("acct-fld").hidden = !showDemo;
+      renderAccounts();
+
+      if (!showDemo) {
+        /* Coming back out, the real account is the one that must be live.
+           Re-rendering the picker already drops the demo option and leaves the
+           real one selected — which looked like nothing to do, and was the bug:
+           the badge still said Demo and the SOCKET was still the demo one, with
+           the picker now hidden. A hidden mismatch is the exact failure this
+           arrangement exists to prevent, so the check is against the session,
+           not against the dropdown. */
+        var real = accounts.filter(function (a) { return !a.demo; })[0];
+        if (real) {
+          $("account").value = real.id;
+          describeAccount();
+          if (session.accountId !== real.id) openSession(real.id);
+        }
+      }
+
+      status(showDemo ? "Accounts shown — demo included." : "Back to the real account.", "info");
+    });
+  }
 
   /* ── go ─────────────────────────────────────────────────────────────── */
 
@@ -759,21 +828,18 @@
   if (remembered) openSession(remembered);
 
   D.portfolio().then(function (d) {
-    accounts = d.accounts
+    allAccounts = d.accounts
       .filter(function (a) { return a.kind === "Options"; })
       .sort(function (x, y) {
         if (x.demo !== y.demo) return x.demo ? 1 : -1;
         return (y.balance || 0) - (x.balance || 0);
       });
 
-    if (!accounts.length) return status("This login has no Deriv options account.", "error");
+    if (!allAccounts.length) return status("This login has no Deriv options account.", "error");
 
-    $("account").innerHTML = accounts.map(function (a) {
-      return '<option value="' + esc(a.id) + '">' + esc(a.id) + " · " +
-        (a.demo ? "Demo" : "Real") + " · " + esc(money(a.balance, a.currency)) + "</option>";
-    }).join("");
+    renderAccounts();
 
-    // Keep the remembered account if it is still one of theirs.
+    // Keep the remembered account if it is still one of the ones on offer.
     var keep = accounts.filter(function (a) { return a.id === remembered; })[0];
     $("account").value = keep ? keep.id : accounts[0].id;
     describeAccount();

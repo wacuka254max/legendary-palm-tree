@@ -103,11 +103,16 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
   <!-- ── settings ─────────────────────────────────────────────────────── -->
   <section class="tools">
     <div class="tools-head">
+      <!-- No handle here. The simulation has exactly one account and no demo
+           to hide behind, so there is nothing for a triple click to reveal. -->
       <h1 class="tools-t">Market analysis tools</h1>
     </div>
 
     <div class="tools-grid">
-      <label class="fld">
+      <!-- Kept in the page because app.js reads and writes it, but never
+           shown: there is one simulated account and choosing it is not a
+           decision anybody has to make. -->
+      <label class="fld fld--acct" id="acct-fld" hidden>
         <span class="fld-k">Account</span>
         <select class="fld-i" id="account"></select>
       </label>

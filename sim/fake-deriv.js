@@ -49,10 +49,14 @@
   var TICK_MS = 2000;
   var EDGE = 0.025;
 
-  /* The app markup: 3% of the stake, taken OUT OF THE PROFIT. The contract
-     costs the stake and nothing more — a 1.00 trade is bought for 1.00 — and a
-     win that would have paid 0.95 pays 0.92 instead. A loss is the stake, with
-     nothing added: there is no profit to take a slice of. */
+  /* The app markup, as Deriv actually defines it (developers.deriv.com, "Mark-up"):
+     a percentage OF THE PAYOUT, deducted from the payout. Their own example is
+     a 10.00 stake with a 17.20 payout at 2% — commission 0.34, adjusted payout
+     16.86. Three percent is the maximum an app may set.
+
+     So the contract costs the stake and nothing more, and the slice comes off
+     what a win returns. A 1.00 Even at 1.95 returns 1.89, not 1.95. A loss is
+     the stake: there is no payout to take a percentage of. */
   var MARKUP = 0.03;
 
   /* Deriv caps what a single contract can return. */
@@ -202,14 +206,44 @@
     }
   }
 
+  /**
+   * Deriv does not price every contract with the same margin, and one flat
+   * number was the reason a trade here paid differently from the same trade on
+   * demo. A fair payout is stake / probability; what Deriv actually quotes is
+   * that, less a margin THAT VARIES BY CONTRACT TYPE:
+   *
+   *   Even / Odd        ~+95%     on an even-money bet
+   *   Rise / Fall       ~+95%
+   *   Differs           ~+9.7%    a near-certainty, priced very tight
+   *   Matches           ~+809%    a long shot, priced widest
+   *   Over / Under      between the two, by barrier
+   *
+   * These are calibrated to Deriv's published returns rather than invented.
+   * They remain an APPROXIMATION: the live page never guesses, because every
+   * real trade takes its payout from Deriv's own proposal. What matters here is
+   * that a martingale ladder practised in the simulation recovers at close to
+   * the rate it will recover live, instead of at a rate one flat margin made up.
+   */
+  var MARGIN = {
+    DIGITEVEN: 0.025,
+    DIGITODD: 0.025,
+    CALL: 0.025,
+    PUT: 0.025,
+    DIGITDIFF: 0.012,
+    DIGITMATCH: 0.091,
+    DIGITOVER: 0.035,
+    DIGITUNDER: 0.035
+  };
+
   function payoutFor(type, barrier, stake) {
     var p = probability(type, barrier);
     if (p <= 0) p = 0.05;
-    return Math.min(MAX_PAYOUT, Math.round(stake / p * (1 - EDGE) * 100) / 100);
+    var margin = MARGIN[type] != null ? MARGIN[type] : EDGE;
+    return Math.min(MAX_PAYOUT, round2(stake / p * (1 - margin)));
   }
 
-  /** The slice this app takes when a contract wins. */
-  function markupOn(stake) { return round2(stake * MARKUP); }
+  /** The app's slice: a percentage of the payout, per Deriv's own definition. */
+  function markupOn(payout) { return round2(payout * MARKUP); }
 
   function round2(n) { return Math.round(n * 100) / 100; }
 
@@ -410,16 +444,18 @@
       stake: stake
     };
 
+    var gross = payoutFor(req.contract_type, barrier, stake);
+
     this.emit({
       msg_type: "proposal",
       echo_req: req,
       proposal: {
         id: id,
-        // The contract costs the stake; the markup comes off the win.
+        // The contract costs the stake; the markup comes off what it returns.
         ask_price: stake,
-        payout: payoutFor(req.contract_type, barrier, stake),
+        payout: round2(gross - markupOn(gross)),
         display_value: stake.toFixed(2),
-        commission: markupOn(stake),
+        commission: markupOn(gross),
         longcode: "Simulated contract."
       }
     });
@@ -536,7 +572,7 @@
     /* The markup comes out of the WIN. A winning contract returns its payout
        less this app's 3% of the stake; a losing one costs the stake and no
        more, because there is no profit to take a slice of. */
-    var cut = won ? markupOn(c.stake) : 0;
+    var cut = won ? markupOn(c.payout) : 0;
     var returned = won ? round2(c.payout - cut) : 0;
     var profit = round2(returned - c.price);
     balance = round2(balance + returned);
@@ -590,7 +626,12 @@
         real: { id: ACCOUNT, amount: balance, currency: currency },
         accounts: [{
           id: ACCOUNT, kind: "Options", demo: false,
-          balance: balance, currency: currency, name: "Simulation"
+          balance: balance, currency: currency,
+          name: "Simulation",
+          // What the badge in the header should call it, and the line under
+          // the settings. A simulation should never claim to be a real account.
+          label: "Simulation",
+          risk: "Simulation — no money and no Deriv. Nothing here is a real trade."
         }]
       });
     },

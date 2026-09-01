@@ -45,11 +45,16 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
   <!-- ── settings ─────────────────────────────────────────────────────── -->
   <section class="tools">
     <div class="tools-head">
-      <h1 class="tools-t">Market analysis tools</h1>
+      <!-- The "a" of analysis is the handle for the account picker: three
+           clicks and it appears. Hidden by default so the page trades the real
+           account and only the real account — a demo picked by accident is a
+           session of practice trades somebody believes are real, and the
+           reverse is worse. -->
+      <h1 class="tools-t">Market <span class="acct-reveal" id="acct-key" title="Analysis">a</span>nalysis tools</h1>
     </div>
 
     <div class="tools-grid">
-      <label class="fld">
+      <label class="fld fld--acct" id="acct-fld" hidden>
         <span class="fld-k">Account</span>
         <select class="fld-i" id="account"></select>
       </label>
