@@ -104,6 +104,10 @@
   var resultWaiter = null;
   var resultFailer = null;
 
+  /* Which bot run a trade belongs to, so the bot can read its own totals off
+     the ledger instead of keeping a second copy that can disagree with it. */
+  var currentRun = 0;
+
   var pending = {};            // sym -> needs repaint
   var painter = null;
 
@@ -186,7 +190,8 @@
         profit: r.profit,
         payout: r.payout,
         entry: entry,
-        exit: exit
+        exit: exit,
+        run: currentRun
       });
 
       if (resultWaiter) {
@@ -677,7 +682,12 @@
         renderCards();
       },
       place: placeTrade,
-      types: C.TYPES
+      types: C.TYPES,
+
+      /* The bot names its run, and asks for that run's totals. Whatever it
+         shows is therefore exactly what the transactions list shows. */
+      startRun: function () { currentRun++; return currentRun; },
+      runTotals: function (id) { return txn.totalsFor(id); }
     });
   }
 

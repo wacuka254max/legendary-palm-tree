@@ -60,6 +60,25 @@
     this.render();
   };
 
+  /**
+   * Totals for one bot run, or for everything when no run is named.
+   *
+   * The bot reads its figures from here rather than keeping its own running
+   * count. A separate tally is a tally that can drift — miss one result and it
+   * reports a loss the ledger says was recovered.
+   */
+  Txn.prototype.totalsFor = function (run) {
+    var stake = 0, payout = 0, won = 0, lost = 0, n = 0;
+    this.rows.forEach(function (r) {
+      if (r.run !== run) return;
+      n++;
+      stake += r.stake || 0;
+      payout += r.payout || 0;
+      if (r.win) won++; else lost++;
+    });
+    return { stake: stake, payout: payout, trades: n, won: won, lost: lost, profit: payout - stake };
+  };
+
   Txn.prototype.totals = function () {
     var stake = 0, payout = 0, won = 0, lost = 0;
     this.rows.forEach(function (r) {

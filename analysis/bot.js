@@ -11,18 +11,25 @@
  * where the edge went. The check happens before each trade, never once at the
  * start.
  *
+ * Two rules keep it steady, and both were learned from it not being:
+ *
+ *   Its figures come from the TRANSACTIONS LEDGER, not from a tally it keeps
+ *   as it goes. A separate count can miss a result — and then it reports a
+ *   loss the ledger already shows recovered.
+ *
+ *   Every start takes the next GENERATION number, and only the loop holding
+ *   the current one may touch the panel. A run still unwinding can therefore
+ *   never switch off a run that has just begun, which is how the card came to
+ *   read "Stop" with nothing running behind it.
+ *
  * When it stops:
  *
- *   Take profit reached          → stop, in front.
- *   Stop loss reached            → stop, and it wins over everything below.
- *                                  It is the one number the user set to be
- *                                  protected by, so a martingale ladder does
- *                                  not get to overrule it.
- *   Neither set, and a win       → stop. The ladder has recovered.
- *   Neither set, and a loss      → keep going, staking up, until it recovers.
- *
- * A failed trade does not end the run — the socket reconnects underneath it, so
- * the bot waits and tries again rather than giving up on a blip.
+ *   Take profit reached   → stop, in front.
+ *   Stop loss reached     → stop, and this one overrides everything below. It
+ *                           is the number set to be protected by, so a
+ *                           martingale ladder does not get to overrule it.
+ *   Neither set, in front → stop; the ladder has recovered.
+ *   Neither set, behind   → keep going, staking up, until it is in front.
  */
 
 (function (global) {
@@ -42,28 +49,36 @@
 
   var running = false;
   var stopping = false;
-  /* Resolved the moment Stop is pressed. The loop races it against whatever it
-     is waiting on, so pressing Stop is felt at once rather than whenever the
-     current trade happens to finish. */
+  var generation = 0;      // only the current one may act
+  var runId = 0;           // the ledger's name for this run
+  var totals = { trades: 0, won: 0, profit: 0 };
+
+  /* Resolved the moment Stop is pressed, so the loop can race it against
+     whatever it is waiting on and feel the press at once. */
   var stopSignal = null;
   var fireStop = null;
-  var session = { trades: 0, wins: 0, losses: 0, profit: 0 };
 
   /* ── the panel ──────────────────────────────────────────────────────── */
 
   function say(msg, kind) {
     var s = el("bot-status");
+    if (!s) return;
     s.textContent = msg || "";
     s.className = "bot-status" + (kind ? " bot-status--" + kind : "");
   }
 
-  function paintStats() {
-    el("bot-trades").textContent = session.trades;
-    el("bot-wr").textContent = session.trades
-      ? Math.round((session.wins / session.trades) * 100) + "%" : "—";
+  /** Read this run's figures back off the ledger and show them. */
+  function syncStats() {
+    totals = runId && host ? host.runTotals(runId) : { trades: 0, won: 0, profit: 0 };
+
+    el("bot-trades").textContent = totals.trades || 0;
+    el("bot-wr").textContent = totals.trades
+      ? Math.round((totals.won / totals.trades) * 100) + "%" : "—";
+
     var p = el("bot-pl");
-    p.textContent = (session.profit >= 0 ? "+" : "") + session.profit.toFixed(2);
-    p.className = "bot-v " + (session.profit > 0 ? "is-up" : session.profit < 0 ? "is-down" : "");
+    var v = totals.profit || 0;
+    p.textContent = (v >= 0 ? "+" : "") + v.toFixed(2);
+    p.className = "bot-v " + (v > 0 ? "is-up" : v < 0 ? "is-down" : "");
   }
 
   function setRunning(on) {
@@ -97,31 +112,41 @@
   }
 
   function limits() {
+    var tpOn = el("bot-tp-tog").getAttribute("aria-checked") === "true";
+    var slOn = el("bot-sl-tog").getAttribute("aria-checked") === "true";
     return {
-      tp: el("bot-tp-tog").getAttribute("aria-checked") === "true" ? parseFloat(el("bot-tp").value) : null,
-      sl: el("bot-sl-tog").getAttribute("aria-checked") === "true" ? parseFloat(el("bot-sl").value) : null
+      tp: tpOn ? parseFloat(el("bot-tp").value) : null,
+      sl: slOn ? parseFloat(el("bot-sl").value) : null
     };
   }
 
-  /** Why the run should end, or null to carry on. */
-  function stopReason(lastWin) {
+  /** Why the run should end, or null to carry on. Judged on the ledger. */
+  function stopReason(t) {
     var l = limits();
+    var profit = t.profit || 0;
 
-    if (l.sl != null && !isNaN(l.sl) && session.profit <= -Math.abs(l.sl)) {
-      return { msg: "Stop loss hit at " + session.profit.toFixed(2) + ".", kind: "warning" };
+    if (l.sl != null && !isNaN(l.sl) && profit <= -Math.abs(l.sl)) {
+      return { msg: "Stop loss hit at " + profit.toFixed(2) + ".", kind: "warning" };
     }
-    if (l.tp != null && !isNaN(l.tp) && session.profit >= Math.abs(l.tp)) {
-      return { msg: "Take profit hit at +" + session.profit.toFixed(2) + ".", kind: "success" };
+    if (l.tp != null && !isNaN(l.tp) && profit >= Math.abs(l.tp)) {
+      return { msg: "Take profit hit at +" + profit.toFixed(2) + ".", kind: "success" };
     }
 
     var noLimits = (l.tp == null || isNaN(l.tp)) && (l.sl == null || isNaN(l.sl));
-    if (noLimits && lastWin) {
-      return { msg: "Recovered. Stopped on the win.", kind: "success" };
+    /* No limits: stop once the RUN is in front, which is what recovery means.
+       Stopping merely because the last trade won called a ladder recovered
+       while it was still behind. */
+    if (noLimits && t.trades > 0 && profit > 0) {
+      return { msg: "Recovered. Stopped in front at +" + profit.toFixed(2) + ".", kind: "success" };
     }
     return null;
   }
 
   /* ── the loop ───────────────────────────────────────────────────────── */
+
+  function armStop() {
+    stopSignal = new Promise(function (r) { fireStop = r; });
+  }
 
   function sleep(ms) {
     // Interruptible: a wait between trades must not outlive a Stop.
@@ -131,61 +156,81 @@
     ]);
   }
 
-  function armStop() {
-    stopSignal = new Promise(function (r) { fireStop = r; });
-  }
-
-  async function loop() {
+  async function loop(mine) {
     var pair = PAIRS.filter(function (p) { return p.id === el("bot-pair").value; })[0];
     var sym = el("bot-market").value;
+    var ended = null;
 
-    host.activate(sym);   // its market must be on the page to be analysed
+    var alive = function () { return mine === generation && running && !stopping; };
 
-    while (running && !stopping) {
-      if (!host.isLive()) { say("Waiting for Deriv…", "warning"); await sleep(1200); continue; }
-      if (host.busy()) { await sleep(300); continue; }
+    /* Refusals in a row end the run. Deriv rejects a stake bigger than the
+       balance, and a martingale ladder eventually gets there — retrying that
+       for ever is not persistence, it is a loop that never ends. */
+    var fails = 0;
+    var MAX_FAILS = 5;
 
-      // The check that has to happen every time, not once at the start.
-      var side = pickSide(pair, sym);
-      if (!side) { say("Waiting for enough ticks…", "warning"); await sleep(1200); continue; }
+    try {
+      host.activate(sym);
 
-      var stake = host.nextStake();
-      var label = host.types[side.type].label;
-      say("Trading " + label + " at " + side.pct.toFixed(1) + "% · " + stake.toFixed(2), "info");
+      while (alive()) {
+        if (!host.isLive()) { say("Waiting for Deriv…", "warning"); await sleep(1200); continue; }
+        if (host.busy()) { await sleep(300); continue; }
 
-      var r;
-      try {
-        /* Race the trade against Stop. If the user stops mid-trade the loop
-           leaves now; the trade itself still settles and still lands in the
-           transactions panel, it simply is not waited on. */
-        r = await Promise.race([
-          host.place(side.type, sym, stake),
-          stopSignal.then(function () { return null; })
-        ]);
-      } catch (e) {
-        // A refusal is a blip, not an ending — the socket reconnects under us.
-        say((e && e.message) || "Trade failed — retrying.", "warning");
-        await sleep(2500);
-        continue;
+        var side = pickSide(pair, sym);
+        if (!side) { say("Waiting for enough ticks…", "warning"); await sleep(1200); continue; }
+
+        var stake = host.nextStake();
+        say("Trading " + host.types[side.type].label + " at " +
+            side.pct.toFixed(1) + "% · " + stake.toFixed(2), "info");
+
+        var r;
+        try {
+          /* Raced against Stop so a press is felt at once. The trade itself is
+             not cancelled — it settles and is recorded either way, it simply
+             stops being waited on. */
+          r = await Promise.race([
+            host.place(side.type, sym, stake),
+            stopSignal.then(function () { return null; })
+          ]);
+        } catch (e) {
+          if (!alive()) break;
+          fails++;
+          if (fails >= MAX_FAILS) {
+            ended = {
+              msg: "Deriv refused " + fails + " trades in a row — stopped. " +
+                   "The stake may be larger than the balance.",
+              kind: "error"
+            };
+            break;
+          }
+          say((e && e.message) || "Trade refused — retrying.", "warning");
+          await sleep(2500);
+          continue;
+        }
+
+        if (!r) break;          // stopped while the trade was in flight
+        if (!alive()) break;
+
+        fails = 0;              // a trade got through; the count starts over
+        syncStats();
+
+        var stop = stopReason(totals);
+        if (stop) { ended = stop; break; }
+
+        await sleep(900);       // a breath; Deriv rate-limits a tight loop
       }
-
-      if (!r) break;          // stopped while the trade was in flight
-      if (stopping) break;
-
-      session.trades++;
-      session.profit = Math.round((session.profit + r.profit) * 100) / 100;
-      if (r.win) session.wins++; else session.losses++;
-      paintStats();
-
-      var stop = stopReason(r.win);
-      if (stop) { say(stop.msg, stop.kind); break; }
-
-      await sleep(900);   // a breath; Deriv rate-limits a tight loop
+    } catch (e) {
+      // Nothing may leave the card reading "Stop" with no loop behind it.
+      ended = { msg: (e && e.message) || "The bot stopped unexpectedly.", kind: "error" };
+    } finally {
+      if (mine === generation) {
+        syncStats();
+        setRunning(false);
+        stopping = false;
+        if (ended) say(ended.msg, ended.kind);
+        else if (!el("bot-status").textContent) say("Stopped.", "info");
+      }
     }
-
-    setRunning(false);
-    stopping = false;
-    if (!el("bot-status").textContent) say("Stopped.", "info");
   }
 
   /* ── dragging ───────────────────────────────────────────────────────── */
@@ -213,13 +258,14 @@
       var r = card.getBoundingClientRect();
       dx = e.clientX - r.left;
       dy = e.clientY - r.top;
-      handle.setPointerCapture(e.pointerId);
+      try { handle.setPointerCapture(e.pointerId); } catch (x) {}
       card.classList.add("is-dragging");
     });
 
     handle.addEventListener("pointermove", function (e) {
       if (!dragging) return;
       e.preventDefault();
+      // Moving the card only moves the card. Nothing here touches the run.
       place(card, e.clientX - dx, e.clientY - dy);
     });
 
@@ -237,8 +283,7 @@
     if (saved) {
       place(card, saved.x, saved.y);
     } else {
-      // Centred to begin with; it is the thing being introduced, and it can be
-      // dragged out of the way the moment it is in the way.
+      // Centred to begin with; it can be dragged aside the moment it is in the way.
       place(card,
         Math.round((global.innerWidth - card.offsetWidth) / 2),
         Math.round((global.innerHeight - card.offsetHeight) / 2));
@@ -278,23 +323,26 @@
     el("bot-run").addEventListener("click", function () {
       if (running) {
         stopping = true;
-        if (fireStop) fireStop();      // felt immediately, not after the trade
-        say("Stopped.", "warning");
+        generation++;                // whatever is running is no longer current
+        if (fireStop) fireStop();    // felt immediately, not after the trade
         setRunning(false);
+        say("Stopped.", "warning");
         return;
       }
-      session = { trades: 0, wins: 0, losses: 0, profit: 0 };
       stopping = false;
       armStop();
-      paintStats();
+      runId = host.startRun();
+      syncStats();
       setRunning(true);
       say("Starting…", "info");
-      loop();
+      loop(++generation);
     });
 
     el("bot-close").addEventListener("click", function () {
       stopping = true;
+      generation++;
       if (fireStop) fireStop();
+      setRunning(false);
       card.hidden = true;
       var open = el("bot-open");
       if (open) open.hidden = false;
@@ -310,7 +358,7 @@
 
     armStop();
     draggable(card, el("bot-head"));
-    paintStats();
+    syncStats();
   }
 
   global.EvieBot = { attach: attach, PAIRS: PAIRS };
