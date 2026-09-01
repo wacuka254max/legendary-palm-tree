@@ -1,0 +1,90 @@
+/* EVIE — the simulation's own few styles.
+   Everything else is styles.css and analysis.css, unchanged: the point of the
+   page is that it looks and behaves like the real one. */
+
+/* Nothing behind the setup card has started, so the page under it is empty.
+   Hiding it keeps a half-built layout from showing through the card. */
+.sim-body main,
+.sim-body .txn,
+.sim-body .bot,
+.sim-body .bot-open { visibility: hidden; }
+
+.sim-body.sim-running main,
+.sim-body.sim-running .txn,
+.sim-body.sim-running .bot,
+.sim-body.sim-running .bot-open { visibility: visible; }
+
+.badge--sim {
+  color: var(--over, #d97706);
+  border-color: currentColor;
+}
+
+.setup {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+.setup[hidden] { display: none; }
+
+.setup-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.setup-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.setup-k { margin: 0 0 2px; font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.setup-t { margin: 0; font-size: 1.15rem; }
+
+.setup-body { display: grid; gap: 14px; margin: 20px 0 14px; }
+/* .fld carries its own display, which would otherwise beat [hidden]. */
+.setup-body [hidden] { display: none; }
+.fld--row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Three exclusive choices, sized to be tapped rather than aimed at. */
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.seg-b {
+  padding: 9px 6px;
+  font: inherit;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.seg-b:hover { border-color: var(--line-hi); color: var(--ink); }
+.seg-b.is-on {
+  color: var(--on-accent);
+  background: var(--blue, #1e9bf0);
+  border-color: var(--blue, #1e9bf0);
+}
+
+/* The plan in a sentence, so nobody has to infer it from three controls. */
+.setup-say {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  background: var(--alt-tint, rgba(0, 0, 0, 0.03));
+  border-radius: 10px;
+}
+
+.setup-go { width: 100%; }
+
+.setup-note { margin: 14px 0 0; font-size: 0.76rem; line-height: 1.6; color: var(--ink-faint); }
+
+@media (max-width: 480px) {
+  .setup { padding: 12px; align-items: flex-start; }
+  .setup-card { padding: 18px; }
+}

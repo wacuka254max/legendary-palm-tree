@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Simulation | Evie</title>
+<meta name="robots" content="noindex,nofollow" />
+<meta name="theme-color" content="#f3f4f7" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<script>
+/* Applied before paint: a saved dark choice must not flash a light page first.
+   Light is the default when nothing has been chosen. */
+(function(){try{var t=localStorage.getItem("evie_theme");
+document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){}})();
+</script>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/analysis/analysis.css" />
+<link rel="stylesheet" href="/sim/sim.css" />
+</head>
+<body class="dash sim-body">
+
+<!-- ── the conditions ───────────────────────────────────────────────────
+     Shown before the page runs. Nothing behind it has started: no socket, no
+     ticks, no bot — so the balance and the run of losses are set before the
+     first trade rather than being applied to one already in flight. -->
+<div class="setup" id="setup">
+  <div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-t">
+    <div class="setup-head">
+      <div>
+        <p class="setup-k">Practice, with no money and no Deriv</p>
+        <h1 class="setup-t" id="setup-t">Set up the simulation</h1>
+      </div>
+      <a class="btn btn-line" href="/home.html">Home</a>
+    </div>
+
+    <div class="setup-body">
+      <label class="fld">
+        <span class="fld-k">Starting balance (USD)</span>
+        <input class="fld-i" id="sim-balance" type="number" min="1" step="1" value="1000" inputmode="decimal" />
+      </label>
+
+      <div class="fld">
+        <span class="fld-k">Losses</span>
+        <div class="seg" id="sim-mode" role="radiogroup" aria-label="Losses">
+          <button class="seg-b is-on" type="button" data-mode="none" role="radio" aria-checked="true">None</button>
+          <button class="seg-b" type="button" data-mode="consecutive" role="radio" aria-checked="false">In a row</button>
+          <button class="seg-b" type="button" data-mode="random" role="radio" aria-checked="false">Random</button>
+        </div>
+      </div>
+
+      <label class="fld" id="sim-count-fld" hidden>
+        <span class="fld-k"><span id="sim-count-k">How many in a row</span></span>
+        <input class="fld-i" id="sim-count" type="number" min="0" max="10" step="1" value="3" inputmode="numeric" />
+      </label>
+
+      <div class="fld fld--row">
+        <span class="fld-k">First trade loses</span>
+        <button class="tog" id="sim-first" type="button" role="switch" aria-checked="false" aria-label="First trade loses">
+          <span class="tog-dot"></span>
+        </button>
+      </div>
+    </div>
+
+    <p class="setup-say" id="sim-say"></p>
+
+    <button class="btn btn-blue btn-lg setup-go" id="sim-go" type="button">Start simulation</button>
+
+    <p class="setup-note">
+      Everything else behaves exactly as it does on the analysis page — every
+      symbol, every trade type, the martingale and the bot. Only the money and
+      the outcomes are arranged.
+    </p>
+  </div>
+</div>
+
+
+<header class="nav">
+  <div class="bleed nav-inner">
+    <a class="brand" href="/home.html">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff3d87"/><path d="M11 10h10M11 16h7M11 22h10" stroke="#0b0b0f" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-name">Evie</span>
+    </a>
+    <div class="perch">
+      <button class="btn btn-line theme-b" data-theme-toggle type="button" aria-pressed="false" title="Switch to dark">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <span data-theme-label>Dark</span>
+      </button>
+      <span class="perch-v" id="balance">—</span>
+      <span class="badge badge--sim" id="acct-badge">Simulation</span>
+      <a class="btn btn-line" href="/home.html">Home</a>
+    </div>
+  </div>
+</header>
+
+<main class="bleed dash-main">
+
+  <!-- ── settings ─────────────────────────────────────────────────────── -->
+  <section class="tools">
+    <div class="tools-head">
+      <h1 class="tools-t">Market analysis tools</h1>
+    </div>
+
+    <div class="tools-grid">
+      <label class="fld">
+        <span class="fld-k">Account</span>
+        <select class="fld-i" id="account"></select>
+      </label>
+      <label class="fld">
+        <span class="fld-k">Stake (USD)</span>
+        <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Reference digit</span>
+        <input class="fld-i" id="ref" type="number" min="0" max="9" step="1" value="5" inputmode="numeric" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Analysis count</span>
+        <input class="fld-i" id="count" type="number" min="10" max="5000" step="10" value="130" inputmode="numeric" />
+      </label>
+
+      <div class="fld fld--mart">
+        <span class="fld-k">
+          Martingale
+          <button class="tog" id="mart-tog" type="button" role="switch" aria-checked="true" aria-label="Martingale">
+            <span class="tog-dot"></span>
+          </button>
+        </span>
+        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" />
+      </div>
+    </div>
+
+    <div class="syms">
+      <span class="fld-k">Active symbols <span class="fld-hint">select a symbol to see its analysis</span></span>
+      <div class="syms-row" id="syms"></div>
+    </div>
+
+    <p class="tools-foot">
+      <span class="risk" id="risk"></span>
+      <span class="next-stake" id="next-stake"></span>
+    </p>
+
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <!-- ── one card per active symbol ───────────────────────────────────── -->
+  <section class="cards-grid" id="cards"></section>
+
+  <footer class="dash-foot">
+    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
+  </footer>
+
+</main>
+
+<!-- ── transactions ─────────────────────────────────────────────────────
+     A rail down the right on a wide screen; on a narrow one the same markup
+     becomes a sheet that rises from the bottom. -->
+<aside class="txn" id="txn">
+  <button class="txn-handle" data-handle type="button" aria-expanded="false" aria-controls="txn-body">
+    <span class="txn-grip" aria-hidden="true"></span>
+    <span class="txn-handle-t">Transactions <span class="txn-count" data-count></span></span>
+    <svg class="txn-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+  </button>
+
+  <div class="txn-body" id="txn-body">
+    <div class="txn-head">
+      <span>Type</span>
+      <span>Entry/Exit spot</span>
+      <span class="txn-head-r">Buy price and P/L</span>
+    </div>
+
+    <ul class="txn-rows" data-rows><li class="tx-none">No transactions yet.</li></ul>
+
+    <div class="sum">
+      <div class="sum-c"><span class="sum-k">Total stake</span><span class="sum-v" data-stake>0.00 USD</span></div>
+      <div class="sum-c"><span class="sum-k">Total payout</span><span class="sum-v" data-payout>0.00 USD</span></div>
+      <div class="sum-c"><span class="sum-k">No. of runs</span><span class="sum-v" data-runs>0</span></div>
+      <div class="sum-c"><span class="sum-k">Contracts lost</span><span class="sum-v" data-lost>0</span></div>
+      <div class="sum-c"><span class="sum-k">Contracts won</span><span class="sum-v" data-won>0</span></div>
+      <div class="sum-c"><span class="sum-k">Total profit/loss</span><span class="sum-v" data-pl>0.00 USD</span></div>
+    </div>
+
+    <button class="btn btn-line txn-reset" data-reset type="button">Reset</button>
+  </div>
+</aside>
+
+
+<!-- ── the floating bot ─────────────────────────────────────────────────
+     Drag it anywhere by its header; close it and a small button brings it
+     back. It does only what the cards allow by hand. -->
+<button class="bot-open" id="bot-open" type="button" hidden>
+  <span class="bot-open-dot" aria-hidden="true"></span>
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg>
+  <span id="bot-open-label">Open bot</span>
+</button>
+
+<aside class="bot" id="bot" aria-label="Trading bot">
+  <div class="bot-head" id="bot-head">
+    <span class="bot-grip" aria-hidden="true"></span>
+    <span class="bot-t">Auto bot</span>
+    <button class="bot-x" id="bot-close" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <div class="bot-body">
+    <label class="bot-f">
+      <span class="bot-k">Market</span>
+      <select class="fld-i" id="bot-market"></select>
+    </label>
+
+    <label class="bot-f">
+      <span class="bot-k">Trade type</span>
+      <select class="fld-i" id="bot-pair"></select>
+    </label>
+    <p class="bot-note">It takes whichever side of the pair is ahead, checked before every trade.</p>
+
+    <div class="bot-f">
+      <span class="bot-k">
+        Take profit
+        <button class="tog" id="bot-tp-tog" type="button" role="switch" aria-checked="false" aria-label="Take profit"><span class="tog-dot"></span></button>
+      </span>
+      <div id="bot-tp-row" hidden>
+        <input class="fld-i" id="bot-tp" type="number" min="0.01" step="0.01" value="5" inputmode="decimal" />
+      </div>
+    </div>
+
+    <div class="bot-f">
+      <span class="bot-k">
+        Stop loss
+        <button class="tog" id="bot-sl-tog" type="button" role="switch" aria-checked="false" aria-label="Stop loss"><span class="tog-dot"></span></button>
+      </span>
+      <div id="bot-sl-row" hidden>
+        <input class="fld-i" id="bot-sl" type="number" min="0.01" step="0.01" value="20" inputmode="decimal" />
+      </div>
+    </div>
+
+    <button class="btn btn-blue bot-run" id="bot-run" type="button">Start</button>
+
+    <dl class="bot-stats">
+      <div><dt>Trades</dt><dd class="bot-v" id="bot-trades">0</dd></div>
+      <div><dt>Win rate</dt><dd class="bot-v" id="bot-wr">—</dd></div>
+      <div><dt>P/L</dt><dd class="bot-v" id="bot-pl">+0.00</dd></div>
+    </dl>
+
+    <p class="bot-status" id="bot-status"></p>
+  </div>
+</aside>
+
+<!-- The simulation runs the REAL page. deriv.js is the only thing swapped:
+     fake-deriv.js answers in its place and hands session.js a socket of its
+     own, so app.js, bot.js and the rest are the same files analysis.html
+     loads. What is proved here is proved about that page, not about a copy.
+
+     setup.js holds the rest back until the conditions have been set, then
+     loads them in this order. -->
+<script src="/sim/fake-deriv.js"></script>
+<script src="/prefs.js"></script>
+<script src="/theme.js"></script>
+<script src="/sim/setup.js"></script>
+</body>
+</html>

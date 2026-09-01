@@ -141,6 +141,28 @@
     });
   }
 
+  /* ── the simulator's door ───────────────────────────────────────────────
+     Three clicks on the "o" of Home. `detail` counts the clicks in a run for
+     us, so this is the browser's own idea of a triple click rather than a
+     hand-rolled timer that would disagree with it.
+
+     Once open it stays open for the visit: someone who has found it should not
+     have to find it again on the way back from the simulation. */
+
+  var door = $("door");
+  var simCard = $("sim-card");
+  if (door && simCard) {
+    var DOOR_KEY = "evie_sim_door";
+    try { if (sessionStorage.getItem(DOOR_KEY) === "1") simCard.hidden = false; } catch (e) {}
+
+    door.addEventListener("click", function (e) {
+      if (e.detail < 3) return;
+      simCard.hidden = false;
+      try { sessionStorage.setItem(DOOR_KEY, "1"); } catch (x) {}
+    });
+  }
+
+
   /* ── reading it ─────────────────────────────────────────────────────────── */
 
   function load() {
