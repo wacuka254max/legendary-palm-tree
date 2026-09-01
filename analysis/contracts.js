@@ -12,6 +12,11 @@
  *   Even     DIGITEVEN   no barrier   wins on 0 2 4 6 8
  *   Odd      DIGITODD    no barrier   wins on 1 3 5 7 9
  *
+ * Rise and Fall are not digit contracts at all — they are CALL and PUT on the
+ * price itself, take no barrier, and win if the exit quote is above (or below)
+ * the entry. They sit on the same card because the same tick stream answers
+ * both questions.
+ *
  * The two narrowed ranges are not arbitrary and are the usual cause of an
  * "invalid barrier" error: nothing is over 9, so DIGITOVER stops at 8, and
  * nothing is under 0, so DIGITUNDER starts at 1. Sending Even or Odd WITH a
@@ -51,6 +56,16 @@
       id: "odd", label: "Odd", contract: "DIGITODD",
       barrier: false,
       explain: "Wins if the last digit is 1, 3, 5, 7 or 9."
+    },
+    rise: {
+      id: "rise", label: "Rise", contract: "CALL",
+      barrier: false,
+      explain: "Wins if the price ends higher than it started."
+    },
+    fall: {
+      id: "fall", label: "Fall", contract: "PUT",
+      barrier: false,
+      explain: "Wins if the price ends lower than it started."
     }
   };
 
@@ -97,13 +112,15 @@
       case "under": return digit < Number(barrier);
       case "even": return digit % 2 === 0;
       case "odd": return digit % 2 === 1;
+      // Rise and Fall settle on the price, not the digit, so a digit cannot
+      // answer for them.
       default: return false;
     }
   }
 
   global.EvieContracts = {
     TYPES: TYPES,
-    order: ["match", "differ", "over", "under", "even", "odd"],
+    order: ["rise", "fall", "even", "odd", "over", "under", "match", "differ"],
     clampBarrier: clampBarrier,
     proposal: proposal,
     wouldWin: wouldWin

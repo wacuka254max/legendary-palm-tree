@@ -152,7 +152,10 @@
           stake: r.stake,
           digit: r.digit,
           type: opts.type,
-          barrier: opts.barrier
+          barrier: opts.barrier,
+          // Which market it was — with several cards on screen, a result that
+          // does not say is a result you cannot place.
+          market: opts.market
         });
         self.ui.net(net);
 

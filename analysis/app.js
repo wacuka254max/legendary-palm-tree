@@ -1,17 +1,20 @@
 /**
- * EVIE — Analysis: read the digits, then act on them.
+ * EVIE — Analysis, laid out the way dbotzone's Advanced tool lays it out.
  *
- * Ties this page's modules together: a Session holding one OTP socket, a Digits
- * window computing the percentages, the contract rules, and a Trader that
- * places what the buttons ask for.
+ * One card per active symbol, each answering the same four questions at a
+ * glance and offering the trade on both sides of each:
  *
- * Markets are the five 2-second volatility indices. The 1-second (1HZ) versions
- * are deliberately absent — they were not asked for, and their digits turn over
- * faster than a table anyone can read.
+ *   Rise / Fall     from the price
+ *   Even / Odd      from the digit
+ *   Over / Under    from the digit against the reference digit
+ *   Matches/Differs the reference digit itself
  *
- * The account picker carries demo as well as real here, unlike Automatic AI:
- * this page exists to be tested against, and the OTP is per-account, so picking
- * the VRTC account genuinely opens a demo socket where every trade is practice.
+ * The side that is currently ahead is marked, because that is what the buttons
+ * are for: see that Even is running at 54% and take Even.
+ *
+ * Every symbol shares ONE socket. Ticks arrive per symbol and only that card
+ * is repainted, and no more than a few times a second — five markets streaming
+ * into a full re-render is exactly how this kind of page starts to stutter.
  */
 
 (function () {
@@ -21,6 +24,7 @@
   if (!D || !D.requireConnection()) return;
 
   var C = window.EvieContracts;
+  var A = window.EvieAnalyser;
   var $ = function (id) { return document.getElementById(id); };
 
   var MARKETS = [
@@ -31,19 +35,27 @@
     { sym: "R_100", name: "Volatility 100" }
   ];
 
-  var marketEl = $("market"), accountEl = $("account"), barrierEl = $("barrier");
-  var recentEl = $("recent"), gridEl = $("grid"), statusEl = $("status");
-  var balanceEl = $("balance"), badgeEl = $("acct-badge"), riskEl = $("risk");
-  var histEl = $("hist"), netEl = $("net"), stopBtn = $("stop");
-  var martTog = $("mart-tog"), martEl = $("mart"), typeNote = $("type-note");
+  /* The four pairs, in the order the card shows them. `key` reads the stat off
+     a stats() result; `label` is what the percentage bar says. */
+  var PAIRS = [
+    { a: "rise", b: "fall", tone: "rise", labels: ["Rise", "Fall"] },
+    { a: "even", b: "odd", tone: "even", labels: ["Even", "Odd"] },
+    { a: "over", b: "under", tone: "over", labels: ["Over", "Under"], ref: true },
+    { a: "match", b: "differ", tone: "match", labels: ["Matches", "Differs"], ref: true }
+  ];
 
   var session = new window.EvieSession();
-  var digits = new window.EvieDigits.Digits();
   var trader = null;
   var accounts = [];
-  var type = "match";
-  var tickSub = null;
+  var analysers = {};          // sym -> Analyser
+  var active = { R_10: true }; // which symbols have a card
+  var subs = {};               // sym -> subscription id
   var running = false;
+  var trading = false;
+  var settings = { stake: 1, ref: 5, count: 130 };
+
+  var pending = {};            // sym -> needs repaint
+  var painter = null;
 
   function esc(v) {
     return String(v == null ? "" : v)
@@ -59,8 +71,13 @@
   }
 
   function status(msg, kind) {
-    statusEl.textContent = msg || "";
-    statusEl.className = "status" + (kind ? " status--" + kind : "");
+    $("status").textContent = msg || "";
+    $("status").className = "status" + (kind ? " status--" + kind : "");
+  }
+
+  function nameOf(sym) {
+    for (var i = 0; i < MARKETS.length; i++) if (MARKETS[i].sym === sym) return MARKETS[i].name;
+    return sym;
   }
 
   /* ── what the trader talks to ───────────────────────────────────────── */
@@ -69,216 +86,324 @@
     status: status,
 
     net: function (n) {
-      netEl.textContent = (n >= 0 ? "+" : "") + n.toFixed(2);
-      netEl.className = "grp-note " + (n > 0 ? "is-up" : n < 0 ? "is-down" : "");
+      $("net").textContent = (n >= 0 ? "+" : "") + n.toFixed(2);
+      $("net").className = "grp-note " + (n > 0 ? "is-up" : n < 0 ? "is-down" : "");
     },
 
     runState: function (on) {
-      running = on;
-      stopBtn.disabled = !on;
-      marketEl.disabled = on;
-      accountEl.disabled = on;
-      Array.prototype.forEach.call(document.querySelectorAll(".pair-b"), function (b) {
+      trading = on;
+      Array.prototype.forEach.call(document.querySelectorAll(".act"), function (b) {
         b.disabled = on;
       });
+      $("account").disabled = on;
     },
 
     result: function (r) {
-      if (histEl.querySelector(".acct--none")) histEl.innerHTML = "";
+      var hist = $("hist");
+      if (hist.querySelector(".acct--none")) hist.innerHTML = "";
       var t = C.TYPES[r.type];
       var what = t.label + (t.barrier ? " " + r.barrier : "");
       var li = document.createElement("li");
       li.className = "trade " + (r.win ? "trade--win" : "trade--loss");
       li.innerHTML =
         '<span class="trade-r">' + (r.win ? "Win" : "Loss") + "</span>" +
-        '<span class="trade-m">' + esc(what) +
+        '<span class="trade-m">' + esc(nameOf(r.market || "")) + " · " + esc(what) +
           (r.digit != null ? " · got " + r.digit : "") + "</span>" +
         '<span class="trade-p">' + (r.profit >= 0 ? "+" : "") + r.profit.toFixed(2) + "</span>";
-      histEl.insertBefore(li, histEl.firstChild);
-      while (histEl.children.length > 60) histEl.removeChild(histEl.lastChild);
+      hist.insertBefore(li, hist.firstChild);
+      while (hist.children.length > 60) hist.removeChild(hist.lastChild);
     }
   };
 
-  /* ── the digit tables ───────────────────────────────────────────────── */
+  /* ── the card ───────────────────────────────────────────────────────── */
 
-  function paintDigits() {
-    var last = digits.last(10);
-    recentEl.innerHTML = last.length
-      ? last.map(function (d) { return '<li class="dg-r">' + d + "</li>"; }).join("")
-      : '<li class="dg-none">Waiting for ticks…</li>';
+  function cardShell(sym) {
+    var el = document.createElement("article");
+    el.className = "mkt";
+    el.id = "card-" + sym;
+    el.innerHTML =
+      '<h2 class="mkt-h"><span class="mkt-n">' + esc(nameOf(sym)) + " Analysis</span>" +
+        '<span class="mkt-c">Current: <b data-cur>—</b></span></h2>' +
+      '<ul class="dgts" data-digits></ul>' +
+      '<div class="rows" data-rows></div>' +
+      '<ol class="ticks" data-ticks></ol>';
+    return el;
+  }
 
-    var s = digits.stats();
-    $("window-note").textContent = s.total ? "last " + s.total + " ticks" : "";
+  function pairRow(p, s, sym) {
+    var av = s[p.a], bv = s[p.b];
+    var refTxt = p.ref ? " " + s.reference : "";
+    var aLead = av > bv, bLead = bv > av;
 
-    gridEl.innerHTML = s.rows.map(function (r) {
-      var mark = r.digit === s.high ? " dg-c--high"
-               : r.digit === s.low ? " dg-c--low"
-               : r.digit === s.rising ? " dg-c--rise" : "";
-      return '<li class="dg-c' + mark + '">' +
-               '<span class="dg-d">' + r.digit + "</span>" +
-               '<span class="dg-p">' + r.pct.toFixed(1) + "%</span>" +
-             "</li>";
+    // Over is impossible above 8 and Under below 1 — Deriv rejects the barrier,
+    // so the button says so rather than failing at the broker.
+    var aOff = p.a === "over" && s.reference > 8;
+    var bOff = p.b === "under" && s.reference < 1;
+
+    var bar = function (side, val, lead) {
+      return '<span class="pbar pbar--' + side + (lead ? " is-lead" : "") + '">' +
+        C.TYPES[side] .label + refTxt + ": " + val.toFixed(1) + "%</span>";
+    };
+
+    return '<div class="row">' +
+      bar(p.a, av, aLead) +
+      '<span class="acts">' +
+        '<button class="act act--' + p.a + (aLead ? " is-lead" : "") + '" type="button" ' +
+          'data-sym="' + sym + '" data-type="' + p.a + '"' + (aOff ? " disabled" : "") + '>' +
+          p.labels[0] + "</button>" +
+        '<button class="act act--' + p.b + (bLead ? " is-lead" : "") + '" type="button" ' +
+          'data-sym="' + sym + '" data-type="' + p.b + '"' + (bOff ? " disabled" : "") + '>' +
+          p.labels[1] + "</button>" +
+      "</span>" +
+      bar(p.b, bv, bLead) +
+    "</div>";
+  }
+
+  function paint(sym) {
+    var host = $("card-" + sym);
+    var an = analysers[sym];
+    if (!host || !an) return;
+
+    var s = an.stats(settings.ref);
+    host.querySelector("[data-cur]").textContent = s.current == null ? "—" : s.current;
+
+    host.querySelector("[data-digits]").innerHTML = s.digits.map(function (r) {
+      var cls = "dgt";
+      if (r.digit === s.current) cls += " is-cur";
+      if (r.digit === s.high) cls += " is-high";
+      else if (r.digit === s.low) cls += " is-low";
+      return '<li class="' + cls + '"><b>' + r.digit + "</b><span>" + r.pct.toFixed(1) + "%</span></li>";
+    }).join("");
+
+    host.querySelector("[data-rows]").innerHTML = PAIRS.map(function (p) {
+      return pairRow(p, s, sym);
+    }).join("");
+
+    host.querySelector("[data-ticks]").innerHTML = an.recent(10).map(function (d) {
+      return '<li class="tk tk--' + (d % 2 === 0 ? "even" : "odd") + '">' + d + "</li>";
+    }).join("");
+
+    if (trading) {
+      Array.prototype.forEach.call(host.querySelectorAll(".act"), function (b) { b.disabled = true; });
+    }
+  }
+
+  /* Repaint at most every 250ms per symbol. Ticks arrive faster than anyone
+     reads, and repainting five cards on every one of them is what makes a
+     page like this stutter. */
+  function markDirty(sym) {
+    pending[sym] = true;
+    if (painter) return;
+    painter = setTimeout(function () {
+      painter = null;
+      Object.keys(pending).forEach(function (s) { paint(s); });
+      pending = {};
+    }, 250);
+  }
+
+  function renderCards() {
+    var host = $("cards");
+    var want = MARKETS.filter(function (m) { return active[m.sym]; }).map(function (m) { return m.sym; });
+
+    // Drop cards for symbols switched off.
+    Array.prototype.forEach.call(host.children, function (c) {
+      var sym = c.id.replace("card-", "");
+      if (want.indexOf(sym) === -1) c.remove();
+    });
+
+    want.forEach(function (sym) {
+      if (!$("card-" + sym)) host.appendChild(cardShell(sym));
+      paint(sym);
+    });
+
+    host.classList.toggle("is-empty", want.length === 0);
+    if (!want.length) host.innerHTML = '<p class="cards-none">No symbols selected. Pick one above.</p>';
+  }
+
+  /* ── symbols ────────────────────────────────────────────────────────── */
+
+  function renderSyms() {
+    $("syms").innerHTML = MARKETS.map(function (m) {
+      return '<button class="sym' + (active[m.sym] ? " is-on" : "") + '" type="button" ' +
+        'data-sym="' + m.sym + '" title="' + esc(m.name) + " (" + m.sym + ')">' +
+        esc(m.name) + "</button>";
     }).join("");
   }
 
+  $("syms").addEventListener("click", function (e) {
+    var b = e.target.closest(".sym");
+    if (!b) return;
+    var sym = b.getAttribute("data-sym");
+    active[sym] = !active[sym];
+    b.classList.toggle("is-on", active[sym]);
+
+    if (active[sym]) { if (running) subscribe(sym); }
+    else unsubscribe(sym);
+
+    renderCards();
+  });
+
   /* ── ticks ──────────────────────────────────────────────────────────── */
 
-  function subscribeTicks() {
-    var sym = marketEl.value;
-    digits.reset();
-    paintDigits();
-
-    if (tickSub) {
-      session.send({ forget: tickSub });
-      tickSub = null;
-    }
-
-    // History first so the table is useful straight away, then live ticks.
+  function subscribe(sym) {
+    if (!session.isOpen()) return;
+    if (!analysers[sym]) analysers[sym] = new A.Analyser(sym, settings.count);
+    analysers[sym].setCount(settings.count);
     session.send({
       ticks_history: sym,
       end: "latest",
-      count: window.EvieDigits.WINDOW,
+      count: settings.count,
       style: "ticks",
       subscribe: 1
     });
   }
 
+  function unsubscribe(sym) {
+    if (subs[sym] && session.isOpen()) session.send({ forget: subs[sym] });
+    delete subs[sym];
+  }
+
+  function subscribeAll() {
+    MARKETS.forEach(function (m) { if (active[m.sym]) subscribe(m.sym); });
+  }
+
+  function unsubscribeAll() {
+    Object.keys(subs).forEach(unsubscribe);
+  }
+
   session.onMessage(function (d) {
     if (d.error) {
-      if (!running) status(d.error.message || "Deriv refused that request.", "error");
+      if (!trading) status(d.error.message || "Deriv refused that request.", "error");
       return;
     }
 
     if (d.msg_type === "history" && d.history) {
-      var sym = (d.echo_req && d.echo_req.ticks_history) || marketEl.value;
-      digits.seed(d.history.prices || [], sym);
-      if (d.subscription && d.subscription.id) tickSub = d.subscription.id;
-      paintDigits();
+      var sym = d.echo_req && d.echo_req.ticks_history;
+      if (!sym) return;
+      if (!analysers[sym]) analysers[sym] = new A.Analyser(sym, settings.count);
+      analysers[sym].setCount(settings.count);
+      analysers[sym].seed(d.history.prices || []);
+      if (d.subscription && d.subscription.id) subs[sym] = d.subscription.id;
+      paint(sym);
       return;
     }
 
-    if (d.msg_type === "tick" && d.tick) {
-      if (d.tick.symbol !== marketEl.value) return;
-      digits.push(window.EvieDigits.lastDigitOf(d.tick.quote, d.tick.symbol, d.tick.pip_size));
-      paintDigits();
+    if (d.msg_type === "tick" && d.tick && d.tick.symbol) {
+      var t = d.tick;
+      if (!active[t.symbol]) return;
+      if (!analysers[t.symbol]) analysers[t.symbol] = new A.Analyser(t.symbol, settings.count);
+      analysers[t.symbol].push(t.quote, t.pip_size);
+      markDirty(t.symbol);
       return;
     }
 
     if (d.msg_type === "balance" && d.balance) {
-      balanceEl.textContent = money(d.balance.balance, d.balance.currency);
+      $("balance").textContent = money(d.balance.balance, d.balance.currency);
     }
   });
 
-  /* ── the trade type buttons ─────────────────────────────────────────── */
+  /* ── trading ────────────────────────────────────────────────────────── */
 
-  function currency() {
-    var a = accounts.filter(function (x) { return x.id === accountEl.value; })[0];
-    return (a && a.currency) || "USD";
-  }
-
-  function describeType() {
-    var t = C.TYPES[type];
-    typeNote.textContent = t.explain +
-      (t.barrier
-        ? " Allowed digits for " + t.label + ": " + t.min + "–" + t.max + "."
-        : " No digit needed.");
-    barrierEl.disabled = !t.barrier;
-
-    // Rebuild the list to the range THIS type accepts, keeping the chosen
-    // digit where it is still legal. Over stops at 8, Under starts at 1.
-    if (t.barrier) {
-      var keep = Number(barrierEl.value);
-      var opts = [];
-      for (var i = t.min; i <= t.max; i++) {
-        opts.push('<option value="' + i + '">' + i + "</option>");
-      }
-      barrierEl.innerHTML = opts.join("");
-      /* Clamp to the nearest legal digit rather than snapping to the bottom of
-         the range: coming from 9 into Over, 8 is what was meant, and 0 is the
-         opposite end of the scale to land on silently. */
-      barrierEl.value = String(isNaN(keep) ? t.min : C.clampBarrier(type, keep));
-    }
-  }
-
-  function buildPairs() {
-    var pairs = [["match", "differ"], ["over", "under"], ["even", "odd"]];
-    $("pairs").innerHTML = pairs.map(function (p) {
-      return '<div class="pair">' + p.map(function (id) {
-        return '<button class="pair-b" type="button" data-type="' + id + '">' +
-          C.TYPES[id].label + "</button>";
-      }).join("") + "</div>";
-    }).join("");
-
-    Array.prototype.forEach.call(document.querySelectorAll(".pair-b"), function (b) {
-      b.addEventListener("click", function () {
-        type = b.getAttribute("data-type");
-        Array.prototype.forEach.call(document.querySelectorAll(".pair-b"), function (x) {
-          x.classList.toggle("is-on", x === b);
-        });
-        describeType();
-        place();
-      });
-    });
-  }
-
-  function place() {
-    if (running) return;
+  $("cards").addEventListener("click", function (e) {
+    var b = e.target.closest(".act");
+    if (!b || b.disabled || trading) return;
     if (!session.isOpen()) return status("No trading session — pick an account.", "error");
 
+    var type = b.getAttribute("data-type");
+    var sym = b.getAttribute("data-sym");
     var stake = parseFloat($("stake").value);
-    var count = parseInt($("count").value, 10);
-    var mult = parseFloat(martEl.value);
 
     if (isNaN(stake) || stake < window.EvieTrader.MIN_STAKE) {
-      return status("Deriv's minimum stake is " +
-        window.EvieTrader.MIN_STAKE.toFixed(2) + ".", "error");
+      return status("Deriv's minimum stake is " + window.EvieTrader.MIN_STAKE.toFixed(2) + ".", "error");
     }
-    if (isNaN(count) || count < 1) return status("Enter how many trades to place.", "error");
 
     trader.run({
       type: type,
-      barrier: C.clampBarrier(type, barrierEl.value),
+      barrier: C.TYPES[type].barrier ? C.clampBarrier(type, settings.ref) : null,
       stake: stake,
-      count: count,
-      martingale: martTog.getAttribute("aria-checked") === "true",
-      multiplier: isNaN(mult) ? 2 : mult,
-      currency: currency(),
-      market: marketEl.value
+      count: 1,
+      martingale: false,
+      multiplier: 1,
+      currency: currencyOf(),
+      market: sym
     });
-  }
-
-  stopBtn.addEventListener("click", function () { if (trader) trader.cancel(); });
-
-  martTog.addEventListener("click", function () {
-    var on = martTog.getAttribute("aria-checked") === "true";
-    martTog.setAttribute("aria-checked", String(!on));
-    martEl.disabled = on;
   });
 
-  /* ── accounts + session ─────────────────────────────────────────────── */
+  function currencyOf() {
+    var a = accounts.filter(function (x) { return x.id === $("account").value; })[0];
+    return (a && a.currency) || "USD";
+  }
+
+  /* ── settings ───────────────────────────────────────────────────────── */
+
+  $("apply").addEventListener("click", function () {
+    var ref = parseInt($("ref").value, 10);
+    var count = parseInt($("count").value, 10);
+    var stake = parseFloat($("stake").value);
+
+    if (isNaN(ref) || ref < 0 || ref > 9) return status("Reference digit must be 0 to 9.", "error");
+    if (isNaN(count) || count < 10) return status("Analysis count must be at least 10.", "error");
+    if (isNaN(stake) || stake < window.EvieTrader.MIN_STAKE) {
+      return status("Deriv's minimum stake is " + window.EvieTrader.MIN_STAKE.toFixed(2) + ".", "error");
+    }
+
+    var countChanged = count !== settings.count;
+    settings = { stake: stake, ref: ref, count: count };
+
+    // A longer window needs history we do not hold, so re-request it; a shorter
+    // one only needs trimming, which setCount does.
+    if (countChanged && running) { unsubscribeAll(); subscribeAll(); }
+    else Object.keys(analysers).forEach(function (s) { analysers[s].setCount(count); paint(s); });
+
+    renderCards();
+    status("Settings applied — reference digit " + ref + ", " + count + " ticks.", "success");
+  });
+
+  $("run").addEventListener("click", function () {
+    if (running) {
+      running = false;
+      unsubscribeAll();
+      $("run").textContent = "Start Analysis";
+      $("run").classList.remove("btn-line");
+      $("run").classList.add("btn-blue");
+      return status("Analysis stopped.", "info");
+    }
+    running = true;
+    $("run").textContent = "Stop Analysis";
+    $("run").classList.remove("btn-blue");
+    $("run").classList.add("btn-line");
+    subscribeAll();
+    status("Analysis started — watching " +
+      MARKETS.filter(function (m) { return active[m.sym]; }).length + " market(s).", "success");
+  });
+
+  /* ── accounts ───────────────────────────────────────────────────────── */
 
   function describeAccount() {
-    var a = accounts.filter(function (x) { return x.id === accountEl.value; })[0];
+    var a = accounts.filter(function (x) { return x.id === $("account").value; })[0];
     if (!a) return;
-    badgeEl.textContent = a.demo ? "Demo" : "Real";
-    badgeEl.classList.toggle("badge--demo", a.demo);
-    balanceEl.textContent = money(a.balance, a.currency);
-    riskEl.textContent = a.demo
+    $("acct-badge").textContent = a.demo ? "Demo" : "Real";
+    $("acct-badge").classList.toggle("badge--demo", a.demo);
+    $("balance").textContent = money(a.balance, a.currency);
+    $("risk").textContent = a.demo
       ? "Demo account — trades here are practice money."
       : "Real account — every trade placed here uses your own money.";
-    riskEl.className = "risk" + (a.demo ? "" : " risk--real");
+    $("risk").className = "risk" + (a.demo ? "" : " risk--real");
   }
 
   function openSession() {
-    var id = accountEl.value;
+    var id = $("account").value;
     if (!id) return;
     status("Opening a session on " + id + "…", "info");
+
+    session.close();
+    subs = {};
 
     session.open(id).then(function () {
       trader = new window.EvieTrader(session, ui);
       session.send({ balance: 1, subscribe: 1 });
-      subscribeTicks();
-      status("Ready.", "success");
+      if (running) subscribeAll();
+      status("Ready. Press Start Analysis.", "success");
     }).catch(function (e) {
       if (e && e.expired) {
         D.disconnect();
@@ -289,20 +414,14 @@
     });
   }
 
-  marketEl.innerHTML = MARKETS.map(function (m) {
-    return '<option value="' + m.sym + '">' + m.name + "</option>";
-  }).join("");
+  $("account").addEventListener("change", function () { describeAccount(); openSession(); });
 
-  marketEl.addEventListener("change", subscribeTicks);
-  accountEl.addEventListener("change", function () { describeAccount(); openSession(); });
+  /* ── go ─────────────────────────────────────────────────────────────── */
 
-  buildPairs();
-  document.querySelector('.pair-b[data-type="match"]').classList.add("is-on");
-  describeType();
-  paintDigits();
+  renderSyms();
+  renderCards();
 
   D.portfolio().then(function (d) {
-    // Real first, then demo — but both, because testing is the point here.
     accounts = d.accounts
       .filter(function (a) { return a.kind === "Options"; })
       .sort(function (x, y) {
@@ -312,12 +431,12 @@
 
     if (!accounts.length) return status("This login has no Deriv options account.", "error");
 
-    accountEl.innerHTML = accounts.map(function (a) {
+    $("account").innerHTML = accounts.map(function (a) {
       return '<option value="' + esc(a.id) + '">' + esc(a.id) + " · " +
         (a.demo ? "Demo" : "Real") + " · " + esc(money(a.balance, a.currency)) + "</option>";
     }).join("");
 
-    accountEl.value = accounts[0].id;
+    $("account").value = accounts[0].id;
     describeAccount();
     openSession();
   }).catch(function (e) {
@@ -329,10 +448,5 @@
     status((e && e.message) || "Could not read your Deriv accounts.", "error");
   });
 
-  window.addEventListener("beforeunload", function (e) {
-    session.close();
-    if (!running) return;
-    e.preventDefault();
-    e.returnValue = "";
-  });
+  window.addEventListener("beforeunload", function () { session.close(); });
 })();

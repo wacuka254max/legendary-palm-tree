@@ -30,96 +30,61 @@
 </header>
 
 <main class="bleed dash-main">
-  <h1 class="dash-title">Analysis</h1>
 
-  <div class="an">
+  <!-- ── settings ─────────────────────────────────────────────────────── -->
+  <section class="tools">
+    <div class="tools-head">
+      <h1 class="tools-t">Market analysis tools</h1>
+      <button class="btn btn-blue" id="run" type="button">Start Analysis</button>
+    </div>
 
-    <!-- ── market + digits ──────────────────────────────────────────── -->
-    <section class="panel-solid an-read">
-      <div class="an-row">
-        <label class="fld an-fld">
-          <span class="fld-k">Market</span>
-          <select class="fld-i" id="market"></select>
-        </label>
-        <label class="fld an-fld">
-          <span class="fld-k">Account</span>
-          <select class="fld-i" id="account"></select>
-        </label>
+    <div class="tools-grid">
+      <label class="fld">
+        <span class="fld-k">Account</span>
+        <select class="fld-i" id="account"></select>
+      </label>
+      <label class="fld">
+        <span class="fld-k">Stake amount (USD)</span>
+        <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Reference digit (0–9)</span>
+        <input class="fld-i" id="ref" type="number" min="0" max="9" step="1" value="5" inputmode="numeric" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Analysis count</span>
+        <input class="fld-i" id="count" type="number" min="10" max="5000" step="10" value="130" inputmode="numeric" />
+      </label>
+      <div class="fld fld--btn">
+        <button class="btn btn-line" id="apply" type="button">Apply settings</button>
       </div>
+    </div>
 
-      <p class="risk" id="risk"></p>
+    <p class="risk" id="risk"></p>
 
-      <h2 class="grp-t grp-t--sub">Last 10 digits</h2>
-      <ol class="dg-recent" id="recent"><li class="dg-none">Waiting for ticks…</li></ol>
+    <div class="syms">
+      <span class="fld-k">Active symbols</span>
+      <div class="syms-row" id="syms"></div>
+    </div>
 
-      <h2 class="grp-t grp-t--sub">
-        How often each digit appears
-        <span class="grp-note" id="window-note"></span>
-      </h2>
-      <ul class="dg-grid" id="grid"></ul>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
 
-      <ul class="dg-key">
-        <li><span class="dg-dot dg-dot--high"></span>Most often</li>
-        <li><span class="dg-dot dg-dot--low"></span>Least often</li>
-        <li><span class="dg-dot dg-dot--rise"></span>Rising fastest</li>
-      </ul>
-    </section>
+  <!-- ── one card per active symbol ───────────────────────────────────── -->
+  <section class="cards-grid" id="cards"></section>
 
-    <!-- ── trade ────────────────────────────────────────────────────── -->
-    <section class="panel-solid an-trade">
-      <h2 class="grp-t">Trade</h2>
+  <!-- ── results ──────────────────────────────────────────────────────── -->
+  <section class="panel-solid results">
+    <h2 class="grp-t">Trade results <span class="grp-note" id="net"></span></h2>
+    <ul class="hist" id="hist"><li class="acct acct--none">No trades yet. Place a trade to see results here.</li></ul>
+  </section>
 
-      <div class="an-row">
-        <label class="fld an-fld">
-          <span class="fld-k">Stake (USD)</span>
-          <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
-        </label>
-        <label class="fld an-fld">
-          <span class="fld-k">Trades</span>
-          <input class="fld-i" id="count" type="number" min="1" max="100" step="1" value="1" inputmode="numeric" />
-        </label>
-      </div>
-
-      <div class="mart">
-        <div class="mart-top">
-          <span class="fld-k">Martingale</span>
-          <button class="tog" id="mart-tog" type="button" role="switch" aria-checked="true">
-            <span class="tog-dot"></span>
-          </button>
-        </div>
-        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="2" inputmode="decimal" />
-        <p class="mart-note">After a loss the next stake is multiplied by this. A win resets it.</p>
-      </div>
-
-      <h3 class="grp-t grp-t--sub">Digit</h3>
-      <div class="an-row">
-        <label class="fld an-fld">
-          <span class="fld-k">Barrier</span>
-          <select class="fld-i" id="barrier"></select>
-        </label>
-      </div>
-      <p class="mart-note" id="type-note"></p>
-
-      <h3 class="grp-t grp-t--sub">Place a trade</h3>
-      <div class="pairs" id="pairs"></div>
-
-      <div class="run-actions">
-        <button class="btn btn-line btn-lg" id="stop" type="button" disabled>Stop</button>
-      </div>
-
-      <p class="status" id="status" role="status" aria-live="polite"></p>
-
-      <h3 class="grp-t grp-t--sub">Results <span class="grp-note" id="net"></span></h3>
-      <ul class="hist" id="hist"><li class="acct acct--none">No trades yet.</li></ul>
-    </section>
-
-  </div>
 </main>
 
 <script src="/deriv.js"></script>
 <script src="/analysis/contracts.js"></script>
 <script src="/analysis/session.js"></script>
-<script src="/analysis/digits.js"></script>
+<script src="/analysis/analyser.js"></script>
 <script src="/analysis/trader.js"></script>
 <script src="/analysis/app.js"></script>
 </body>

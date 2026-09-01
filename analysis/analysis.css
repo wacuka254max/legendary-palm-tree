@@ -1,149 +1,253 @@
 /* ══════════════════════════════════════════════════════════════════════
    Evie — Analysis.
 
-   Same palette and the same flat, gradient-free rules as the rest of the
-   site; this file only adds what is particular to reading digits and
-   placing a trade off them.
+   Laid out like dbotzone's Advanced tool: a card per market, a digit grid
+   with the notable digits outlined, and each trade pair as
+   percentage · buttons · percentage.
+
+   The reference is a light theme; this keeps Evie's dark surface so the
+   page still belongs to the rest of the site, and carries the reference's
+   colour language across: green rise, red fall, blue even, red odd,
+   orange over, cyan under. Flat colours only — no gradients anywhere.
    ══════════════════════════════════════════════════════════════════════ */
 
-/* Reading on the left, trading on the right. They stack below 960px. */
-.an {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
+:root {
+  --up:    #22c55e;
+  --down:  #ef4444;
+  --even:  #3b82f6;
+  --odd:   #ef4444;
+  --over:  #f59e0b;
+  --under: #06b6d4;
+  --match: #a855f7;
+  --differ:#64748b;
+  --cur:   #6366f1;
 }
 
-.an-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 12px; }
-.an-fld { margin-top: 0; }
+/* ── settings ───────────────────────────────────────────────────────── */
 
-.grp-note { margin-left: 8px; font-weight: 600; color: var(--ink-faint); text-transform: none; letter-spacing: 0; }
-.grp-note.is-up { color: var(--ok); }
-.grp-note.is-down { color: var(--pink); }
-
-/* ── the last ten digits ───────────────────────────────────────────── */
-
-.dg-recent {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-.dg-r {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  background: var(--surface-2);
+.tools {
+  padding: clamp(18px, 2.2vw, 24px);
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius);
 }
-/* The newest digit is the one being acted on, so it is the one marked. */
-.dg-r:last-child { border-color: var(--blue); color: var(--blue); }
-.dg-none { font-size: 12.5px; color: var(--ink-faint); }
-
-/* ── how often each digit appears ──────────────────────────────────── */
-
-.dg-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(19%, 62px), 1fr));
-  gap: 8px;
-  margin-top: 10px;
-}
-.dg-c {
-  display: grid;
-  justify-items: center;
-  gap: 3px;
-  padding: 10px 4px;
-  background: var(--surface-2);
-  /* Two-pixel border so a highlight reads at a glance; transparent by
-     default, which keeps every box exactly the same size either way. */
-  border: 2px solid transparent;
-  border-radius: 10px;
-}
-.dg-d { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.dg-p { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
-
-.dg-c--high { border-color: var(--ok); }
-.dg-c--high .dg-d, .dg-c--high .dg-p { color: var(--ok); }
-
-.dg-c--low { border-color: #ff4d4d; }
-.dg-c--low .dg-d, .dg-c--low .dg-p { color: #ff4d4d; }
-
-/* Bright pink, and deliberately not the same red as "least often" — the two
-   would be indistinguishable at a glance otherwise. */
-.dg-c--rise { border-color: #ff2d9b; }
-.dg-c--rise .dg-d, .dg-c--rise .dg-p { color: #ff2d9b; }
-
-.dg-key {
+.tools-head {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 14px;
-  margin-top: 14px;
-  font-size: 11.5px;
-  color: var(--ink-faint);
+  flex-wrap: wrap;
+  margin-bottom: 18px;
 }
-.dg-key li { display: inline-flex; align-items: center; gap: 6px; }
-.dg-dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid; }
-.dg-dot--high { border-color: var(--ok); }
-.dg-dot--low { border-color: #ff4d4d; }
-.dg-dot--rise { border-color: #ff2d9b; }
+.tools-t { font-size: clamp(1.1rem, 2vw, 1.35rem); font-weight: 700; }
 
-/* ── martingale ────────────────────────────────────────────────────── */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.fld--btn { display: flex; align-items: flex-end; }
+.fld--btn .btn { width: 100%; }
 
-.mart { margin-top: 18px; }
-.mart-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.mart-note { margin-top: 8px; font-size: 12px; line-height: 1.5; color: var(--ink-faint); }
+.syms { margin-top: 18px; }
+.syms-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 
-.tog {
-  position: relative;
-  width: 44px;
-  height: 24px;
-  padding: 0;
+.sym {
+  padding: 9px 15px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
   background: var(--surface-2);
   border: 1px solid var(--line-hi);
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
-.tog-dot {
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 16px; height: 16px;
-  background: var(--ink-faint);
-  border-radius: 50%;
-  transition: transform 0.18s ease, background 0.18s ease;
+.sym:hover { color: var(--ink); border-color: var(--ink-faint); }
+.sym.is-on { color: #0b0b0f; background: var(--blue); border-color: var(--blue); }
+
+/* ── the cards ──────────────────────────────────────────────────────── */
+
+.cards-grid {
+  display: grid;
+  /* One card per market. Three across on a wide screen, one on a phone,
+     with no breakpoint of its own. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 14px;
+  margin-top: 14px;
 }
-/* On is green, and says so with the knob as well as the colour, so it does
-   not depend on hue alone. */
-.tog[aria-checked="true"] { background: rgba(95, 211, 154, 0.18); border-color: var(--ok); }
-.tog[aria-checked="true"] .tog-dot { transform: translateX(20px); background: var(--ok); }
+.cards-none { padding: 40px 0; text-align: center; color: var(--ink-faint); }
 
-/* ── the trade type buttons ────────────────────────────────────────── */
-
-.pairs { display: grid; gap: 8px; margin-top: 10px; }
-.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-.pair-b {
-  padding: 13px 10px;
-  font: inherit;
-  font-size: 14px;
+.mkt {
+  padding: clamp(14px, 1.6vw, 18px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-width: 0;
+}
+.mkt-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  font-size: 14.5px;
   font-weight: 650;
-  color: var(--ink);
-  background: var(--surface-2);
-  border: 1px solid var(--line-hi);
-  border-radius: 11px;
-  cursor: pointer;
-  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+  text-align: center;
 }
-.pair-b:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
-/* The one that will be placed if you press Enter on the form. */
-.pair-b.is-on { border-color: var(--blue); color: var(--blue); }
-.pair-b:disabled { opacity: 0.45; cursor: not-allowed; }
+.mkt-c { color: var(--ink-faint); font-weight: 500; font-size: 13px; }
+.mkt-c b { color: var(--blue); font-weight: 700; font-variant-numeric: tabular-nums; }
 
-@media (max-width: 960px) {
-  .an { grid-template-columns: minmax(0, 1fr); }
+/* ── digits ─────────────────────────────────────────────────────────── */
+
+.dgts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.dgt {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 2px;
+  background: var(--surface-2);
+  /* Two-pixel, transparent by default, so an outlined box is exactly the
+     same size as a plain one and the grid never shifts. */
+  border: 2px solid transparent;
+  border-radius: 9px;
+}
+.dgt b { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dgt span { font-size: 10.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+.dgt.is-high { border-color: var(--up); }
+.dgt.is-high b, .dgt.is-high span { color: var(--up); }
+.dgt.is-low { border-color: var(--down); }
+.dgt.is-low b, .dgt.is-low span { color: var(--down); }
+/* The live digit wins the outline — it is the one the next contract settles
+   against, so it matters more than the tallies. */
+.dgt.is-cur { border-color: var(--cur); }
+.dgt.is-cur b, .dgt.is-cur span { color: #a5b4fc; }
+
+/* ── pair rows ──────────────────────────────────────────────────────── */
+
+.rows { display: grid; gap: 6px; }
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.pbar {
+  padding: 7px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-radius: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid transparent;
+}
+/* The leading side gets the border, so the answer is visible without
+   comparing two numbers. */
+.pbar.is-lead { border-color: currentColor; }
+
+.acts { display: inline-flex; gap: 5px; }
+.act {
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0b0b0f;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+.act:hover:not(:disabled) { filter: brightness(1.12); }
+.act:active:not(:disabled) { transform: translateY(1px); }
+.act:disabled { opacity: 0.35; cursor: not-allowed; }
+/* The leading side is ringed. A light ring, not currentColor: the label on a
+   filled button is deliberately dark, and a dark ring would vanish. */
+.act.is-lead { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px rgba(255, 255, 255, 0.55); }
+
+/* Colour belongs to the BAR's text and the BUTTON's fill — never the button's
+   text, which stays dark. Setting both from one rule painted every label in
+   the same colour as the fill behind it and made them invisible. */
+.pbar--rise { color: var(--up); }
+.pbar--fall { color: var(--down); }
+.pbar--even { color: var(--even); }
+.pbar--odd { color: var(--odd); }
+.pbar--over { color: var(--over); }
+.pbar--under { color: var(--under); }
+.pbar--match { color: var(--match); }
+.pbar--differ { color: #94a3b8; }
+
+.act { color: #0b0b0f; }
+.act--rise { background: var(--up); }
+.act--fall { background: var(--down); }
+.act--even { background: var(--even); }
+.act--odd { background: var(--odd); }
+.act--over { background: var(--over); }
+.act--under { background: var(--under); }
+.act--match { background: var(--match); }
+.act--differ { background: #94a3b8; }
+
+.pbar--rise { background: rgba(34, 197, 94, 0.10); }
+.pbar--fall { background: rgba(239, 68, 68, 0.10); }
+.pbar--even { background: rgba(59, 130, 246, 0.10); }
+.pbar--odd { background: rgba(239, 68, 68, 0.10); }
+.pbar--over { background: rgba(245, 158, 11, 0.10); }
+.pbar--under { background: rgba(6, 182, 212, 0.10); }
+.pbar--match { background: rgba(168, 85, 247, 0.10); }
+.pbar--differ { background: rgba(148, 163, 184, 0.10); }
+
+/* ── recent ticks ───────────────────────────────────────────────────── */
+
+.ticks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 12px;
+}
+.tk {
+  display: grid;
+  place-items: center;
+  width: 26px; height: 26px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 50%;
+  font-variant-numeric: tabular-nums;
+}
+.tk--even { background: var(--even); }
+.tk--odd { background: var(--odd); }
+
+/* ── results ────────────────────────────────────────────────────────── */
+
+.results { margin-top: 14px; }
+.grp-note { margin-left: 8px; font-weight: 700; color: var(--ink-faint); text-transform: none; letter-spacing: 0; }
+.grp-note.is-up { color: var(--up); }
+.grp-note.is-down { color: var(--down); }
+
+.risk { margin-top: 14px; font-size: 12.5px; color: var(--ink-faint); }
+.risk--real { color: var(--pink); }
+.status { margin-top: 10px; font-size: 13px; color: var(--ink-muted); min-height: 1.2em; }
+.status--error { color: var(--pink); }
+.status--success { color: var(--up); }
+.status--warning { color: #e3b341; }
+
+@media (max-width: 420px) {
+  /* Two rows of five stay legible; the pair rows stack their halves rather
+     than squeezing three columns into a phone. */
+  .row { grid-template-columns: minmax(0, 1fr); justify-items: stretch; }
+  .acts { justify-content: center; }
+  .pbar { text-align: center; }
 }
