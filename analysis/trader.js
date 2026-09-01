@@ -63,10 +63,19 @@
       if (!c.is_sold) return;
 
       var profit = parseFloat(c.profit) || 0;
+      var stake = parseFloat(c.buy_price) || this.pending.stake;
+
       this.pending.resolve({
         win: profit > 0,
         profit: profit,
-        stake: parseFloat(c.buy_price) || this.pending.stake,
+        stake: stake,
+        /* The payout is what came BACK. A loss returns nothing, so it is not
+           stake+profit in that case — it is zero, and the running total has to
+           reflect that or "total payout" becomes meaningless. */
+        payout: profit > 0 ? stake + profit : 0,
+        // The two spots Deriv settled between, as it displays them.
+        entry: c.entry_tick_display_value || c.entry_spot_display_value || null,
+        exit: c.exit_tick_display_value || c.exit_spot_display_value || null,
         // Deriv reports the settling tick; it is what makes a result checkable.
         digit: typeof c.exit_tick_display_value === "string"
           ? parseInt(c.exit_tick_display_value.slice(-1), 10)
@@ -153,6 +162,9 @@
           digit: r.digit,
           type: opts.type,
           barrier: opts.barrier,
+          payout: r.payout,
+          entry: r.entry,
+          exit: r.exit,
           // Which market it was — with several cards on screen, a result that
           // does not say is a result you cannot place.
           market: opts.market

@@ -35,7 +35,6 @@
   <section class="tools">
     <div class="tools-head">
       <h1 class="tools-t">Market analysis tools</h1>
-      <button class="btn btn-blue" id="run" type="button">Start Analysis</button>
     </div>
 
     <div class="tools-grid">
@@ -73,19 +72,46 @@
   <!-- ── one card per active symbol ───────────────────────────────────── -->
   <section class="cards-grid" id="cards"></section>
 
-  <!-- ── results ──────────────────────────────────────────────────────── -->
-  <section class="panel-solid results">
-    <h2 class="grp-t">Trade results <span class="grp-note" id="net"></span></h2>
-    <ul class="hist" id="hist"><li class="acct acct--none">No trades yet. Place a trade to see results here.</li></ul>
-  </section>
-
 </main>
+
+<!-- ── transactions ─────────────────────────────────────────────────────
+     A rail down the right on a wide screen; on a narrow one the same markup
+     becomes a sheet that rises from the bottom. -->
+<aside class="txn" id="txn">
+  <button class="txn-handle" data-handle type="button" aria-expanded="false" aria-controls="txn-body">
+    <span class="txn-grip" aria-hidden="true"></span>
+    <span class="txn-handle-t">Transactions <span class="txn-count" data-count></span></span>
+    <svg class="txn-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+  </button>
+
+  <div class="txn-body" id="txn-body">
+    <div class="txn-head">
+      <span>Type</span>
+      <span>Entry/Exit spot</span>
+      <span class="txn-head-r">Buy price and P/L</span>
+    </div>
+
+    <ul class="txn-rows" data-rows><li class="tx-none">No transactions yet.</li></ul>
+
+    <div class="sum">
+      <div class="sum-c"><span class="sum-k">Total stake</span><span class="sum-v" data-stake>0.00 USD</span></div>
+      <div class="sum-c"><span class="sum-k">Total payout</span><span class="sum-v" data-payout>0.00 USD</span></div>
+      <div class="sum-c"><span class="sum-k">No. of runs</span><span class="sum-v" data-runs>0</span></div>
+      <div class="sum-c"><span class="sum-k">Contracts lost</span><span class="sum-v" data-lost>0</span></div>
+      <div class="sum-c"><span class="sum-k">Contracts won</span><span class="sum-v" data-won>0</span></div>
+      <div class="sum-c"><span class="sum-k">Total profit/loss</span><span class="sum-v" data-pl>0.00 USD</span></div>
+    </div>
+
+    <button class="btn btn-line txn-reset" data-reset type="button">Reset</button>
+  </div>
+</aside>
 
 <script src="/deriv.js"></script>
 <script src="/analysis/contracts.js"></script>
 <script src="/analysis/session.js"></script>
 <script src="/analysis/analyser.js"></script>
 <script src="/analysis/trader.js"></script>
+<script src="/analysis/txn.js"></script>
 <script src="/analysis/app.js"></script>
 </body>
 </html>

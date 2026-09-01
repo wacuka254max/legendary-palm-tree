@@ -251,3 +251,180 @@
   .acts { justify-content: center; }
   .pbar { text-align: center; }
 }
+
+/* ── Transactions ───────────────────────────────────────────────────────
+   One markup, two shapes. Wide: a rail down the right, always open, with
+   the page inset to make room for it. Narrow: a sheet parked at the bottom
+   showing only its handle, sliding up when tapped — a 340px rail would eat
+   the width the market cards need. */
+
+.txn {
+  position: fixed;
+  right: 0;
+  top: 68px;                 /* under the fixed nav */
+  bottom: 0;
+  z-index: 40;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+}
+
+.txn-handle { display: none; }
+
+.txn-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;             /* lets the rows scroll instead of pushing */
+  flex: 1;
+  padding: 16px;
+}
+
+.txn-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--ink-faint);
+}
+.txn-head-r { text-align: right; }
+
+.txn-rows {
+  flex: 1;
+  min-height: 80px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-hi) transparent;
+  overscroll-behavior: contain;
+}
+.txn-rows::-webkit-scrollbar { width: 8px; }
+.txn-rows::-webkit-scrollbar-track { background: transparent; }
+.txn-rows::-webkit-scrollbar-thumb {
+  background: var(--line-hi);
+  border-radius: 999px;
+  border: 2px solid var(--surface);
+}
+
+.tx {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.tx-none { padding: 22px 0; font-size: 12.5px; color: var(--ink-faint); text-align: center; }
+
+.tx-type { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px; align-items: center; }
+.tx-dot { width: 8px; height: 8px; border-radius: 50%; grid-row: span 2; }
+.tx-dot--win { background: var(--up); }
+.tx-dot--loss { background: var(--down); }
+.tx-type-t { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-type-s { grid-column: 2; font-size: 10.5px; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Entry above, exit below — the two spots the contract settled between. */
+.tx-spot { display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+.tx-in { color: var(--ink-muted); }
+.tx-out { color: var(--ink-faint); }
+
+.tx-money { display: grid; gap: 2px; text-align: right; font-variant-numeric: tabular-nums; }
+.tx-buy { color: var(--ink-muted); }
+.tx-pl { font-weight: 650; }
+.tx-pl.is-up, .sum-v.is-up { color: var(--up); }
+.tx-pl.is-down, .sum-v.is-down { color: var(--down); }
+
+/* ── the totals ─────────────────────────────────────────────────────── */
+
+.sum {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 8px;
+  margin-top: 14px;
+  padding: 16px 14px;
+  background: var(--raise);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.sum-c { display: grid; gap: 4px; text-align: center; min-width: 0; }
+.sum-k { font-size: 10px; font-weight: 600; color: var(--ink-faint); line-height: 1.25; }
+.sum-v { font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.txn-reset { width: 100%; margin-top: 12px; }
+
+/* Make room for the rail so no card ever sits under it. */
+@media (min-width: 1200px) {
+  .dash-main { padding-right: calc(340px + var(--gutter)); }
+}
+
+/* ── the sheet ──────────────────────────────────────────────────────── */
+
+@media (max-width: 1199px) {
+  .txn {
+    top: auto;
+    left: 0;
+    width: auto;
+    border-left: 0;
+    border-top: 1px solid var(--line-hi);
+    border-radius: 16px 16px 0 0;
+    /* Parked with only the handle showing. Translating the whole panel keeps
+       the animation on the compositor, so it stays smooth on a phone. */
+    transform: translateY(calc(100% - 52px));
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    max-height: min(82vh, 620px);
+  }
+  .txn.is-open { transform: translateY(0); }
+
+  .txn-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    width: 100%;
+    height: 52px;
+    padding: 0 16px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--ink);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+  .txn-grip {
+    position: absolute;
+    top: 7px; left: 50%;
+    transform: translateX(-50%);
+    width: 38px; height: 4px;
+    background: var(--line-hi);
+    border-radius: 999px;
+  }
+  .txn-chev { color: var(--ink-faint); transition: transform 0.28s ease; }
+  .txn.is-open .txn-chev { transform: rotate(180deg); }
+
+  .txn-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #0b0b0f;
+    background: var(--blue);
+    border-radius: 999px;
+  }
+  .txn-count:empty { display: none; }
+
+  .txn-body { padding: 0 16px 16px; overflow-y: auto; }
+  .txn-rows { max-height: 40vh; }
+
+  /* The parked handle covers the page bottom, so the last card is not hidden. */
+  .dash-main { padding-bottom: 76px; }
+}

@@ -44,13 +44,14 @@
     { a: "match", b: "differ", tone: "match", labels: ["Matches", "Differs"], ref: true }
   ];
 
+  var txn = new window.EvieTxn({ root: document.getElementById("txn"), nameOf: nameOf });
+
   var session = new window.EvieSession();
   var trader = null;
   var accounts = [];
   var analysers = {};          // sym -> Analyser
   var active = { R_10: true }; // which symbols have a card
   var subs = {};               // sym -> subscription id
-  var running = false;
   var trading = false;
   var settings = { stake: 1, ref: 5, count: 130 };
 
@@ -75,6 +76,10 @@
     $("status").className = "status" + (kind ? " status--" + kind : "");
   }
 
+  function activeCount() {
+    return MARKETS.filter(function (m) { return active[m.sym]; }).length;
+  }
+
   function nameOf(sym) {
     for (var i = 0; i < MARKETS.length; i++) if (MARKETS[i].sym === sym) return MARKETS[i].name;
     return sym;
@@ -85,10 +90,9 @@
   var ui = {
     status: status,
 
-    net: function (n) {
-      $("net").textContent = (n >= 0 ? "+" : "") + n.toFixed(2);
-      $("net").className = "grp-note " + (n > 0 ? "is-up" : n < 0 ? "is-down" : "");
-    },
+    /* The panel keeps the running total, so there is nothing to do here —
+       but the trader calls it, so it has to exist. */
+    net: function () {},
 
     runState: function (on) {
       trading = on;
@@ -99,19 +103,17 @@
     },
 
     result: function (r) {
-      var hist = $("hist");
-      if (hist.querySelector(".acct--none")) hist.innerHTML = "";
       var t = C.TYPES[r.type];
-      var what = t.label + (t.barrier ? " " + r.barrier : "");
-      var li = document.createElement("li");
-      li.className = "trade " + (r.win ? "trade--win" : "trade--loss");
-      li.innerHTML =
-        '<span class="trade-r">' + (r.win ? "Win" : "Loss") + "</span>" +
-        '<span class="trade-m">' + esc(nameOf(r.market || "")) + " · " + esc(what) +
-          (r.digit != null ? " · got " + r.digit : "") + "</span>" +
-        '<span class="trade-p">' + (r.profit >= 0 ? "+" : "") + r.profit.toFixed(2) + "</span>";
-      hist.insertBefore(li, hist.firstChild);
-      while (hist.children.length > 60) hist.removeChild(hist.lastChild);
+      txn.add({
+        label: t.label + (t.barrier ? " " + r.barrier : ""),
+        market: r.market,
+        win: r.win,
+        stake: r.stake,
+        profit: r.profit,
+        payout: r.payout,
+        entry: r.entry,
+        exit: r.exit
+      });
     }
   };
 
@@ -237,7 +239,7 @@
     active[sym] = !active[sym];
     b.classList.toggle("is-on", active[sym]);
 
-    if (active[sym]) { if (running) subscribe(sym); }
+    if (active[sym]) subscribe(sym);
     else unsubscribe(sym);
 
     renderCards();
@@ -352,29 +354,11 @@
 
     // A longer window needs history we do not hold, so re-request it; a shorter
     // one only needs trimming, which setCount does.
-    if (countChanged && running) { unsubscribeAll(); subscribeAll(); }
+    if (countChanged) { unsubscribeAll(); subscribeAll(); }
     else Object.keys(analysers).forEach(function (s) { analysers[s].setCount(count); paint(s); });
 
     renderCards();
     status("Settings applied — reference digit " + ref + ", " + count + " ticks.", "success");
-  });
-
-  $("run").addEventListener("click", function () {
-    if (running) {
-      running = false;
-      unsubscribeAll();
-      $("run").textContent = "Start Analysis";
-      $("run").classList.remove("btn-line");
-      $("run").classList.add("btn-blue");
-      return status("Analysis stopped.", "info");
-    }
-    running = true;
-    $("run").textContent = "Stop Analysis";
-    $("run").classList.remove("btn-blue");
-    $("run").classList.add("btn-line");
-    subscribeAll();
-    status("Analysis started — watching " +
-      MARKETS.filter(function (m) { return active[m.sym]; }).length + " market(s).", "success");
   });
 
   /* ── accounts ───────────────────────────────────────────────────────── */
@@ -402,8 +386,8 @@
     session.open(id).then(function () {
       trader = new window.EvieTrader(session, ui);
       session.send({ balance: 1, subscribe: 1 });
-      if (running) subscribeAll();
-      status("Ready. Press Start Analysis.", "success");
+      subscribeAll();
+      status("Live — watching " + activeCount() + " market(s).", "success");
     }).catch(function (e) {
       if (e && e.expired) {
         D.disconnect();
