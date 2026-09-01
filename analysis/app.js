@@ -713,6 +713,7 @@
 
   /* Restore the last view first: which symbols were on, and the window each
      was showing. The page therefore opens on data, not on a placeholder. */
+  var cached = readCache();
   var prefs = window.EviePrefs ? window.EviePrefs.scope("analysis") : null;
 
   /* Which symbols are on belongs to the TAB, not to the browser: the opening
