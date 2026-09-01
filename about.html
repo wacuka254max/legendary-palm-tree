@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>About | Evie</title>
+<meta name="description" content="Evie is free software for automating trades on your own broker account. Not a broker, holds no funds, takes no deposits, promises no returns." />
+<meta name="theme-color" content="#0b0b0f" />
+<meta name="robots" content="index,follow,max-image-preview:large" />
+<link rel="canonical" href="https://www.evietrader.site/about.html" />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="Evie" />
+<meta property="og:url" content="https://www.evietrader.site/about.html" />
+<meta property="og:title" content="About | Evie" />
+<meta property="og:description" content="Evie is free software for automating trades on your own broker account. Not a broker, holds no funds, takes no deposits, promises no returns." />
+<meta property="og:image" content="https://www.evietrader.site/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<script>document.documentElement.setAttribute("data-theme","dark");</script>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header class="nav">
+  <div class="bleed nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff3d87"/><path d="M11 10h10M11 16h7M11 22h10" stroke="#0b0b0f" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-name">Evie</span>
+    </a>
+    <div class="nav-cta">
+      <a class="btn btn-solid js-connect" href="/home.html">Connect</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <article class="doc bleed">
+    <h1>About Evie</h1>
+    <p class="doc-lead">Evie is free software for automating trades on a trading
+      account you already own. It is not a broker, not a fund, and not an
+      investment scheme.</p>
+
+    <h2>What Evie is</h2>
+    <p>A web app that reads a market and places trades on it. You connect your
+      own Deriv account through Deriv&rsquo;s official OAuth sign-in, choose the
+      market and the trade type, and the bot places those trades on your account
+      under the limits you set. You can stop it at any time, and it stops itself
+      when it reaches a target or a loss limit you chose.</p>
+    <p>It is free. There is no subscription, no licence fee, no deposit to us,
+      and nothing to buy.</p>
+
+    <h2>What Evie is not</h2>
+    <ul class="doc-list">
+      <li><b>Not a broker or an exchange.</b> Evie holds no client money and has
+        no accounts. Your money stays with your own regulated broker, and every
+        trade is executed by that broker on your own account.</li>
+      <li><b>Not a deposit-taking business.</b> Evie never asks you to send funds
+        anywhere, and never will. Anyone asking you to deposit money with
+        &ldquo;Evie&rdquo; is not us.</li>
+      <li><b>Not a managed account or a signal service.</b> Nobody trades on your
+        behalf. The software runs in your own browser, on your own instruction.</li>
+      <li><b>Not financial advice.</b> Nothing here is a recommendation to trade
+        or to buy any instrument.</li>
+      <li><b>Not a guarantee of profit.</b> No automated strategy can promise a
+        return, and this one does not. Losing trades are a normal part of how it
+        works &mdash; see the <a href="/risk.html">risk disclosure</a>.</li>
+    </ul>
+
+    <h2>How your account is connected</h2>
+    <p>Sign-in goes through Deriv&rsquo;s own OAuth page, on Deriv&rsquo;s domain.
+      Evie never sees your Deriv password. The token that comes back is stored in
+      your own browser and is used only to read your balance and place the trades
+      you ask for. Disconnecting from the dashboard removes it.</p>
+
+    <h2>Who runs it</h2>
+    <p>Evie is an independent software project. It is not affiliated with,
+      endorsed by, or partnered with Deriv, MetaQuotes, TradingView, Binance,
+      Exness, OANDA, or any prop firm named on this site; those names and logos
+      appear only to say which platforms the software works with.</p>
+    <p>Questions, problems or takedown requests:
+      <a href="mailto:support@evietrader.site">support@evietrader.site</a>.</p>
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="bleed footer-inner">
+    <div class="footer-brand">
+      <span class="brand-name">Evie</span>
+      <p>Free, fully automated AI trading bots for the platforms people actually trade on.</p>
+    </div>
+    <nav class="footer-links" aria-label="Footer">
+      <a href="/about.html">About</a>
+      <a href="/risk.html">Risk disclosure</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+  </div>
+  <div class="bleed footer-legal">
+    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
+    <p>&copy; 2026 Evie. Evie is software, not a broker: it holds no funds, accepts no deposits and executes trades only on a trading account you already own. All trademarks and platform logos are the property of their respective owners and are shown for compatibility reference only.</p>
+  </div>
+</footer>
+
+<script src="/deriv.js"></script>
+<script src="/main.js" defer></script>
+<script src="/connect.js"></script>
+<script src="/install.js"></script>
+</body>
+</html>
