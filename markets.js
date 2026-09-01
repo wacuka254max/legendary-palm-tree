@@ -42,6 +42,8 @@
   var series = {};         // sym -> { t: [], p: [] }
   var redrawTimer = null;
   var closed = false;
+  var attempt = 0;
+  var pinger = null;
 
   function el(id) { return document.getElementById(id); }
 
@@ -130,7 +132,13 @@
           subscribe: 1
         }));
       });
+      attempt = 0;
       redrawTimer = setInterval(draw, REDRAW_MS);
+      // Deriv closes a silent socket; a ping keeps the prices coming.
+      clearInterval(pinger);
+      pinger = setInterval(function () {
+        if (ws && ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 }));
+      }, 25000);
     };
 
     ws.onmessage = function (ev) {
@@ -160,8 +168,13 @@
 
     ws.onclose = function () {
       if (redrawTimer) { clearInterval(redrawTimer); redrawTimer = null; }
-      // One quiet retry. The rail is a nicety; it must never nag.
-      if (!closed) setTimeout(function () { if (!closed) restart(); }, 5000);
+      /* Keep coming back, backing off to a few seconds. Deriv drops idle
+         connections, and a rail that gives up after one try is a rail that is
+         blank for anyone who leaves the page open. */
+      if (closed) return;
+      attempt++;
+      setTimeout(function () { if (!closed) restart(); },
+        Math.min(1000 * Math.pow(2, attempt - 1), 8000));
     };
 
     ws.onerror = function () { try { ws.close(); } catch (e) {} };

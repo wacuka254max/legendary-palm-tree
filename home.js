@@ -176,7 +176,6 @@
   var params = new URLSearchParams(window.location.search);
 
   if (params.has("code") || params.has("error")) {
-    amountEl.textContent = "Connecting…";
     D.handleRedirect().then(function (r) {
       if (r.status === "connected") { celebrate(); return load(); }
       // Nothing to retry here — the button is on the landing page.

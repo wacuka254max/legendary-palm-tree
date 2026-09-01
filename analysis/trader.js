@@ -82,6 +82,7 @@
     if (d.msg_type === "proposal_open_contract" && d.proposal_open_contract) {
       var c = d.proposal_open_contract;
       if (this.pending.stage !== "settle") return;
+      if (d.subscription && d.subscription.id) this.pending.sub = d.subscription.id;
       if (this.pending.contractId && c.contract_id !== this.pending.contractId) return;
 
       /* Read the spots from EVERY update, not just the settling one. The entry
@@ -127,6 +128,11 @@
         if (done) return;
         done = true;
         clearTimeout(timer);
+        /* Every trade subscribes to its own contract stream. Left open, a long
+           session ends up with one live subscription per trade placed, all of
+           them still sending — which is what makes the page slow down the
+           longer it is used. */
+        if (self.pending && self.pending.sub) self.s.send({ forget: self.pending.sub });
         self.pending = null;
         fn(v);
       };
@@ -142,6 +148,7 @@
         stage: "proposal",
         stake: spec.stake,
         contractId: null,
+        sub: null,
         entry: null,
         exit: null,
         resolve: function (v) { finish(resolve, v); },

@@ -59,6 +59,13 @@
      while martingale is recovering a loss, and every win puts it back. */
   var nextStake = 1;
 
+  /* The most recent quote per symbol, formatted the way Deriv displays it.
+     Deriv does not always put entry/exit on the contract, and a blank spot in
+     the transactions list is useless — the tick stream we are already reading
+     answers the same question. */
+  var lastSpot = {};
+  var entryHint = null;
+
   var pending = {};            // sym -> needs repaint
   var painter = null;
 
@@ -115,6 +122,14 @@
       showNextStake();
 
       var t = C.TYPES[r.type];
+
+      /* Prefer what Deriv reported; fall back to the ticks we were already
+         streaming. A one-tick contract enters on the quote that was live when
+         it was bought and exits on the next one, which is exactly what these
+         two hold. */
+      var entry = r.entry || entryHint;
+      var exit = r.exit || lastSpot[r.market] || null;
+
       txn.add({
         label: t.label + (t.barrier ? " " + r.barrier : ""),
         market: r.market,
@@ -122,8 +137,8 @@
         stake: r.stake,
         profit: r.profit,
         payout: r.payout,
-        entry: r.entry,
-        exit: r.exit
+        entry: entry,
+        exit: exit
       });
     }
   };
@@ -296,6 +311,16 @@
       if (!analysers[sym]) analysers[sym] = new A.Analyser(sym, settings.count);
       analysers[sym].setCount(settings.count);
       analysers[sym].seed(d.history.prices || []);
+
+      /* Seed the spot from the history too. Otherwise a trade placed in the
+         first seconds — before any live tick has landed — has nothing to fall
+         back on and the entry column is blank again. */
+      var prices = d.history.prices || [];
+      if (prices.length) {
+        var dec = A.PIP_DECIMALS[sym] != null ? A.PIP_DECIMALS[sym] : 2;
+        lastSpot[sym] = Number(prices[prices.length - 1]).toFixed(dec);
+      }
+
       if (d.subscription && d.subscription.id) subs[sym] = d.subscription.id;
       paint(sym);
       return;
@@ -303,6 +328,9 @@
 
     if (d.msg_type === "tick" && d.tick && d.tick.symbol) {
       var t = d.tick;
+      var dec = t.pip_size != null ? t.pip_size
+        : (A.PIP_DECIMALS[t.symbol] != null ? A.PIP_DECIMALS[t.symbol] : 2);
+      lastSpot[t.symbol] = Number(t.quote).toFixed(dec);
       if (!active[t.symbol]) return;
       if (!analysers[t.symbol]) analysers[t.symbol] = new A.Analyser(t.symbol, settings.count);
       analysers[t.symbol].push(t.quote, t.pip_size);
@@ -320,7 +348,11 @@
   $("cards").addEventListener("click", function (e) {
     var b = e.target.closest(".act");
     if (!b || b.disabled || trading) return;
-    if (!session.isOpen()) return status("No trading session — pick an account.", "error");
+
+    /* Not "pick an account" — an account IS picked, the socket is simply
+       still coming up or has just blinked. The session queues what it cannot
+       send yet, so the trade goes out the moment it can. */
+    if (!session.isLive()) return status("Still connecting to Deriv…", "warning");
 
     var type = b.getAttribute("data-type");
     var sym = b.getAttribute("data-sym");
@@ -333,6 +365,9 @@
     /* One trade per click. The ladder lives here rather than inside the
        trader, because each click is its own run and the recovery has to
        survive between them. */
+    // The spot the contract is entering on, before the next tick replaces it.
+    entryHint = lastSpot[sym] || null;
+
     trader.run({
       type: type,
       barrier: C.TYPES[type].barrier ? C.clampBarrier(type, settings.ref) : null,
@@ -441,19 +476,21 @@
     $("risk").className = "risk" + (a.demo ? "" : " risk--real");
   }
 
-  function openSession() {
-    var id = $("account").value;
-    if (!id) return;
-    status("Opening a session on " + id + "…", "info");
+  var ACCOUNT_KEY = "evie_analysis_account";
 
-    session.close();
+  function openSession(id) {
+    if (!id) return;
+    try { localStorage.setItem(ACCOUNT_KEY, id); } catch (e) {}
+
+    /* Whatever was subscribed before belongs to the old socket. Clearing the
+       ids here means the reconnect below re-requests them rather than trying
+       to forget subscriptions that no longer exist. */
     subs = {};
+    session.resubscribe = function () { subscribeAll(); session.send({ balance: 1, subscribe: 1 }); };
 
     session.open(id).then(function () {
-      trader = new window.EvieTrader(session, ui);
-      session.send({ balance: 1, subscribe: 1 });
-      subscribeAll();
-      status("Live — watching " + activeCount() + " market(s).", "success");
+      if (!trader) trader = new window.EvieTrader(session, ui);
+      status("Live — " + activeCount() + " market(s).", "success");
     }).catch(function (e) {
       if (e && e.expired) {
         D.disconnect();
@@ -464,13 +501,20 @@
     });
   }
 
-  $("account").addEventListener("change", function () { describeAccount(); openSession(); });
+  $("account").addEventListener("change", function () { describeAccount(); openSession($("account").value); });
 
   /* ── go ─────────────────────────────────────────────────────────────── */
 
   renderSyms();
   renderCards();
   showNextStake();
+
+  /* Connect on the account used last, immediately, rather than waiting for the
+     portfolio call to come back. Nobody wants to watch "Checking…" before the
+     data they came for; the account list fills in behind it. */
+  var remembered = null;
+  try { remembered = localStorage.getItem(ACCOUNT_KEY); } catch (e) {}
+  if (remembered) openSession(remembered);
 
   D.portfolio().then(function (d) {
     accounts = d.accounts
@@ -487,9 +531,11 @@
         (a.demo ? "Demo" : "Real") + " · " + esc(money(a.balance, a.currency)) + "</option>";
     }).join("");
 
-    $("account").value = accounts[0].id;
+    // Keep the remembered account if it is still one of theirs.
+    var keep = accounts.filter(function (a) { return a.id === remembered; })[0];
+    $("account").value = keep ? keep.id : accounts[0].id;
     describeAccount();
-    openSession();
+    if (!keep) openSession($("account").value);
   }).catch(function (e) {
     if (e && e.expired) {
       D.disconnect();
