@@ -35,6 +35,34 @@
     { sym: "R_100", name: "Volatility 100" }
   ];
 
+  /* What is on before anyone has chosen anything.
+
+     A wide screen fits three cards side by side, so it opens on three rather
+     than on one card and a lot of empty grid. They are picked at random so the
+     page does not always suggest the same markets — every one of these is a
+     fair choice, and a fixed trio quietly reads as a recommendation.
+
+     A narrow screen shows one card at a time, so three would only be two
+     screens of scrolling before the first decision.
+
+     Either way this is a starting point, not a setting: the first tap on a
+     symbol chip replaces it, and the choice is remembered from then on. */
+  var WIDE_MIN = 1000;
+  var WIDE_PICKS = 3;
+
+  function defaultActive() {
+    var pool = MARKETS.map(function (m) { return m.sym; });
+    var wide = false;
+    try { wide = window.innerWidth >= WIDE_MIN; } catch (e) {}
+    var take = wide ? Math.min(WIDE_PICKS, pool.length) : 1;
+
+    var out = {};
+    for (var i = 0; i < take; i++) {
+      out[pool.splice(Math.floor(Math.random() * pool.length), 1)[0]] = true;
+    }
+    return out;
+  }
+
   /* The four pairs, in the order the card shows them. `key` reads the stat off
      a stats() result; `label` is what the percentage bar says. */
   var PAIRS = [
@@ -49,7 +77,7 @@
   var session = new window.EvieSession();
   var accounts = [];
   var analysers = {};          // sym -> Analyser
-  var active = { R_10: true }; // which symbols have a card
+  var active = defaultActive();  // which symbols have a card
   var subs = {};               // sym -> subscription id
   var trading = false;
   var settings = { stake: 1, ref: 5, count: 130, martingale: true, multiplier: 3.1 };
