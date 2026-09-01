@@ -155,7 +155,10 @@
         if (window.EvieMarkets) {
           var opts = d.accounts.filter(function (a) { return a.kind === "Options"; });
           var pick = opts.filter(function (a) { return a.demo; })[0] || opts[0];
-          if (pick) window.EvieMarkets.start(pick.id);
+          if (pick) {
+            try { localStorage.setItem("evie_markets_account", pick.id); } catch (x) {}
+            window.EvieMarkets.start(pick.id);
+          }
         }
       })
       .catch(function (e) {
@@ -170,6 +173,15 @@
         fail(e && e.message);
       });
   }
+
+  /* The rail connects on the account used last, straight away. Waiting for the
+     portfolio call means a dashboard that is blank for as long as that takes. */
+  (function () {
+    if (!window.EvieMarkets) return;
+    var id = null;
+    try { id = localStorage.getItem("evie_markets_account"); } catch (e) {}
+    if (id) window.EvieMarkets.start(id);
+  })();
 
   /* ── entry ──────────────────────────────────────────────────────────────── */
 

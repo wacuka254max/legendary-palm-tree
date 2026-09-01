@@ -37,6 +37,36 @@
   var WINDOW_S = 300;      // the five minutes the panel is about
   var REDRAW_MS = 1000;    // ticks arrive faster than the eye needs redrawing
 
+  /* The last window per market, so a reopened dashboard shows the rail
+     already drawn instead of "Waiting for prices…" for the second it takes
+     Deriv to answer. Live data overwrites it as soon as it arrives; older
+     than the window itself is not worth showing, so it is dropped. */
+  var CACHE_KEY = "evie_markets_cache";
+
+  function readCache() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (!raw || Date.now() - raw.t > WINDOW_S * 1000) return null;
+      return raw.syms || null;
+    } catch (e) { return null; }
+  }
+
+  var cacheTimer = null;
+  function writeCache() {
+    clearTimeout(cacheTimer);
+    cacheTimer = setTimeout(function () {
+      try {
+        var out = {};
+        Object.keys(series).forEach(function (sym) {
+          var s = series[sym];
+          // Sixty points still draw a faithful sparkline and keep this small.
+          out[sym] = { t: s.t.slice(-60), p: s.p.slice(-60) };
+        });
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), syms: out }));
+      } catch (e) {}
+    }, 3000);
+  }
+
   var listEl = null;
   var ws = null;
   var series = {};         // sym -> { t: [], p: [] }
@@ -156,6 +186,7 @@
           t: (d.history.times || []).map(Number),
           p: (d.history.prices || []).map(Number)
         };
+        writeCache();
         return;
       }
 
@@ -163,6 +194,7 @@
         var s = series[d.tick.symbol] || (series[d.tick.symbol] = { t: [], p: [] });
         s.t.push(Number(d.tick.epoch));
         s.p.push(Number(d.tick.quote));
+        writeCache();
       }
     };
 
@@ -194,6 +226,10 @@
     if (!listEl || !accountId || !global.EvieDeriv) return;
     lastAccount = accountId;
 
+    // Draw the last known prices at once, so the rail is never an empty box.
+    var cached = readCache();
+    if (cached) { series = cached; draw(); }
+
     global.EvieDeriv.tradeSocket(accountId)
       .then(open)
       .catch(function () {
@@ -215,6 +251,19 @@
     closed = true;
     try { if (ws) ws.close(); } catch (e) {}
   });
+
+  /* Paint before anything is asked of the network. start() is called once the
+     portfolio comes back, which is far too late for a rail that should never
+     look empty. */
+  function prime() {
+    listEl = el("mk-list");
+    if (!listEl) return;
+    var cached = readCache();
+    if (cached) { series = cached; draw(); }
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", prime);
+  else prime();
 
   global.EvieMarkets = { start: start };
 })(window);

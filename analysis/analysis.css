@@ -526,3 +526,12 @@
   .ticks { margin-top: 9px; gap: 4px; }
   .tk { width: 23px; height: 23px; font-size: 11px; }
 }
+
+/* A quiet aside inside the label, not a second line. */
+.fld-hint {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+  opacity: 0.85;
+}

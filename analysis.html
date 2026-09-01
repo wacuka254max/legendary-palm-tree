@@ -68,16 +68,16 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
       <div class="fld fld--mart">
         <span class="fld-k">
           Martingale
-          <button class="tog" id="mart-tog" type="button" role="switch" aria-checked="false" aria-label="Martingale">
+          <button class="tog" id="mart-tog" type="button" role="switch" aria-checked="true" aria-label="Martingale">
             <span class="tog-dot"></span>
           </button>
         </span>
-        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" disabled />
+        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" />
       </div>
     </div>
 
     <div class="syms">
-      <span class="fld-k">Active symbols</span>
+      <span class="fld-k">Active symbols <span class="fld-hint">select a symbol to see its analysis</span></span>
       <div class="syms-row" id="syms"></div>
     </div>
 

@@ -53,7 +53,7 @@
   var active = { R_10: true }; // which symbols have a card
   var subs = {};               // sym -> subscription id
   var trading = false;
-  var settings = { stake: 1, ref: 5, count: 130, martingale: false, multiplier: 3.1 };
+  var settings = { stake: 1, ref: 5, count: 130, martingale: true, multiplier: 3.1 };
 
   /* The stake the NEXT trade will use. It only differs from the base stake
      while martingale is recovering a loss, and every win puts it back. */
@@ -65,6 +65,39 @@
      answers the same question. */
   var lastSpot = {};
   var entryHint = null;
+
+  /* Last window per symbol, kept so a reopened page is POPULATED on its first
+     paint rather than showing an empty card for the second it takes Deriv to
+     answer. The live history replaces it as soon as it lands; the cache only
+     ever fills the gap. Anything older than this is not worth showing, so it
+     is ignored and the skeleton stands instead. */
+  var CACHE_KEY = "evie_analysis_cache";
+  var CACHE_MAX_AGE = 10 * 60 * 1000;
+
+  function readCache() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (!raw || Date.now() - raw.t > CACHE_MAX_AGE) return null;
+      return raw;
+    } catch (e) { return null; }
+  }
+
+  var cacheTimer = null;
+  function writeCache() {
+    clearTimeout(cacheTimer);
+    // Written on a timer: this runs on every tick otherwise, and localStorage
+    // is synchronous.
+    cacheTimer = setTimeout(function () {
+      try {
+        var out = { t: Date.now(), active: active, syms: {} };
+        Object.keys(analysers).forEach(function (sym) {
+          if (!active[sym]) return;
+          out.syms[sym] = { prices: analysers[sym].prices.slice(-settings.count) };
+        });
+        localStorage.setItem(CACHE_KEY, JSON.stringify(out));
+      } catch (e) {}
+    }, 2000);
+  }
 
   var pending = {};            // sym -> needs repaint
   var painter = null;
@@ -245,7 +278,9 @@
     });
 
     host.classList.toggle("is-empty", want.length === 0);
-    if (!want.length) host.innerHTML = '<p class="cards-none">No symbols selected. Pick one above.</p>';
+    if (!want.length) {
+      host.innerHTML = '<p class="cards-none">Select a symbol above to see its analysis.</p>';
+    }
   }
 
   /* ── symbols ────────────────────────────────────────────────────────── */
@@ -269,6 +304,7 @@
     else unsubscribe(sym);
 
     renderCards();
+    writeCache();
   });
 
   /* ── ticks ──────────────────────────────────────────────────────────── */
@@ -323,6 +359,7 @@
 
       if (d.subscription && d.subscription.id) subs[sym] = d.subscription.id;
       paint(sym);
+      writeCache();
       return;
     }
 
@@ -335,6 +372,7 @@
       if (!analysers[t.symbol]) analysers[t.symbol] = new A.Analyser(t.symbol, settings.count);
       analysers[t.symbol].push(t.quote, t.pip_size);
       markDirty(t.symbol);
+      writeCache();
       return;
     }
 
@@ -505,7 +543,27 @@
 
   /* ── go ─────────────────────────────────────────────────────────────── */
 
+  /* Restore the last view first: which symbols were on, and the window each
+     was showing. The page therefore opens on data, not on a placeholder. */
+  var cached = readCache();
+  if (cached && cached.active && Object.keys(cached.active).length) active = cached.active;
+
   renderSyms();
+
+  if (cached) {
+    Object.keys(cached.syms).forEach(function (sym) {
+      if (!active[sym]) return;
+      var an = new A.Analyser(sym, settings.count);
+      an.seed(cached.syms[sym].prices || []);
+      analysers[sym] = an;
+      var p = cached.syms[sym].prices || [];
+      if (p.length) {
+        var dec = A.PIP_DECIMALS[sym] != null ? A.PIP_DECIMALS[sym] : 2;
+        lastSpot[sym] = Number(p[p.length - 1]).toFixed(dec);
+      }
+    });
+  }
+
   renderCards();
   showNextStake();
 
