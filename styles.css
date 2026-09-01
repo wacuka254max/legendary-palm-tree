@@ -38,6 +38,7 @@
   --blue:      #0d8ecf;
   --blue-hi:   #0a76ae;
   --ok:        #14a05a;
+  --danger:    #d92d20;
 
   /* Text sitting ON an accent fill. */
   --on-accent: #ffffff;
@@ -73,6 +74,7 @@
   --blue:      #38c6ff;
   --blue-hi:   #5bd2ff;
   --ok:        #5fd39a;
+  --danger:    #ff6a6a;
 
   --on-accent: #0b0b0f;
   --ring:      rgba(255, 255, 255, 0.55);
@@ -126,6 +128,8 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
    nothing in the gap. */
 .dash-main { padding-top: clamp(84px, 9vh, 100px); padding-bottom: 56px; }
 .dash-title {
+  max-width: 1180px;
+  margin-inline: auto;
   margin-bottom: clamp(14px, 1.8vw, 20px);
   font-size: clamp(1.45rem, 2.4vw, 1.8rem);
   font-weight: 700;
@@ -170,7 +174,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: 10px;
-  max-width: 660px;
   margin-bottom: 18px;
 }
 .tile {
@@ -826,11 +829,21 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 
 /* On a wide screen the rail fills the space the tiles were leaving empty on
    the right. Below 1180px it drops underneath them, full width. */
+/* Two columns that stay together.
+
+   The left column's content was capped at 660px while its track kept growing
+   with the window, so on a wide screen the tiles sat at the far left, the rail
+   at the far right, and a third of the page was the gulf between them. The
+   whole grid is bounded instead, and centred once the window is wider than it
+   — so the two columns keep company and the spare width becomes an even
+   margin rather than a hole in the middle. */
 .dash-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: clamp(16px, 2.4vw, 32px);
+  gap: clamp(16px, 2vw, 26px);
   align-items: start;
+  max-width: 1180px;
+  margin-inline: auto;
 }
 .dash-col { min-width: 0; }
 
@@ -1019,6 +1032,8 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 
 .dash-foot {
+  max-width: 1180px;
+  margin-inline: auto;
   margin-top: 28px;
   padding-top: 16px;
   border-top: 1px solid var(--line);
@@ -1077,7 +1092,6 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-sm);
-    max-width: 660px;
   }
   .acctp[hidden] { display: none; }
 }
@@ -1117,3 +1131,11 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .acctp .grp + .grp { margin-top: 12px; }
 .acctp .acct { padding: 7px 0; font-size: 12px; }
 .acctp .sheet-who { margin-bottom: 10px; font-size: 12.5px; }
+
+
+/* Disconnect is the one button on this page that undoes something, so it is
+   the one button wearing the colour that means it. The border stays neutral
+   until hover: a permanently red outline in a quiet panel reads as an alert
+   about the account rather than an action available on it. */
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { color: var(--danger); border-color: var(--danger); }
