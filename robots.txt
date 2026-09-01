@@ -17,4 +17,7 @@ Disallow: /automatic-ai.html
 Disallow: /sim/
 Disallow: /analysis/
 
+# IndexNow key: 9a23fb3eb59f730783ec614a76ccbce3 — served at
+# /9a23fb3eb59f730783ec614a76ccbce3.txt for Bing, Yandex and Seznam.
+
 Sitemap: https://www.evietrader.site/sitemap.xml
