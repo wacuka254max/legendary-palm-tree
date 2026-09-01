@@ -1,25 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-
+  "cleanUrls": false,
+  "trailingSlash": false,
   "redirects": [
     {
-      "//": "The testing address is retired. Anything still pointing at it — an old bookmark, a link somewhere, a crawler that saw it once — lands on the real domain instead, on the same path. A permanent redirect rather than a noindex header: this makes the duplicate stop existing rather than merely asking search engines to look away, and it hands whatever the old address had earned to the domain.",
       "source": "/:path*",
       "has": [{ "type": "host", "value": "glowing-happiness-two.vercel.app" }],
       "destination": "https://www.evietrader.site/:path*",
       "permanent": true
     }
   ],
-
   "headers": [
     {
-      "//": "Every preview build Vercel makes is another copy of the site on its own address. None of them should ever be indexed.",
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "(?<sub>.*)-git-(?<rest>.*)\\.vercel\\.app" }],
+      "has": [{ "type": "host", "value": ".*-git-.*\\.vercel\\.app" }],
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
-      "//": "The verification file must be served as plain text, exactly as Google wrote it.",
       "source": "/google78fd7c48f7d89293.html",
       "headers": [
         { "key": "Content-Type", "value": "text/html; charset=utf-8" },
@@ -27,16 +24,14 @@
       ]
     },
     {
-      "//": "The pages behind the connection place real trades. A stale one served from a cache would be an old build talking to Deriv, so they are re-fetched every time; the assets around them are safe to keep.",
-      "source": "/(home|analysis|analyss|automatic-ai)\\.html",
-      "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
-    },
-    {
       "source": "/sitemap.xml",
       "headers": [{ "key": "Content-Type", "value": "application/xml; charset=utf-8" }]
     },
     {
-      "//": "Ordinary hardening. Nothing here frames another site or is meant to be framed.",
+      "source": "/(home|analysis|analyss|automatic-ai).html",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
@@ -44,8 +39,5 @@
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
       ]
     }
-  ],
-
-  "cleanUrls": false,
-  "trailingSlash": false
+  ]
 }
