@@ -77,6 +77,10 @@
   var session = new window.EvieSession();
   var accounts = [];            // what the picker is offering
   var allAccounts = [];         // everything this login has, demo included
+
+  /* Prices are streaming, but there is no real account to trade on. The cards
+     fill in as usual; only placing a trade is refused. */
+  var analysisOnly = false;
   var analysers = {};          // sym -> Analyser
   var active = defaultActive();  // which symbols have a card
   var subs = {};               // sym -> subscription id
@@ -401,6 +405,13 @@
        send yet, so the trade goes out the moment it can. */
     if (!session.isLive()) return status("Still connecting to Deriv…", "warning");
 
+    if (analysisOnly) {
+      return status(
+        "This login has no real options account. The analysis is live; open a real account with Deriv to trade it.",
+        "warning"
+      );
+    }
+
     var type = b.getAttribute("data-type");
     var sym = b.getAttribute("data-sym");
     var stake = settings.martingale ? nextStake : settings.stake;
@@ -449,6 +460,13 @@
    */
   function placeTrade(type, sym, stake, forRun) {
     if (!session.isLive()) return Promise.reject(new Error("Not connected."));
+
+    /* The buttons check this too, with a friendlier sentence. This is the
+       backstop: the bot places its trades through here as well, and a socket
+       open for prices must not become a socket that trades. */
+    if (analysisOnly) {
+      return Promise.reject(new Error("No real options account to trade on."));
+    }
 
     if (inFlight) {
       var busy = new Error("A trade is already running.");
@@ -870,19 +888,32 @@
 
     renderAccounts();
 
-    /* No real account is not the same as no account, and the difference
-       matters in the header: showing the demo's balance next to a badge
-       reading Real is a lie about how much money is at stake. The perch stays
-       blank until there is a real balance to put in it. */
+    /* No real account is not the same as no account.
+       
+       The header must not borrow the demo's balance — a figure beside a badge
+       reading Real is a claim about how much money is at stake — so the perch
+       stays blank. But the ANALYSIS is not about an account at all: it is the
+       market, and someone who has connected Deriv should be able to read it
+       while they wait for a real account to be approved. So a session still
+       opens, on whatever options account this login has, purely for prices.
+       
+       Trading is what needs the real account, and that is what is held back. */
     if (!accounts.length) {
-      session.close();
       $("balance").textContent = "—";
       $("acct-badge").textContent = "Real";
       $("acct-badge").classList.remove("badge--demo");
-      $("risk").textContent = "This login has no real options account.";
+      $("risk").textContent = "No real options account yet — the analysis is live, trading is not.";
       $("risk").className = "risk";
-      return status("This login has no real options account — nothing to trade.", "warning");
+
+      analysisOnly = true;
+      var feed = allAccounts[0];          // a demo, since there is no real one
+      if (feed && session.accountId !== feed.id) openSession(feed.id);
+
+      return status("Analysis only: this login has no real options account to trade on.", "warning");
     }
+
+    // A real account has appeared (or been revealed): trading is on again.
+    analysisOnly = false;
 
     // Keep the remembered account if it is still one of the ones on offer.
     var keep = accounts.filter(function (a) { return a.id === remembered; })[0];

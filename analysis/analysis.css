@@ -653,7 +653,11 @@
 .bot-open {
   position: fixed;
   right: 24px; bottom: 24px;
-  z-index: 70;
+  /* Above the transactions rail, not under it. The rail is a fixed panel down
+     the right on a wide screen, and at z-index 70 the button that brings the
+     bot back was sitting behind it — closed the bot, and there was no way to
+     open it again without reloading. */
+  z-index: 85;
   display: inline-flex; align-items: center; gap: 7px;
   padding: 10px 15px;
   font: inherit; font-size: 13px; font-weight: 650;
@@ -671,6 +675,11 @@
 .bot-open.is-running .bot-open-dot { display: block; animation: bot-pulse 1.6s ease-in-out infinite; }
 @keyframes bot-pulse { 50% { opacity: 0.35; } }
 
+@media (min-width: 1200px) {
+  /* Beside the rail rather than over it: 340px of panel plus the same gutter
+     it would have had against the edge. */
+  .bot-open { right: 364px; }
+}
 @media (max-width: 1199px) {
   /* Clear of the transactions sheet parked at the bottom. */
   .bot-open { bottom: 66px; }
