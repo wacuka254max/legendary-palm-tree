@@ -54,7 +54,9 @@ body {
 img { max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 
-.wrap { width: 100%; max-width: 1240px; margin-inline: auto; padding-inline: var(--gutter); }
+/* Full bleed. A centred column leaves a band of empty page down each side on
+   a wide screen; this uses the screen it is given and keeps only a gutter. */
+.wrap { width: 100%; padding-inline: var(--gutter); }
 
 /* ── Header ───────────────────────────────────────────────────────────── */
 
@@ -130,7 +132,7 @@ a { color: inherit; text-decoration: none; }
 
 .h1 {
   margin: clamp(20px, 3vw, 30px) auto 0;
-  max-width: 17ch;
+  max-width: 20ch;
   font-size: clamp(2.3rem, 6.4vw, 4.4rem);
   line-height: 1.02;
   letter-spacing: -0.04em;
@@ -164,7 +166,7 @@ a { color: inherit; text-decoration: none; }
   border-radius: var(--r);
 }
 .tile--wide { grid-column: span 6; }
-.tile--third { grid-column: span 2; }
+.tile--half { grid-column: span 3; }
 
 .tile-k {
   margin: 0 0 8px;
@@ -191,7 +193,7 @@ a { color: inherit; text-decoration: none; }
 .i-mint { color: var(--mint); }
 
 @media (max-width: 860px) {
-  .tile--third { grid-column: span 6; }
+  .tile--half { grid-column: span 6; }
 }
 
 /* ── The states strip ─────────────────────────────────────────────────────
@@ -241,87 +243,76 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ── Platforms ────────────────────────────────────────────────────────────
-   A bordered table rather than a floating strip: hairlines between cells, so
-   twelve marks of twelve different widths read as one block. */
+   The line on the left, the marks floating on the right. Each one drifts on
+   its own timing, so the cluster breathes rather than pulsing in unison —
+   twelve things moving together reads as a glitch, twelve things moving
+   independently reads as alive. */
 
-.plat { padding-bottom: clamp(44px, 6vw, 80px); }
+.plat { padding-bottom: clamp(44px, 6vw, 84px); }
+.plat-in {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: center;
+  padding: clamp(24px, 3vw, 40px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
 .plat-k {
-  margin: 0 0 clamp(14px, 2vw, 20px);
+  margin: 0 0 10px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-3);
 }
-.plat-grid {
+.plat-t { margin: 0; font-size: clamp(1.35rem, 2.4vw, 1.9rem); line-height: 1.12; letter-spacing: -0.03em; font-weight: 700; }
+.plat-p { margin: 12px 0 0; max-width: 44ch; color: var(--text-2); font-size: 0.96rem; }
+
+.cloud {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  overflow: hidden;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(10px, 1.2vw, 14px);
 }
-.plat-cell {
+.chip {
   display: grid;
   place-items: center;
-  min-height: 92px;
-  padding: 18px;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-/* The last cell in each row, and the whole bottom row, keep the panel's own
-   edge instead of doubling it. */
-.plat-cell:nth-child(6n) { border-right: 0; }
-.plat-cell:nth-last-child(-n + 6) { border-bottom: 0; }
-.plat-cell img { height: 24px; width: auto; max-width: 118px; object-fit: contain; opacity: 0.72; transition: opacity 0.16s ease; }
-.plat-cell:hover img { opacity: 1; }
-
-@media (max-width: 900px) {
-  .plat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .plat-cell:nth-child(6n) { border-right: 1px solid var(--line); }
-  .plat-cell:nth-child(3n) { border-right: 0; }
-  .plat-cell:nth-last-child(-n + 6) { border-bottom: 1px solid var(--line); }
-  .plat-cell:nth-last-child(-n + 3) { border-bottom: 0; }
-}
-@media (max-width: 520px) {
-  .plat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .plat-cell { min-height: 78px; }
-  .plat-cell:nth-child(3n) { border-right: 1px solid var(--line); }
-  .plat-cell:nth-child(2n) { border-right: 0; }
-  .plat-cell:nth-last-child(-n + 3) { border-bottom: 1px solid var(--line); }
-  .plat-cell:nth-last-child(-n + 2) { border-bottom: 0; }
-}
-
-/* ── Steps ────────────────────────────────────────────────────────────── */
-
-.steps { padding-bottom: clamp(44px, 6vw, 80px); }
-.sec-head { max-width: 46ch; margin-bottom: clamp(20px, 3vw, 30px); }
-.sec-t { margin: 8px 0 0; font-size: clamp(1.5rem, 3vw, 2.1rem); line-height: 1.1; letter-spacing: -0.03em; font-weight: 700; }
-.sec-p { margin: 12px 0 0; color: var(--text-2); font-size: 0.98rem; }
-
-.steps-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 16px); }
-.step {
-  padding: clamp(20px, 2.2vw, 26px);
-  background: var(--panel);
+  min-height: 74px;
+  padding: 14px;
+  background: var(--panel-2);
   border: 1px solid var(--line);
-  border-radius: var(--r);
+  border-radius: var(--r-sm);
+  animation: float 7s ease-in-out infinite;
+  transition: border-color 0.16s ease, transform 0.16s ease;
 }
-.step-n {
-  display: inline-grid;
-  place-items: center;
-  width: 30px; height: 30px;
-  margin-bottom: 14px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--violet-hi);
-  background: rgba(124, 92, 255, 0.12);
-  border: 1px solid rgba(124, 92, 255, 0.34);
-  border-radius: 9px;
-}
-.step-t { margin: 0 0 6px; font-size: 1.04rem; font-weight: 650; letter-spacing: -0.02em; }
-.step-p { margin: 0; font-size: 0.92rem; color: var(--text-2); }
+.chip:hover { border-color: var(--line-hi); transform: translateY(-2px); }
+.chip img { height: 22px; width: auto; max-width: 104px; object-fit: contain; opacity: 0.78; }
+.chip:hover img { opacity: 1; }
 
-@media (max-width: 860px) { .steps-grid { grid-template-columns: minmax(0, 1fr); } }
+/* Twelve chips, each offset so no two rise together. */
+.chip:nth-child(6n+1) { animation-delay: 0s; }
+.chip:nth-child(6n+2) { animation-delay: -1.1s; }
+.chip:nth-child(6n+3) { animation-delay: -2.3s; }
+.chip:nth-child(6n+4) { animation-delay: -3.4s; }
+.chip:nth-child(6n+5) { animation-delay: -4.6s; }
+.chip:nth-child(6n)   { animation-delay: -5.7s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@media (max-width: 1000px) {
+  .plat-in { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .cloud { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .chip { min-height: 64px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chip { animation: none; }
+}
 
 /* ── Closing ──────────────────────────────────────────────────────────── */
 

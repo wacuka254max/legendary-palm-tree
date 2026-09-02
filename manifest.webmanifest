@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Kairos - fully automated AI trading bots",
-  "short_name": "Kairos",
+  "name": "Uptick - fully automated AI trading bots",
+  "short_name": "Uptick",
   "description": "Fully automated AI trading bots that run on a broker account you already own.",
   "start_url": "/",
   "scope": "/",
@@ -38,18 +38,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Analysis",
-      "short_name": "Analysis",
-      "url": "/analysis.html"
-    },
-    {
-      "name": "Automatic AI",
-      "short_name": "Auto AI",
-      "url": "/automatic-ai.html"
     }
   ],
   "categories": [

@@ -513,10 +513,18 @@
     /* Every page behind the connection opens the same way: no session means
        nothing to show, so go back to the door. Shared so a page added later
        cannot forget it. Returns false when it has sent them away. */
+    /* TEMPORARY — the gate is open.
+     *
+     * While this site is being designed, the pages behind it have to be
+     * reachable without a Deriv account: the landing page links straight to
+     * the dashboard and nothing asks anyone to connect. Restore the two lines
+     * below before this goes anywhere near a real user — without them every
+     * page behind the connection is public. */
     requireConnection: function () {
-      if (isConnected()) return true;
-      global.location.replace("/");
-      return false;
+      return true;
+      // if (isConnected()) return true;
+      // global.location.replace("/");
+      // return false;
     }
   };
 })(window);
