@@ -287,7 +287,23 @@
 
   var REST_BASE = "https://api.derivws.com";
 
-  function get(path, token) {
+  /* Deriv takes itself out of service for a moment at a time — "Service
+     temporarily unavailable. A health probe is in progress." is their own
+     wording, and it means exactly what it says: wait a second and ask again.
+     Handing that sentence to somebody who opened the page to read a market is
+     no answer at all, so the transient failures are ridden out here rather
+     than surfaced.
+
+     Only the ones that mean "later": 429 and the 5xx family, plus a network
+     that did not answer. A 401 is not transient, and neither is a 404. */
+  var RETRY_STATUS = [429, 500, 502, 503, 504];
+  var RETRY_MAX = 4;
+
+  function transient(e) {
+    return !!e && (e.retryable === true);
+  }
+
+  function once(path, token) {
     return fetch(REST_BASE + path, {
       headers: { Authorization: "Bearer " + token, "Deriv-App-ID": APP_ID },
       cache: "no-store"
@@ -301,9 +317,30 @@
         if (!res.ok) {
           var msg = (json && json.errors && json.errors[0] && json.errors[0].message) ||
             (json && (json.message || json.error)) || ("Deriv API error (" + res.status + ")");
-          throw new Error(String(msg));
+          var err = new Error(String(msg));
+          err.status = res.status;
+          if (RETRY_STATUS.indexOf(res.status) > -1) err.retryable = true;
+          throw err;
         }
         return json && json.data;
+      });
+    }, function (netErr) {
+      // Nothing came back at all: the network, not Deriv, and worth retrying.
+      var e = new Error("Could not reach Deriv.");
+      e.retryable = true;
+      e.cause = netErr;
+      throw e;
+    });
+  }
+
+  function get(path, token, attempt) {
+    attempt = attempt || 0;
+    return once(path, token).catch(function (e) {
+      if (!transient(e) || attempt >= RETRY_MAX) throw e;
+      // 600ms, 1.2s, 2.4s, 4.8s — inside the window one of these clears in.
+      var wait = 600 * Math.pow(2, attempt);
+      return new Promise(function (resolve) {
+        setTimeout(function () { resolve(get(path, token, attempt + 1)); }, wait);
       });
     });
   }

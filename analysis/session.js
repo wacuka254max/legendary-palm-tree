@@ -33,6 +33,7 @@
     this.openHandlers = [];
     this.queue = [];
     this.resubscribe = null;   // called after every (re)connect
+    this.onTrouble = null;     // called when an attempt fails and another is due
     this.stopped = false;
     this.attempt = 0;
     this.pinger = null;
@@ -123,6 +124,10 @@
     }).catch(function (e) {
       // An expired session is the one failure reconnecting cannot mend.
       if (e && e.expired) throw e;
+      /* Everything else is worth another go — Deriv pausing for a health
+         probe, a socket refused, a network blink. The page is told, so it can
+         say something truer than "Live" while the attempts run. */
+      if (self.onTrouble) { try { self.onTrouble(e); } catch (x) {} }
       self.retry();
       return self;
     });

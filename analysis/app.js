@@ -348,6 +348,10 @@
     Object.keys(subs).forEach(unsubscribe);
   }
 
+  session.onOpen(function () {
+    status("Live — " + activeCount() + " market(s).", "success");
+  });
+
   session.onMessage(function (d) {
     if (d.error) {
       if (!trading) status(d.error.message || "Deriv refused that request.", "error");
@@ -732,8 +736,15 @@
     subs = {};
     session.resubscribe = function () { subscribeAll(); session.send({ balance: 1, subscribe: 1 }); };
 
+    /* A failed attempt is not a failure: another is already scheduled. Say
+       that, rather than either claiming to be live or leaving Deriv's own
+       "health probe in progress" on screen as though it were the end of it. */
+    session.onTrouble = function () {
+      if (!session.isOpen()) status("Deriv is briefly unavailable — reconnecting…", "warning");
+    };
+
     session.open(id).then(function () {
-      status("Live — " + activeCount() + " market(s).", "success");
+      if (session.isOpen()) status("Live — " + activeCount() + " market(s).", "success");
     }).catch(function (e) {
       if (e && e.expired) {
         D.disconnect();
