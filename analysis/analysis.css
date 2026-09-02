@@ -1,11 +1,11 @@
 /* ══════════════════════════════════════════════════════════════════════
-   Evie — Analysis.
+   UPTICK — Analysis.
 
    Laid out like dbotzone's Advanced tool: a card per market, a digit grid
    with the notable digits outlined, and each trade pair as
    percentage · buttons · percentage.
 
-   The reference is a light theme; this keeps Evie's dark surface so the
+   The reference is a light theme; this keeps Uptick's own surface so the
    page still belongs to the rest of the site, and carries the reference's
    colour language across: green rise, red fall, blue even, red odd,
    orange over, cyan under. Flat colours only — no gradients anywhere.
@@ -65,7 +65,7 @@
 .fld-i:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* The multiplier sits under its own switch, so the pair reads as one control.
-   The switch itself is styled in styles.css: three pages use it now. */
+   The switch itself is styled in site.css: three pages use it now. */
 .fld--mart { flex: 0 1 190px; }
 
 .syms { margin-top: 10px; }
@@ -614,7 +614,7 @@
 .bot-f .fld-i { padding: 7px 9px; font-size: 13px; }
 
 .bot-run { width: 100%; padding: 9px; font-size: 13.5px; }
-.bot-run.is-running { background: var(--down); }
+.bot-run.is-running { background: var(--down); border-color: var(--down); }
 
 .bot-stats {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));

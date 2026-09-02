@@ -1,9 +1,17 @@
-/* EVIE — the simulation's own few styles.
-   Everything else is styles.css and analysis.css, unchanged: the point of the
-   page is that it looks and behaves like the real one. */
+/* ══════════════════════════════════════════════════════════════════════════
+   UPTICK — the simulation's own few styles.
 
-/* Nothing behind the setup card has started, so the page under it is empty.
-   Hiding it keeps a half-built layout from showing through the card. */
+   Everything past the setup card is the real page: site.css, app.css and
+   whichever of analysis.css / ai.css that page loads, unchanged. That is the
+   point of the simulation — it looks and behaves like the page it stands in
+   for, so what is proved here is proved about that page.
+
+   So this file is only the card in front, plus the switch and the pair of
+   controls the card needs.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Nothing behind the card has started, so the page under it is half built.
+   Hiding it keeps that from showing through. */
 .sim-body main,
 .sim-body .txn,
 .sim-body .bot,
@@ -14,74 +22,120 @@
 .sim-body.sim-running .bot,
 .sim-body.sim-running .bot-open { visibility: visible; }
 
+/* ── The card, and the field behind it ────────────────────────────────────
+   The overlay carries the site's own dotted ground rather than a flat block
+   of colour: the card should read as a page of the site, not as a dialog
+   dropped on top of a blank one. */
+
 .setup {
   position: fixed;
   inset: 0;
   z-index: 300;
   display: flex;
-  align-items: center;
+  /* Centred by the card's own auto margins instead of align-items, which
+     clips the top of a card taller than the screen. */
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px;
-  background: var(--bg);
+  padding: clamp(14px, 3vw, 28px);
   overflow-y: auto;
+  background-color: var(--void);
+  background-image: var(--dots);
 }
 .setup[hidden] { display: none; }
 
 .setup-card {
   width: 100%;
   max-width: 460px;
-  padding: 22px;
+  margin: auto;
+  padding: clamp(20px, 3vw, 28px);
+  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
+  border-radius: var(--r);
 }
 
-.setup-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.setup-k { margin: 0 0 2px; font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
-.setup-t { margin: 0; font-size: 1.15rem; }
+.setup-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.setup-mark { flex: none; margin-bottom: 14px; display: block; }
+.setup-k {
+  margin: 0 0 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.setup-t {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.2vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.setup-head .btn { padding: 8px 14px; font-size: 13px; }
 
-.setup-body { display: grid; gap: 14px; margin: 20px 0 14px; }
-/* .fld carries its own display, which would otherwise beat [hidden]. */
+.setup-body { display: grid; gap: 14px; margin: clamp(18px, 2.6vw, 24px) 0 14px; }
+
+/* The two pages this card sits on style .fld differently — one stacks them,
+   the other flexes them along a row. Inside the card they are grid cells and
+   neither treatment applies. */
+.setup-body .fld { display: block; flex: none; min-width: 0; margin: 0; }
 .setup-body [hidden] { display: none; }
-.fld--row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.setup-body .fld--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.setup-body .fld--row .fld-k { margin-bottom: 0; }
 
-/* Three exclusive choices, sized to be tapped rather than aimed at. */
+/* ── The three exclusive choices ──────────────────────────────────────────
+   Sized to be tapped rather than aimed at, and the chosen one is filled
+   rather than outlined: at a glance the card should say which it is without
+   being read. */
+
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .seg-b {
-  padding: 9px 6px;
+  padding: 10px 6px;
   font: inherit;
-  font-size: 0.84rem;
-  color: var(--ink-soft);
-  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: 10px;
   cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
-.seg-b:hover { border-color: var(--line-hi); color: var(--ink); }
+.seg-b:hover { color: var(--text); border-color: var(--line-hi); }
 .seg-b.is-on {
-  color: var(--on-accent);
-  background: var(--blue, #1e9bf0);
-  border-color: var(--blue, #1e9bf0);
+  color: #fff;
+  background: var(--violet);
+  border-color: var(--violet);
 }
 
 /* The plan in a sentence, so nobody has to infer it from three controls. */
 .setup-say {
   margin: 0 0 16px;
-  padding: 10px 12px;
-  font-size: 0.84rem;
-  line-height: 1.5;
-  color: var(--ink-soft);
-  background: var(--alt-tint, rgba(0, 0, 0, 0.03));
-  border-radius: 10px;
+  padding: 11px 13px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+  background: var(--panel-2);
+  border-left: 2px solid var(--violet);
+  border-radius: 0 10px 10px 0;
 }
+.setup-say:empty { display: none; }
 
 .setup-go { width: 100%; }
 
-.setup-note { margin: 14px 0 0; font-size: 0.76rem; line-height: 1.6; color: var(--ink-faint); }
-
-@media (max-width: 480px) {
-  .setup { padding: 12px; align-items: flex-start; }
-  .setup-card { padding: 18px; }
+.setup-note {
+  margin: 16px 0 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-3);
 }
 
 /* The balance and its dice, on one line. */
@@ -92,4 +146,9 @@
   padding: 0 14px;
   font-size: 12.5px;
   white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .setup { padding: 12px; }
+  .setup-card { padding: 18px; }
 }
