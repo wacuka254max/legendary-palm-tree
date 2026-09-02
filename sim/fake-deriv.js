@@ -310,10 +310,43 @@
 
     if (req.ping) return this.emit({ msg_type: "ping", ping: "pong", echo_req: req });
     if (req.forget) { delete this.subs[req.forget]; return; }
+
+    /* Two pages talk to this server and they ask for prices differently. The
+       analysis page wants a window of history it can measure; Automatic AI
+       wants the stream only. Same feed underneath either way. */
     if (req.ticks_history) return this.history(req);
+    if (req.ticks) return this.ticks(req);
+
+    if (req.balance) return this.balanceNow(req);
     if (req.proposal) return this.proposal(req);
     if (req.buy) return this.buy(req);
     if (req.proposal_open_contract) return this.watch(req);
+  };
+
+  /** A tick stream with no history in front of it. */
+  FakeSocket.prototype.ticks = function (req) {
+    var self = this;
+    var sym = req.ticks;
+    market(sym);                                  // exists from here on
+
+    var id = "sub-" + (this.nextId++);
+    this.subs[id] = { sym: sym };
+
+    if (!req.subscribe) return;
+
+    var timer = setInterval(function () {
+      if (self.readyState !== 1 || !self.subs[id]) return;
+      self.tick(sym);
+    }, TICK_MS);
+    this.timers.push(timer);
+  };
+
+  FakeSocket.prototype.balanceNow = function (req) {
+    this.emit({
+      msg_type: "balance",
+      echo_req: req,
+      balance: { balance: balance, currency: currency, loginid: ACCOUNT }
+    });
   };
 
   FakeSocket.prototype.history = function (req) {
@@ -526,6 +559,11 @@
 
   /** The open contract, before it settles: this is where the entry spot lives. */
   FakeSocket.prototype.watch = function (req) {
+    /* Without a contract id this is the blanket subscription — "tell me about
+       everything on this account". Automatic AI opens one at connect and
+       expects settlements to arrive down it. */
+    if (!req.contract_id) { this.watchAll = true; return; }
+
     var c = this.contracts[req.contract_id];
     if (!c) return;
     var m = market(c.sym);
@@ -570,6 +608,9 @@
     var profit = round2(returned - c.price);
     balance = round2(balance + returned);
 
+    /* Announced down the per-contract subscription if one was opened, and down
+       the blanket one if that is what the page is using. A real Deriv sends it
+       on both; the page is responsible for counting it once. */
     this.emit({
       msg_type: "proposal_open_contract",
       subscription: c.watchId ? { id: c.watchId } : undefined,
@@ -642,6 +683,21 @@
     }
   };
 
-  // session.js is the only thing on the page that opens one.
+  /* The real WebSocket class carries these, and code checks against them:
+     `ws.readyState !== WebSocket.OPEN` is the usual way to ask "is this
+     connection up?". Without them the comparison is against undefined, every
+     check answers "not open", and a page that is perfectly connected spends
+     its life reconnecting. session.js compares against the number 1 and never
+     noticed; the Automatic AI engine uses the constant and could not trade. */
+  FakeSocket.CONNECTING = 0;
+  FakeSocket.OPEN = 1;
+  FakeSocket.CLOSING = 2;
+  FakeSocket.CLOSED = 3;
+  FakeSocket.prototype.CONNECTING = 0;
+  FakeSocket.prototype.OPEN = 1;
+  FakeSocket.prototype.CLOSING = 2;
+  FakeSocket.prototype.CLOSED = 3;
+
+  // The only WebSocket either page opens.
   global.WebSocket = FakeSocket;
 })(window);

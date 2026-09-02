@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Automatic AI simulation | Evie</title>
+<meta name="robots" content="noindex,nofollow" />
+<meta name="theme-color" content="#f3f4f7" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<script>
+/* Applied before paint: a saved dark choice must not flash a light page first.
+   Light is the default when nothing has been chosen. */
+(function(){try{var t=localStorage.getItem("evie_theme");
+document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){}})();
+</script>
+<link rel="stylesheet" href="/styles.css" />
+<link rel="stylesheet" href="/sim/sim.css" />
+</head>
+<body class="dash sim-body">
+
+<!-- ── the conditions ───────────────────────────────────────────────────
+     Shown before the page runs. Nothing behind it has started: no socket, no
+     ticks, no bot — so the balance and the run of losses are set before the
+     first trade rather than being applied to one already in flight. -->
+<div class="setup" id="setup">
+  <div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-t">
+    <div class="setup-head">
+      <div>
+        <p class="setup-k">Practice, with no money and no Deriv</p>
+        <h1 class="setup-t" id="setup-t">Set up the simulation</h1>
+      </div>
+      <a class="btn btn-line" href="/home.html">Home</a>
+    </div>
+
+    <div class="setup-body">
+      <label class="fld">
+        <span class="fld-k">Starting balance (USD)</span>
+        <input class="fld-i" id="sim-balance" type="number" min="1" step="1" value="1000" inputmode="decimal" />
+      </label>
+
+      <div class="fld">
+        <span class="fld-k">Losses</span>
+        <div class="seg" id="sim-mode" role="radiogroup" aria-label="Losses">
+          <button class="seg-b is-on" type="button" data-mode="none" role="radio" aria-checked="true">None</button>
+          <button class="seg-b" type="button" data-mode="consecutive" role="radio" aria-checked="false">In a row</button>
+          <button class="seg-b" type="button" data-mode="random" role="radio" aria-checked="false">Random</button>
+        </div>
+      </div>
+
+      <label class="fld" id="sim-count-fld" hidden>
+        <span class="fld-k"><span id="sim-count-k">How many in a row</span></span>
+        <input class="fld-i" id="sim-count" type="number" min="0" max="10" step="1" value="3" inputmode="numeric" />
+      </label>
+
+      <div class="fld fld--row">
+        <span class="fld-k">First trade loses</span>
+        <button class="tog" id="sim-first" type="button" role="switch" aria-checked="false" aria-label="First trade loses">
+          <span class="tog-dot"></span>
+        </button>
+      </div>
+    </div>
+
+    <p class="setup-say" id="sim-say"></p>
+
+    <button class="btn btn-blue btn-lg setup-go" id="sim-go" type="button">Start simulation</button>
+
+    <p class="setup-note">
+      Everything past this card is the analysis page — every symbol, every
+      trade type, the martingale and the bot, priced and paced the way Deriv
+      prices and paces them, down to a stake the balance cannot cover being
+      refused. Only the money and the outcomes are arranged.
+    </p>
+  </div>
+</div>
+
+
+<header class="nav">
+  <div class="bleed nav-inner">
+    <a class="brand" href="/home.html">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff3d87"/><path d="M11 10h10M11 16h7M11 22h10" stroke="#0b0b0f" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand-name">Evie</span>
+    </a>
+    <div class="perch">
+      <button class="btn btn-line theme-b" data-theme-toggle type="button" aria-pressed="false" title="Switch to dark">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <span data-theme-label>Dark</span>
+      </button>
+      <span class="perch-v" id="balance">—</span>
+      <span class="badge" id="acct-badge">Real</span>
+      <a class="btn btn-line" href="/home.html">Home</a>
+    </div>
+  </div>
+</header>
+
+<main class="bleed dash-main">
+  <h1 class="dash-title">Automatic AI</h1>
+
+  <div class="run">
+
+    <!-- ── controls ─────────────────────────────────────────────────── -->
+    <section class="panel-solid">
+      <h2 class="grp-t">Settings</h2>
+
+      <label class="fld" id="acct-fld" hidden>
+        <span class="fld-k">Account</span>
+        <select class="fld-i" id="account"></select>
+      </label>
+
+      <!-- One to a line. Paired across a row they read as two halves of one
+           setting, and stake beside martingale is exactly the pair you do not
+           want misread. -->
+      <label class="fld">
+        <span class="fld-k">Stake</span>
+        <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Martingale</span>
+        <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Take profit</span>
+        <input class="fld-i" id="tp" type="number" min="0" step="1" value="100" inputmode="decimal" />
+      </label>
+      <label class="fld">
+        <span class="fld-k">Stop loss</span>
+        <input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" />
+      </label>
+
+      <div class="run-actions">
+        <button class="btn btn-blue btn-lg" id="start" type="button">Start</button>
+        <button class="btn btn-line btn-lg" id="stop" type="button" disabled>Stop</button>
+      </div>
+
+      <p class="risk" id="risk"></p>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- ── live state ───────────────────────────────────────────────── -->
+    <section class="panel-solid">
+      <h2 class="grp-t">Session</h2>
+
+      <!-- Each figure carries its own colour, so the six read as six
+           different things at a glance rather than one grey block. Flat
+           colours from the palette the rest of the app uses. -->
+      <dl class="stats-grid">
+        <div><dt>Profit</dt><dd id="s-profit">0.00</dd></div>
+        <div><dt>Trades</dt><dd class="stat--count" id="s-trades">0</dd></div>
+        <div><dt>Win rate</dt><dd class="stat--rate" id="s-rate">0.00%</dd></div>
+        <div><dt>Next stake</dt><dd class="stat--stake" id="s-stake">&mdash;</dd></div>
+        <div><dt>Market</dt><dd class="stat--market" id="s-market">&mdash;</dd></div>
+        <div><dt>Running</dt><dd class="stat--time" id="s-time">00:00:00</dd></div>
+      </dl>
+
+      <h3 class="grp-t grp-t--sub">Trades</h3>
+      <ul class="hist" id="hist"><li class="acct acct--none">No trades yet.</li></ul>
+    </section>
+
+  </div>
+  <footer class="dash-foot">
+    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
+  </footer>
+
+</main>
+
+<!-- The simulation runs the REAL page. deriv.js is the only thing swapped:
+     fake-deriv.js answers in its place and hands the engine a socket of its
+     own, so automatic-ai-engine.js and automatic-ai.js are the same files
+     automatic-ai.html loads — the recovery, the martingale, the limits and
+     the stopping are not reimplemented here, they are the originals.
+
+     setup.js holds them back until the conditions are set, then loads them in
+     this order. -->
+<script src="/sim/fake-deriv.js"></script>
+<script src="/prefs.js"></script>
+<script src="/theme.js"></script>
+<script>window.EVIE_SIM_SCRIPTS = ["/automatic-ai-engine.js", "/automatic-ai.js"];</script>
+<script src="/sim/setup.js"></script>
+</body>
+</html>

@@ -23,10 +23,12 @@
 
   var $ = function (id) { return document.getElementById(id); };
 
-  /* The order matters — contracts before the session, the session before the
-     app, the bot before the app that attaches it. Exactly analysis.html's
-     order, minus deriv.js, which fake-deriv.js has already stood in for. */
-  var SCRIPTS = [
+  /* Which page is being simulated. Each names the scripts it would have loaded
+     had it been the real thing — in the same order, minus deriv.js, which
+     fake-deriv.js has already stood in for. Order matters: contracts before
+     the session, the session before the app, the bot before the app that
+     attaches it. */
+  var SCRIPTS = global.EVIE_SIM_SCRIPTS || [
     "/analysis/contracts.js",
     "/analysis/session.js",
     "/analysis/analyser.js",
@@ -44,11 +46,11 @@
     document.body.appendChild(s);
   }
 
-  /* The simulation runs app.js, which asks for the prefs scope named
-     "analysis". Left alone, a stake set here would be waiting on the real
-     analysis page in the same tab — practice money settings arriving on an
-     account that trades real money. Every scope the simulation opens is
-     renamed, so the two never meet. */
+  /* The simulation runs the real page's scripts, which ask for their own prefs
+     scope by name. Left alone, a stake set here would be waiting on the real
+     page in the same tab — practice settings arriving on an account that
+     trades real money. Every scope the simulation opens is renamed, so the two
+     never meet. */
   if (global.EviePrefs) {
     var realScope = global.EviePrefs.scope;
     global.EviePrefs.scope = function (name) { return realScope("sim-" + name); };
