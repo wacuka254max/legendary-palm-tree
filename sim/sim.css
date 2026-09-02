@@ -83,3 +83,13 @@
   .setup { padding: 12px; align-items: flex-start; }
   .setup-card { padding: 18px; }
 }
+
+/* The balance and its dice, on one line. */
+.fld-with { display: flex; gap: 8px; align-items: stretch; }
+.fld-with .fld-i { flex: 1 1 auto; min-width: 0; }
+.fld-btn {
+  flex: none;
+  padding: 0 14px;
+  font-size: 12.5px;
+  white-space: nowrap;
+}

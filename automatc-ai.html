@@ -37,7 +37,13 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <div class="setup-body">
       <label class="fld">
         <span class="fld-k">Starting balance (USD)</span>
-        <input class="fld-i" id="sim-balance" type="number" min="1" step="1" value="1000" inputmode="decimal" />
+        <!-- A real account is rarely a round thousand, and a round thousand
+             makes the arithmetic on screen too easy to follow. The dice give
+             an ordinary-looking balance to practise against. -->
+        <span class="fld-with">
+          <input class="fld-i" id="sim-balance" type="number" min="1" step="0.01" value="1000" inputmode="decimal" />
+          <button class="btn btn-line fld-btn" id="sim-random" type="button" title="Random balance">Random</button>
+        </span>
       </label>
 
       <div class="fld">

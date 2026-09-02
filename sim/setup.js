@@ -58,6 +58,22 @@
 
   var mode = "none";
 
+  /* What was set last time, kept in localStorage rather than the session.
+     Everything else about a simulation is deliberately per-tab and starts
+     clean, but the setup card is a form somebody fills in before they can get
+     to the thing they came for — and typing the same balance every time is a
+     toll, not a decision. */
+  var LAST_KEY = "evie_sim_setup";
+
+  function remember(cfg) {
+    try { localStorage.setItem(LAST_KEY, JSON.stringify(cfg)); } catch (e) {}
+  }
+
+  function recall() {
+    try { return JSON.parse(localStorage.getItem(LAST_KEY) || "null"); }
+    catch (e) { return null; }
+  }
+
   function say(text) { $("sim-say").textContent = text; }
 
   /** What the chosen conditions actually mean, in a sentence. */
@@ -112,6 +128,30 @@
 
   $("sim-count").addEventListener("input", refresh);
 
+  /* A balance that looks like somebody's actual account: an odd number of
+     dollars and an odd number of cents, between fifty and twenty-five
+     thousand. */
+  $("sim-random").addEventListener("click", function () {
+    var dollars = 50 + Math.floor(Math.random() * 24951);
+    var cents = Math.floor(Math.random() * 100);
+    $("sim-balance").value = (dollars + cents / 100).toFixed(2);
+  });
+
+  /* Put last time's answers back, before anything is read from the fields. */
+  var last = recall();
+  if (last) {
+    if (last.balance) $("sim-balance").value = last.balance;
+    if (last.count != null) $("sim-count").value = last.count;
+
+    if (last.mode) {
+      var b = $("sim-mode").querySelector('[data-mode="' + last.mode + '"]');
+      if (b) b.click();                    // click, so the panel follows it
+    }
+    // Click it only if it is not already where it should be.
+    var firstOn = $("sim-first").getAttribute("aria-checked") === "true";
+    if (!!last.firstLoss !== firstOn) $("sim-first").click();
+  }
+
   $("sim-go").addEventListener("click", function () {
     var balance = Number($("sim-balance").value);
     if (isNaN(balance) || balance < 1) return say("Give the simulation a balance to start with.");
@@ -125,6 +165,7 @@
     };
 
     try { sessionStorage.setItem(global.EvieDeriv.sim.CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+    remember(cfg);
     // fake-deriv.js read the old plan when it loaded; this is the new one.
     global.EvieDeriv.sim.reboot();
 
