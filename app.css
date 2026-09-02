@@ -10,9 +10,12 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 .app { min-height: 100svh; }
-/* Clearing the sticky header and no more. Anything beyond that is a band of
-   empty page under a bar somebody has already read. */
-.app-main { padding-top: clamp(72px, 6.6vh, 82px); padding-bottom: clamp(12px, 1.8vh, 22px); }
+/* The header is STICKY, not fixed, so it already takes its own space in the
+   flow — the padding that used to be here was clearing a bar that needed no
+   clearing, and the two together left most of a hundred pixels of nothing
+   between the header and the first word. This is breathing room and nothing
+   more. */
+.app-main { padding-top: clamp(14px, 2vh, 22px); padding-bottom: clamp(12px, 1.8vh, 22px); }
 
 /* Title and line on one row where there is width for it: two stacked lines
    above the tools cost forty pixels a laptop does not have to spare. */
