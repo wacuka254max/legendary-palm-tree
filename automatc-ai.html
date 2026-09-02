@@ -178,9 +178,13 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <script src="/prefs.js"></script>
 <script src="/theme.js"></script>
 <script>
-window.EVIE_SIM_SCRIPTS = ["/automatic-ai-engine.js", "/automatic-ai.js"];
-/* This bot's whole character is what it does after a loss, so the simulation
-   drops one in even when the plan says nobody loses. See fake-deriv.js. */
+/* ai-drills.js sits between the two: the engine has to exist for it to stand
+   in front of, and the page has to build its bot afterwards. */
+window.EVIE_SIM_SCRIPTS = [
+  "/automatic-ai-engine.js",
+  "/sim/ai-drills.js",
+  "/automatic-ai.js"
+];
 window.EVIE_SIM_DRILLS = true;
 </script>
 <script src="/sim/setup.js"></script>

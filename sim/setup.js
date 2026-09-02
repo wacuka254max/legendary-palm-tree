@@ -70,7 +70,7 @@
          card says so — without walking through the mechanics of how it is
          provoked, which is the simulator's business and not a setting. */
       var drill = global.EVIE_SIM_DRILLS
-        ? " Recovery still runs from time to time, on Over/Under at the martingale stake, so you can watch it work."
+        ? " The recovery still runs from time to time — Over 4 or Under 5 at the martingale stake — and wins too."
         : "";
       return (first
         ? "The first trade loses. Every trade after it wins."

@@ -93,55 +93,13 @@
     return d;
   }
 
-  /* ── recovery drills ────────────────────────────────────────────────────
-   *
-   * A bot that never loses never recovers, and the recovery is the part worth
-   * watching: the martingale stepping up, the market being re-read, the ladder
-   * clearing itself on a win. Set the simulation to no losses and none of that
-   * ever runs.
-   *
-   * So on a page that asks for them, a drill is dropped in: one loss, or two in
-   * a row, somewhere between the third and the twenty-fifth trade. Single or
-   * double is a coin flip — a single is the ordinary case, a double is the one
-   * that shows the ladder actually climbing. When it has been and gone another
-   * is scheduled the same distance ahead, so a long session keeps showing the
-   * behaviour rather than going quiet after one.
-   *
-   * Only where the page asks. The analysis simulation uses "no losses" to check
-   * payouts against a demo account, and a loss arriving in the middle of that
-   * would be a surprise in the wrong place.
-   */
-  var DRILL_FIRST_MIN = 2;    // the first one comes early, inside ten trades
-  var DRILL_FIRST_MAX = 10;
-  var DRILL_MIN = 3;          // and the ones after it, three to twenty-five apart
-  var DRILL_MAX = 25;
-
   function Plan(cfg) {
     this.cfg = cfg;
     this.n = 0;          // trades placed so far
     this.runLeft = 0;    // losses still owed by a consecutive run
     this.runDone = false;
     this.block = [];     // the shuffled ten that random mode deals from
-
-    this.drills = !!global.EVIE_SIM_DRILLS && cfg.mode === "none";
-    this.drillAt = 0;    // the trade a drill lands on
-    this.drillLeft = 0;  // losses it still owes
-    if (this.drills) this.armDrill(0, true);
   }
-
-  /**
-   * Schedule the next drill.
-   *
-   * The first lands inside the first ten trades, because a simulation that
-   * spends its opening minute doing nothing but winning teaches nothing —
-   * whoever opened it came to watch the recovery. The ones after it are three
-   * to twenty-five trades apart, which is the ordinary rhythm.
-   */
-  Plan.prototype.armDrill = function (from, first) {
-    var lo = first ? DRILL_FIRST_MIN : DRILL_MIN;
-    var hi = first ? DRILL_FIRST_MAX : DRILL_MAX;
-    this.drillAt = from + lo + Math.floor(Math.random() * (hi - lo + 1));
-  };
 
   Plan.prototype.loses = function () {
     var cfg = this.cfg;
@@ -157,25 +115,9 @@
       return true;
     }
 
-    if (cfg.mode === "none") {
-      if (!this.drills) return false;
-
-      // Part-way through a double: owe the second loss.
-      if (this.drillLeft > 0) {
-        this.drillLeft--;
-        if (this.drillLeft === 0) this.armDrill(this.n);
-        return true;
-      }
-
-      if (this.n === this.drillAt) {
-        // A coin flip: one loss, or two in a row.
-        this.drillLeft = Math.random() < 0.5 ? 0 : 1;
-        if (this.drillLeft === 0) this.armDrill(this.n);
-        return true;
-      }
-
-      return false;
-    }
+    /* None means none. The Automatic AI simulation still shows a recovery, but
+       it starts one rather than losing into it — see sim/ai-drills.js. */
+    if (cfg.mode === "none") return false;
 
     if (cfg.mode === "consecutive") {
       if (this.runLeft > 0) { this.runLeft--; return true; }
