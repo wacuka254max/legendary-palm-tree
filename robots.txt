@@ -1,4 +1,4 @@
-# Kestrel
+# Uptick
 #
 # The front door is meant to be found. Everything behind the broker connection
 # is somebody's own dashboard and is marked noindex in its own head as well.
