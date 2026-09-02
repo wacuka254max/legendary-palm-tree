@@ -1,7 +1,7 @@
 /**
- * EVIE — light or dark, remembered.
+ * UPTICK — light or dark, remembered.
  *
- * Light is the default. The choice lives in localStorage and is applied to
+ * Dark is the default here: the site is a black one, and light is the option. The choice lives in localStorage and is applied to
  * <html> as data-theme, which every colour token keys off.
  *
  * The APPLYING happens in a tiny inline script in each page's <head>, before
@@ -13,20 +13,20 @@
 (function (global) {
   "use strict";
 
-  var KEY = "evie_theme";
+  var KEY = "uptick_theme";
 
   function current() {
-    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
   }
 
   function apply(theme) {
-    var dark = theme === "dark";
+    var dark = theme !== "light";
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
     try { localStorage.setItem(KEY, dark ? "dark" : "light"); } catch (e) {}
 
     // The browser chrome around the page should match the page.
     var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", dark ? "#0b0b0f" : "#f3f4f7");
+    if (meta) meta.setAttribute("content", dark ? "#07070a" : "#f7f7fb");
 
     Array.prototype.forEach.call(document.querySelectorAll("[data-theme-toggle]"), function (b) {
       b.setAttribute("aria-pressed", String(dark));
@@ -45,5 +45,5 @@
   // Reflect whatever the head script decided, so the button starts correct.
   apply(current());
 
-  global.EvieTheme = { apply: apply, current: current };
+  global.UptickTheme = { apply: apply, current: current };
 })(window);

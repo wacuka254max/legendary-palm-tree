@@ -10,11 +10,21 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 .app { min-height: 100svh; }
-.app-main { padding-top: clamp(84px, 9vh, 104px); padding-bottom: 48px; }
+/* Clearing the sticky header and no more. Anything beyond that is a band of
+   empty page under a bar somebody has already read. */
+.app-main { padding-top: clamp(72px, 6.6vh, 82px); padding-bottom: clamp(12px, 1.8vh, 22px); }
 
-.app-head { margin-bottom: clamp(16px, 2.2vw, 24px); }
-.app-t { margin: 0; font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 700; letter-spacing: -0.03em; }
-.app-sub { margin: 6px 0 0; color: var(--text-2); font-size: 0.94rem; }
+/* Title and line on one row where there is width for it: two stacked lines
+   above the tools cost forty pixels a laptop does not have to spare. */
+.app-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-bottom: clamp(10px, 1.3vw, 14px);
+}
+.app-t { margin: 0; font-size: clamp(1.35rem, 2.2vw, 1.7rem); font-weight: 700; letter-spacing: -0.03em; }
+.app-sub { margin: 0; color: var(--text-2); font-size: 0.9rem; }
 
 /* Two columns across the whole width: the work on the left, the prices on the
    right at a width a list of sparklines actually needs. */
@@ -48,25 +58,29 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--violet-hi);
-  background: rgba(124, 92, 255, 0.12);
-  border: 1px solid rgba(124, 92, 255, 0.4);
+  background: var(--violet-tint);
+  border: 1px solid var(--violet-edge);
   border-radius: 999px;
   cursor: pointer;
 }
-.badge--demo { color: var(--amber); background: rgba(255, 176, 32, 0.12); border-color: rgba(255, 176, 32, 0.4); }
+.badge--demo { color: var(--amber); background: var(--amber-tint); border-color: var(--amber-edge); }
 
 /* ── Tools ────────────────────────────────────────────────────────────────
    Wide rows rather than square cards: three links do not need a grid, and a
    row gives the name, the line under it and the arrow somewhere to sit. */
 
-.tools { display: grid; gap: clamp(10px, 1.2vw, 14px); }
+/* Three across on a wide screen. Stacked, the three rows plus the account
+   panel under them ran past the bottom of a laptop; across, the whole
+   dashboard fits above the fold. */
+.tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 1.2vw, 14px); }
+@media (max-width: 1000px) { .tools { grid-template-columns: minmax(0, 1fr); } }
 
 .tool {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) 24px;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
-  padding: clamp(16px, 1.8vw, 20px);
+  gap: 3px 12px;
+  padding: clamp(13px, 1.4vw, 16px);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r);
@@ -77,15 +91,22 @@
 .tool-icon {
   display: grid;
   place-items: center;
-  width: 42px; height: 42px;
+  width: 38px; height: 38px;
   background: var(--panel-2);
   border: 1px solid var(--line-hi);
   border-radius: 11px;
 }
-.tool-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+/* Placed explicitly rather than left to auto-flow: an item with a row but no
+   column gets put wherever the algorithm likes, which is how the title ended
+   up above the icon instead of beside it. Icon left spanning both lines,
+   arrow right spanning both, name and line between them. */
+/* Aligned to the top of the name, not centred across both lines: centred,
+   it reads as sitting under the title rather than beside it. */
+.tool-icon { grid-column: 1; grid-row: 1 / span 2; align-self: start; margin-top: 1px; }
+.tool-h { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tool-t { font-size: 1.02rem; font-weight: 650; letter-spacing: -0.02em; }
-.tool-p { grid-column: 2; font-size: 0.88rem; color: var(--text-2); }
-.tool-go { color: var(--text-3); }
+.tool-p { grid-column: 2; grid-row: 2; font-size: 0.88rem; color: var(--text-2); }
+.tool-go { grid-column: 3; grid-row: 1 / span 2; align-self: center; color: var(--text-3); }
 .tool:hover .tool-go { color: var(--violet-hi); }
 
 .tag {
@@ -95,10 +116,11 @@
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--violet-hi);
-  border: 1px solid rgba(124, 92, 255, 0.42);
+  border: 1px solid var(--violet-edge);
   border-radius: 999px;
+  white-space: nowrap;
 }
-.tag--off { color: var(--amber); border-color: rgba(255, 176, 32, 0.42); }
+.tag--off { color: var(--amber); border-color: var(--amber-edge); }
 
 /* Present, and plainly not ready. Dimmed rather than hidden, so it is clear
    the tool exists and is coming. */
@@ -106,29 +128,36 @@
 .tool--off:hover { background: var(--panel); border-color: var(--line); }
 /* The MetaTrader mark is a wide wordmark, not a square glyph: the icon box
    grows to fit it rather than squeezing it to 24x4. */
-.tool--off { grid-template-columns: auto minmax(0, 1fr) 24px; }
-.tool--off .tool-icon { width: auto; min-width: 42px; padding: 0 12px; }
+.tool--off { grid-template-columns: auto minmax(0, 1fr); }
+.tool--off .tool-icon { grid-row: 1 / span 2; }
+.tool--off .tool-icon { width: auto; min-width: 38px; padding: 0 10px; }
 .tool-logo { height: 16px; width: auto; max-width: 130px; object-fit: contain; }
+
+/* The MetaTrader wordmark ships white, which disappears on a light panel.
+   Two files, one per ground; the theme picks which is painted. */
+.tool-logo--ink { display: none; }
+:root[data-theme="light"] .tool-logo--ink { display: block; }
+:root[data-theme="light"] .tool-logo--pale { display: none; }
 
 /* ── Account panel ────────────────────────────────────────────────────── */
 
 .acctp {
-  margin-top: clamp(12px, 1.6vw, 18px);
-  padding: clamp(16px, 1.8vw, 22px);
+  margin-top: clamp(10px, 1.2vw, 14px);
+  padding: clamp(14px, 1.5vw, 18px);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r);
 }
 .acctp[hidden] { display: none; }
-.acctp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.acctp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 11px; }
 .acctp-k { margin: 0 0 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
 .acctp-t { margin: 0; font-size: 0.98rem; font-weight: 650; letter-spacing: -0.02em; }
-.acctp-note { margin: 14px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
+.acctp-note { margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
 .acctp-note strong { color: var(--text-2); font-weight: 600; }
 
-.grp + .grp { margin-top: 14px; }
+.grp + .grp { margin-top: 10px; }
 .grp-t {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -141,7 +170,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 9px 0;
+  padding: 7px 0;
   border-bottom: 1px solid var(--line);
   font-size: 12.5px;
 }
@@ -161,7 +190,7 @@
 .acct-id { color: var(--text-2); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .acct-bal { font-weight: 650; font-variant-numeric: tabular-nums; }
 
-.sheet-who { margin: 0 0 10px; font-size: 12.5px; font-weight: 650; }
+.sheet-who { margin: 0 0 8px; font-size: 12.5px; font-weight: 650; }
 .sheet-note { margin-top: 16px; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
 .sheet-note strong { color: var(--text-2); }
 
@@ -171,22 +200,32 @@
 /* The one control here that undoes something wears the colour that says so.
    The border stays quiet until hover: a permanently red outline sitting in a
    panel reads as an alert about the account rather than an action on it. */
-.btn--danger { color: #ff6a6a; }
-.btn--danger:hover { color: #ff6a6a; border-color: #ff6a6a; background: rgba(255, 106, 106, 0.08); }
+.btn--danger { color: var(--danger); }
+.btn--danger:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-tint); }
+
+/* The note and the way out of it, on one line: two stacked blocks under the
+   accounts cost a row the fold does not have. */
+.acctp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 12px;
+}
 
 .linkout {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 14px;
-  padding: 9px 14px;
+  padding: 8px 13px;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--violet-hi);
   border: 1px solid var(--line-hi);
   border-radius: 10px;
 }
-.linkout:hover { border-color: var(--violet); background: rgba(124, 92, 255, 0.08); }
+.linkout:hover { border-color: var(--violet); background: var(--violet-tint); }
 
 /* ── Prices ───────────────────────────────────────────────────────────── */
 
@@ -217,13 +256,25 @@
   animation: beat 2.4s ease-in-out infinite;
 }
 
-.mk-list { list-style: none; margin: 0; padding: 4px 8px 8px; }
+.mk-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 8px 8px;
+  /* Ten markets is more than a laptop has room for beside the tools. The list
+     scrolls inside the panel so the page itself never has to. */
+  max-height: min(52vh, 460px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-hi) transparent;
+}
+@media (max-width: 1100px) { .mk-list { max-height: none; } }
 .mk {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 92px 62px;
   align-items: center;
   gap: 10px;
-  padding: 9px 8px;
+  padding: 7px 8px;
   border-top: 1px solid var(--line);
 }
 .mk:first-child { border-top: 0; }
@@ -231,7 +282,7 @@
 
 /* The slot holds the row's height before a price has arrived, which is what
    stops the list growing under the cursor on a refresh. */
-.mk-spark, .mk-slot { display: block; width: 92px; height: 32px; }
+.mk-spark, .mk-slot { display: block; width: 92px; height: 28px; }
 
 .mk-pct {
   padding: 4px 0;
@@ -242,8 +293,8 @@
   border-radius: 7px;
   white-space: nowrap;
 }
-.mk-pct--up { color: var(--mint); background: rgba(52, 211, 153, 0.12); }
-.mk-pct--down { color: #ff6a6a; background: rgba(255, 106, 106, 0.12); }
+.mk-pct--up { color: var(--mint); background: var(--mint-tint); }
+.mk-pct--down { color: var(--danger); background: var(--danger-tint); }
 .mk-pct--idle { color: var(--text-3); background: var(--panel-2); }
 
 /* ── The sheet ────────────────────────────────────────────────────────── */
@@ -258,7 +309,7 @@
   padding: 20px;
 }
 .sheet[hidden] { display: none; }
-.sheet-back { position: absolute; inset: 0; background: rgba(3, 3, 6, 0.7); }
+.sheet-back { position: absolute; inset: 0; background: rgba(3, 3, 6, 0.55); }
 .sheet-card {
   position: relative;
   width: 100%;
@@ -300,14 +351,14 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--mint);
-  background: rgba(52, 211, 153, 0.1);
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  background: var(--mint-tint);
+  border: 1px solid var(--mint-edge);
   border-radius: 10px;
 }
 .flash[hidden] { display: none; }
 
-.app-foot { margin-top: clamp(24px, 3vw, 34px); padding-top: 18px; border-top: 1px solid var(--line); }
-.disclaimer { margin: 0; font-size: 0.78rem; line-height: 1.7; color: var(--text-3); }
+.app-foot { margin-top: clamp(10px, 1.4vw, 15px); padding-top: 10px; border-top: 1px solid var(--line); }
+.disclaimer { margin: 0; font-size: 0.75rem; line-height: 1.6; color: var(--text-3); }
 
 /* No affordance on the door: a dotted underline would turn a private mode
    into a thing every visitor pokes at. */
@@ -326,3 +377,22 @@
 }
 .sim-card a:hover { border-color: var(--violet); }
 .sim-card a span { font-size: 0.68rem; font-weight: 500; color: var(--text-3); }
+
+/* ── The theme button ─────────────────────────────────────────────────────
+   One icon, whichever one you are not looking at: a moon while the page is
+   dark, a sun while it is light. The word is there for a screen reader and
+   nowhere else — the header has three controls and no room for a fourth
+   label. */
+
+.btn--icon { padding: 10px; }
+.vh {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.ico-sun { display: none; }
+:root[data-theme="light"] .ico-sun { display: block; }
+:root[data-theme="light"] .ico-moon { display: none; }
