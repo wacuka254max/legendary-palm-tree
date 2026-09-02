@@ -66,11 +66,11 @@
     var first = $("sim-first").getAttribute("aria-checked") === "true";
 
     if (mode === "none") {
-      /* On a page that runs recovery drills, "no losses" does not mean the
-         recovery never runs — say so, rather than let a loss appear out of a
-         plan that promised none. */
+      /* On a page that runs recovery drills the recovery still happens, so the
+         card says so — without walking through the mechanics of how it is
+         provoked, which is the simulator's business and not a setting. */
       var drill = global.EVIE_SIM_DRILLS
-        ? " A recovery drill lands somewhere between the 3rd and 25th trade — one loss, or two in a row — so the martingale gets used."
+        ? " Recovery still runs from time to time, on Over/Under at the martingale stake, so you can watch it work."
         : "";
       return (first
         ? "The first trade loses. Every trade after it wins."

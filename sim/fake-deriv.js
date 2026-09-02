@@ -111,7 +111,9 @@
    * payouts against a demo account, and a loss arriving in the middle of that
    * would be a surprise in the wrong place.
    */
-  var DRILL_MIN = 3;
+  var DRILL_FIRST_MIN = 2;    // the first one comes early, inside ten trades
+  var DRILL_FIRST_MAX = 10;
+  var DRILL_MIN = 3;          // and the ones after it, three to twenty-five apart
   var DRILL_MAX = 25;
 
   function Plan(cfg) {
@@ -124,12 +126,21 @@
     this.drills = !!global.EVIE_SIM_DRILLS && cfg.mode === "none";
     this.drillAt = 0;    // the trade a drill lands on
     this.drillLeft = 0;  // losses it still owes
-    if (this.drills) this.armDrill(0);
+    if (this.drills) this.armDrill(0, true);
   }
 
-  /** Put the next drill between three and twenty-five trades from here. */
-  Plan.prototype.armDrill = function (from) {
-    this.drillAt = from + DRILL_MIN + Math.floor(Math.random() * (DRILL_MAX - DRILL_MIN + 1));
+  /**
+   * Schedule the next drill.
+   *
+   * The first lands inside the first ten trades, because a simulation that
+   * spends its opening minute doing nothing but winning teaches nothing —
+   * whoever opened it came to watch the recovery. The ones after it are three
+   * to twenty-five trades apart, which is the ordinary rhythm.
+   */
+  Plan.prototype.armDrill = function (from, first) {
+    var lo = first ? DRILL_FIRST_MIN : DRILL_MIN;
+    var hi = first ? DRILL_FIRST_MAX : DRILL_MAX;
+    this.drillAt = from + lo + Math.floor(Math.random() * (hi - lo + 1));
   };
 
   Plan.prototype.loses = function () {
