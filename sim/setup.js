@@ -66,9 +66,15 @@
     var first = $("sim-first").getAttribute("aria-checked") === "true";
 
     if (mode === "none") {
-      return first
+      /* On a page that runs recovery drills, "no losses" does not mean the
+         recovery never runs — say so, rather than let a loss appear out of a
+         plan that promised none. */
+      var drill = global.EVIE_SIM_DRILLS
+        ? " A recovery drill lands somewhere between the 3rd and 25th trade — one loss, or two in a row — so the martingale gets used."
+        : "";
+      return (first
         ? "The first trade loses. Every trade after it wins."
-        : "Every trade wins.";
+        : "Every trade wins.") + drill;
     }
     if (mode === "consecutive") {
       if (!n) return first ? "The first trade loses. Everything else wins." : "Every trade wins.";
