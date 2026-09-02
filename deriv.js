@@ -148,10 +148,10 @@
       u.searchParams.set("response_type", "code");
       u.searchParams.set("client_id", APP_ID);
       u.searchParams.set("redirect_uri", redirectUri());
-      // The scopes this newer client actually allows — trade reaches the
-      // options accounts, payment the wallets, account_manage the profile.
-      // The older read/openid scopes are rejected outright.
-      u.searchParams.set("scope", "trade payment account_manage");
+      // Only what the bots need: trade reaches the options accounts they place
+      // on, account_manage the profile name. Payment is NOT asked for — it
+      // grants deposits and withdrawals, and nothing here moves money.
+      u.searchParams.set("scope", "trade account_manage");
       u.searchParams.set("brand", "deriv");
       u.searchParams.set("state", state);
       u.searchParams.set("code_challenge", challenge);
@@ -279,14 +279,19 @@
 
      api.derivws.com is the door that matches these credentials: Bearer access
      token plus the app id in a Deriv-App-ID header, CORS-open to the browser.
-     Three endpoints, matching the three scopes we asked for:
+     Two endpoints, matching the two scopes we ask for:
 
        trade          → /trading/v1/options/accounts
-       payment        → /wallet/v1/wallets
        account_manage → /account/v1/nickname
 
-     Only the options call is required. The other two are best-effort, so a
-     scope Deriv declines to grant costs a section of the page, not the page. */
+     There is a third, /wallet/v1/wallets, and it is deliberately not called:
+     it needs the payment scope, which grants deposits and withdrawals. Asking
+     a trader for that to print a number is not a trade worth making, so the
+     wallets are not read and the balances here are the options accounts —
+     which are the only accounts the bots can trade anyway.
+
+     Only the options call is required. The nickname is best-effort, so a
+     scope Deriv declines to grant costs a line of the page, not the page. */
 
   var REST_BASE = "https://api.derivws.com";
 
@@ -349,8 +354,8 @@
   }
 
   /* Deriv marks demo money several ways: options report account_type "demo",
-     and every virtual id starts VR (VRTC options, VRW wallet). Any one of them
-     is enough — a demo balance shown as real would be a lie about money. */
+     and every virtual id starts VR. Either one is enough — a demo balance
+     shown as real would be a lie about money. */
   function isDemo() {
     for (var i = 0; i < arguments.length; i++) {
       var v = arguments[i];
@@ -366,8 +371,8 @@
   }
 
   /**
-   * The whole portfolio: every options account and every wallet, real and demo,
-   * plus the profile nickname and the id of the account they connected with.
+   * Every options account this login has, real and demo, plus the profile
+   * nickname. Wallets are not included — see the note on the endpoints above.
    */
   function portfolio() {
     return validToken().then(function (token) {
@@ -382,10 +387,9 @@
 
       return Promise.all([
         settled(get("/trading/v1/options/accounts", token)),
-        settled(get("/wallet/v1/wallets", token)),
         settled(get("/account/v1/nickname", token))
       ]).then(function (r) {
-        var optsR = r[0], walletsR = r[1], nickR = r[2];
+        var optsR = r[0], nickR = r[1];
 
         // Options are the backbone. If that failed, there is nothing to show.
         if (!optsR.ok) throw optsR.error;
@@ -403,21 +407,6 @@
             demo: isDemo(a.account_type, a.group, a.status, id)
           });
         });
-
-        if (walletsR.ok) {
-          (Array.isArray(walletsR.value) ? walletsR.value : []).forEach(function (w) {
-            var id = String(w.wallet_id || "");
-            if (!id) return;
-            var tb = w.total_balance || {};
-            accounts.push({
-              id: id,
-              kind: "Wallet",
-              currency: String(tb.converted_to || ""),
-              balance: num(tb.approximate_total_balance),
-              demo: isDemo(w.type, id)
-            });
-          });
-        }
 
         var nickname = "";
         if (nickR.ok && nickR.value && typeof nickR.value === "object") {

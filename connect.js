@@ -53,16 +53,73 @@
     });
   }
 
+  /* ── the first press ──────────────────────────────────────────────────
+     Somebody without a Deriv account used to discover that at Deriv's own
+     login screen. The first press of Get started asks instead; every press
+     after it goes straight through, and so does the first if the card is not
+     in the page — connecting must never depend on a bit of markup being
+     there. */
+
+  var CHOICE_KEY = "uptick_connect_choice_v1";
+  var choice = document.getElementById("connect-choice");
+
+  function answered() {
+    try { return localStorage.getItem(CHOICE_KEY) === "1"; } catch (e) { return true; }
+  }
+
+  function markAnswered() {
+    try { localStorage.setItem(CHOICE_KEY, "1"); } catch (e) {}
+  }
+
+  function openChoice() {
+    if (!choice) return false;
+    choice.hidden = false;
+    setTimeout(function () { choice.classList.add("is-in"); }, 10);
+    return true;
+  }
+
+  function closeChoice() {
+    if (!choice) return;
+    choice.classList.remove("is-in");
+    setTimeout(function () { choice.hidden = true; }, 200);
+  }
+
+  function beginConnect() {
+    busy(true);
+    D.connect().catch(function () {
+      busy(false);
+      banner("Could not start the Deriv connection. Please try again.");
+    });
+  }
+
+  if (choice) {
+    /* Answered by leaving to sign up: the card stays open behind the new tab,
+       so coming back to finish is one press of the button already on screen. */
+    document.getElementById("choice-create").addEventListener("click", markAnswered);
+
+    document.getElementById("choice-connect").addEventListener("click", function () {
+      markAnswered();
+      closeChoice();
+      beginConnect();
+    });
+
+    choice.addEventListener("click", function (e) {
+      // Closing without answering is not an answer: the next press asks again.
+      if (e.target.closest("[data-choice-close]")) closeChoice();
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && !choice.hidden) closeChoice();
+    });
+  }
+
   document.querySelectorAll(".js-connect").forEach(function (btn) {
     btn.addEventListener("click", function (e) {
       e.preventDefault();
       // Already connected? No reason to send them round Deriv again.
       if (D.isConnected()) return goHome(false);
-      busy(true);
-      D.connect().catch(function () {
-        busy(false);
-        banner("Could not start the Deriv connection. Please try again.");
-      });
+      if (!answered() && openChoice()) return;
+      beginConnect();
     });
   });
 

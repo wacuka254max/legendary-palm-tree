@@ -172,6 +172,33 @@
   </div>
 </footer>
 
+<!-- Asked once, on the first press of Get started. The bots run on a Deriv
+     account the visitor already owns, and a visitor who has not got one used
+     to find that out at Deriv's own login screen — the wrong place to learn
+     it, and the point at which they leave. -->
+<div class="gate" id="connect-choice" hidden>
+  <div class="gate-back" data-choice-close></div>
+  <div class="gate-card" role="dialog" aria-modal="true" aria-labelledby="connect-choice-t">
+    <div class="gate-head">
+      <div>
+        <p class="gate-k">Before you connect</p>
+        <h2 class="gate-t" id="connect-choice-t">Do you have a Deriv account?</h2>
+      </div>
+      <button class="gate-x" type="button" data-choice-close aria-label="Close">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <p class="gate-p">Uptick runs on <strong>your own</strong> Deriv account. Connect the one you
+      already have &mdash; or open one first, then come back to this page and connect.</p>
+
+    <div class="gate-actions">
+      <a class="btn btn--violet btn--lg" id="choice-create" href="https://t.deriv.link?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored">I&rsquo;m new &mdash; create an account</a>
+      <button class="btn btn--lg" id="choice-connect" type="button">I have one &mdash; connect</button>
+    </div>
+  </div>
+</div>
+
 <script src="/deriv.js"></script>
 <script src="/connect.js"></script>
 <script src="/install.js"></script>

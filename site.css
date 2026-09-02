@@ -235,6 +235,83 @@ a { color: inherit; text-decoration: none; }
 }
 .flash--error.is-in { transform: translate(-50%, 0); }
 
+/* ── The connect gate ─────────────────────────────────────────────────────
+   Asked once, on the first press of Get started. Its own classes rather than
+   the dashboard's .sheet, which lives in app.css — a file the landing page
+   does not load. Tokens throughout, so it holds up in either theme. */
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.gate[hidden] { display: none; }
+
+.gate-back {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.66);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.gate.is-in .gate-back { opacity: 1; }
+
+.gate-card {
+  position: relative;
+  width: min(100%, 460px);
+  max-height: min(86vh, 640px);
+  overflow-y: auto;
+  padding: clamp(22px, 3vw, 28px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.gate.is-in .gate-card { opacity: 1; transform: none; }
+
+.gate-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.gate-k {
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.gate-t {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.2vw, 1.28rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.gate-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  color: var(--text-2);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+.gate-x:hover { color: var(--text); border-color: var(--line-hi); }
+
+.gate-p { margin: 18px 0 0; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+.gate-p strong { color: var(--text); font-weight: 650; }
+
+/* The two answers, each the full width of the card: this is a choice between
+   them, not a main action with an afterthought beside it. */
+.gate-actions { display: grid; gap: 10px; margin-top: 22px; }
+.gate-actions .btn { width: 100%; }
+
 /* ── Hero ─────────────────────────────────────────────────────────────────
    Centred, because the bento grid under it is the width of the page and a
    left-aligned headline would leave it hanging off one edge. */
