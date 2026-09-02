@@ -1,0 +1,216 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   UPTICK — Automatic AI.
+
+   Two panels: what you set on the left, what it is doing on the right. The
+   settings are one field to a line — paired across a row they read as two
+   halves of one setting, and stake beside martingale is exactly the pair not
+   to have misread.
+
+   Loaded after site.css and app.css, which carry the tokens, the buttons and
+   the header.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.run {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  align-items: stretch;
+  gap: clamp(12px, 1.6vw, 18px);
+}
+
+@media (max-width: 900px) {
+  /* Below this the control column has nothing to sit beside. */
+  .run { grid-template-columns: minmax(0, 1fr); }
+}
+
+.panel-solid {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: clamp(16px, 1.8vw, 22px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.grp-t {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.grp-t--sub { margin-top: clamp(14px, 2vw, 20px); }
+
+/* ── Fields ───────────────────────────────────────────────────────────── */
+
+.fld { display: block; margin-top: 12px; }
+.fld[hidden] { display: none; }   /* `display: block` beats [hidden] alone */
+
+.fld-k {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.fld-i {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 0.15s ease;
+}
+.fld-i:focus { outline: none; border-color: var(--violet); }
+.fld-i:disabled { opacity: 0.5; }
+
+select.fld-i { appearance: none; cursor: pointer; }
+
+/* The handle that reveals the account picker: an ordinary letter until it is
+   clicked three times, and marked only once it has been. */
+.acct-reveal { cursor: text; }
+.acct-reveal--on { color: var(--violet-hi); }
+
+.run-actions { display: flex; gap: 10px; margin-top: clamp(16px, 2vw, 22px); }
+.run-actions .btn { flex: 1 1 auto; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* The one line that says whose money this is. */
+.risk { margin: 14px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-2); }
+.risk--real { color: var(--danger); }
+
+.status { margin: 8px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-2); }
+.status--success { color: var(--mint); }
+.status--warning { color: var(--amber); }
+.status--error { color: var(--danger); }
+
+/* ── Session figures ──────────────────────────────────────────────────────
+   One colour each, so six numbers read as six different things rather than
+   one grey block. Profit and win rate take their colour from their VALUE,
+   because for those two the colour is information; the rest are simply told
+   apart. */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+  gap: 14px 12px;
+  margin: 14px 0 0;
+}
+.stats-grid > div { min-width: 0; }
+.stats-grid dt {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.stats-grid dd {
+  margin: 4px 0 0;
+  font-size: clamp(1rem, 1.4vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.stats-grid .is-up { color: var(--mint); }
+.stats-grid .is-down { color: var(--danger); }
+
+.stat--count { color: var(--violet-hi); }
+.stat--stake { color: var(--amber); }
+.stat--market { color: #c084fc; }
+.stat--time { color: #2dd4bf; }
+.stat--rate.is-up { color: var(--mint); }
+.stat--rate.is-down { color: var(--danger); }
+
+:root[data-theme="light"] .stat--market { color: #7e22ce; }
+:root[data-theme="light"] .stat--time { color: #0d9488; }
+
+/* ── Trades ───────────────────────────────────────────────────────────────
+   The list fills whatever the card has left and scrolls inside itself, so a
+   long session never grows the page a second scrollbar. */
+
+.hist {
+  flex: 1 1 0;
+  min-height: 140px;
+  margin-top: 8px;
+  padding-top: 4px;
+  /* A gutter for the scrollbar: without it the bar is drawn over the profit,
+     which is the one number in the row anybody is reading. */
+  padding-right: 14px;
+  list-style: none;
+  overflow-y: auto;
+  /* The list keeps its own scrolling. Reaching the top used to hand the
+     gesture to the page, which scrolled the whole card out of view. */
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--line);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-hi) transparent;
+}
+.hist::-webkit-scrollbar { width: 8px; }
+.hist::-webkit-scrollbar-track { background: transparent; }
+.hist::-webkit-scrollbar-thumb {
+  background: var(--line-hi);
+  border-radius: 999px;
+  border: 2px solid var(--panel);
+}
+
+@media (max-width: 900px) {
+  /* Stacked, the card has no column opposite to take its height from, so the
+     list needs a limit of its own or a long session grows the page. */
+  .hist { flex: 0 1 auto; max-height: clamp(200px, 42vh, 440px); }
+}
+
+.trade {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.trade:last-child { border-bottom: 0; }
+
+.trade-r {
+  padding: 5px 11px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  border-radius: 8px;
+}
+.trade--win .trade-r { color: var(--mint); background: var(--mint-tint); }
+.trade--loss .trade-r { color: var(--danger); background: var(--danger-tint); }
+
+.trade-m { color: var(--text-2); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+/* The result of the trade, and the reason the row exists. Everything else in
+   it is context. */
+.trade-p {
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.trade--win .trade-p { color: var(--mint); }
+.trade--loss .trade-p { color: var(--danger); }
+
+.acct--none { display: block; padding: 22px 0; font-size: 12.5px; color: var(--text-3); text-align: center; }
+
+/* The page title sits above the two panels; the dashboard's own head rules do
+   not apply here, so it carries its own room. */
+.page-t { margin: 0 0 clamp(12px, 1.6vw, 18px); }
+
+/* Same as the app's main column: the header is sticky and takes its own
+   space, so this is breathing room rather than clearance. */
+.dash-main { padding-top: clamp(14px, 2vh, 20px); padding-bottom: clamp(14px, 2vh, 22px); }
