@@ -40,7 +40,6 @@
       this.keepAliveTimer = null;
       this.tradeWatchdog = null;
       this.resumeTimer = null;
-      this.tradeStartedAt = 0;
       this.ws = null;
       this.isRunning = false;
       this.stopRequested = false;
@@ -48,6 +47,8 @@
       this.config = { ...this.defaults };
       this.currentStake = this.defaults.initialStake;
       this.activeContractId = null;
+      this.contractStreamId = null;
+      this.awaitingBuy = false;
       this.tradeInProgress = false;
       this.lastMarket = null;
       this.lastDigit = null;
@@ -57,7 +58,6 @@
       this.totalTrades = 0;
       this.wins = 0;
       this.consecutiveLosses = 0;
-      this.tradeHistory = [];
       this.balance = 0;
       this.accountCurrency = 'USD';
       this.startTime = null;
@@ -96,11 +96,11 @@
       this.totalTrades = 0;
       this.wins = 0;
       this.consecutiveLosses = 0;
-      this.tradeHistory = [];
       this.lastMarket = null;
       this.lastDigit = null;
       this.activeContractId = null;
       this.contractStreamId = null;
+      this.awaitingBuy = false;
       this.tradeInProgress = false;
       this.recoveryMode = false;
       this.recoveryMarket = null;
@@ -335,12 +335,34 @@
             }
             break;
           case 'proposal':
-            if (this.isRunning && data.proposal?.id && this.ws?.readyState === WebSocket.OPEN) {
-              this.ws.send(JSON.stringify({
-                buy: data.proposal.id,
-                price: data.proposal.ask_price
-              }));
+            /* ONE buy per trade.
+             *
+             * This used to buy on every proposal message that arrived, with
+             * nothing tying the message to the trade being placed. A proposal
+             * on this API is a priced quote that can be sent more than once —
+             * it re-prices as the market moves — so a single request could
+             * produce a second and a third message, and each one bought. That
+             * is two contracts open at once from the very first trade, both
+             * staked, neither asked for.
+             *
+             * The flag is the whole fix: it is raised when the proposal is
+             * sent and lowered by the buy it authorises. Anything after that,
+             * for this trade, is a price update and nothing more. */
+            if (!this.isRunning || !data.proposal?.id) break;
+
+            // Stop the re-pricing stream if this one came with a subscription.
+            if (data.subscription?.id && this.ws?.readyState === WebSocket.OPEN) {
+              try { this.ws.send(JSON.stringify({ forget: data.subscription.id })); } catch (_) {}
             }
+
+            if (!this.awaitingBuy || this.activeContractId) break;
+            if (this.ws?.readyState !== WebSocket.OPEN) break;
+
+            this.awaitingBuy = false;
+            this.ws.send(JSON.stringify({
+              buy: data.proposal.id,
+              price: data.proposal.ask_price
+            }));
             break;
           case 'buy':
             if (data.buy?.contract_id) {
@@ -394,16 +416,25 @@
               
               const analysis = this.marketAnalysis[market];
               analysis.digits.push(digit);
-              analysis.totalTicks++;
-              
-              // Keep only last 50 digits for analysis
+
+              // Keep only the last 50 digits: that is the window being judged.
               if (analysis.digits.length > 50) {
                 analysis.digits.shift();
               }
-              
-              // Count over 4 and under 5 occurrences
-              if (digit > 4) analysis.over4Count++;
-              if (digit < 5) analysis.under5Count++;
+
+              /* Counted FROM that window, not accumulated forever.
+                 They used to be running totals that never came down while the
+                 digit list was trimmed, so after a few minutes every market
+                 read as an even 50/50 — the lifetime average of a fair digit —
+                 and the "is one side ahead by 60%?" test could never be true
+                 again. The bias it was built to find was being averaged away. */
+              analysis.over4Count = 0;
+              analysis.under5Count = 0;
+              for (let i = 0; i < analysis.digits.length; i++) {
+                if (analysis.digits[i] > 4) analysis.over4Count++;
+                else analysis.under5Count++;
+              }
+              analysis.totalTicks = analysis.digits.length;
             }
             break;
           default:
@@ -537,6 +568,7 @@
     /** Clear the in-flight trade so the loop is allowed to run again. */
     releaseTrade() {
       this.tradeInProgress = false;
+      this.awaitingBuy = false;
       this.activeContractId = null;
       this.clearTradeWatchdog();
     }
@@ -591,7 +623,6 @@
      */
     armTradeWatchdog() {
       this.clearTradeWatchdog();
-      this.tradeStartedAt = Date.now();
       this.watchdogRounds = 0;
 
       const check = () => {
@@ -685,6 +716,7 @@
       }
 
       this.tradeInProgress = true;
+      this.awaitingBuy = true;      // exactly one buy answers this proposal
       this.armTradeWatchdog();
       this.currentMarket = market;
       this.currentDigit = digit;
@@ -735,6 +767,7 @@
         this.totalProfit = parseFloat((this.totalProfit + profit).toFixed(2));
         this.totalTrades += 1;
         this.tradeInProgress = false;
+        this.awaitingBuy = false;
         this.activeContractId = null;
         this.clearTradeWatchdog();
 
@@ -762,15 +795,12 @@
           // Apply martingale
           this.currentStake = parseFloat((this.currentStake * (this.config.martingaleMultiplier || 3.1)).toFixed(2));
           
-          // Enter recovery mode on loss
+          /* Enter recovery. The market and the side are NOT chosen here:
+             queueNextTrade reads them fresh at the moment it buys, so deciding
+             now would only be an earlier answer that gets thrown away. */
           if (!this.recoveryMode) {
             this.recoveryMode = true;
-            this.ui.showStatus('Loss detected. Analyzing markets for recovery...', 'warning');
-            
-            // Analyze markets to find best recovery option
-            const recovery = this.analyzeMarketsForRecovery();
-            this.recoveryMarket = recovery.market;
-            this.recoveryTradeType = recovery.tradeType;
+            this.ui.showStatus('Loss detected. Recovering on the stronger side...', 'warning');
           }
         }
 
