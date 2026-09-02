@@ -9,13 +9,17 @@
    Loaded after site.css, which holds the tokens, the buttons and the header.
    ══════════════════════════════════════════════════════════════════════════ */
 
-.app { min-height: 100svh; }
+/* A column the height of the window, so the footer sits at the bottom of the
+   screen rather than floating with eighty pixels of dead ground beneath it.
+   Short content pushes the space above the disclaimer, where it reads as room
+   rather than as an unfinished page. */
+.app { display: flex; flex-direction: column; min-height: 100svh; }
 /* The header is STICKY, not fixed, so it already takes its own space in the
    flow — the padding that used to be here was clearing a bar that needed no
    clearing, and the two together left most of a hundred pixels of nothing
    between the header and the first word. This is breathing room and nothing
    more. */
-.app-main { padding-top: clamp(14px, 2vh, 22px); padding-bottom: clamp(12px, 1.8vh, 22px); }
+.app-main { flex: 1; display: flex; flex-direction: column; padding-top: clamp(14px, 2vh, 22px); padding-bottom: clamp(10px, 1.4vh, 16px); }
 
 /* Title and line on one row where there is width for it: two stacked lines
    above the tools cost forty pixels a laptop does not have to spare. */
@@ -36,6 +40,8 @@
   grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 380px);
   gap: clamp(14px, 1.8vw, 22px);
   align-items: start;
+  /* Space left over goes above the footer, not below it. */
+  margin-bottom: clamp(12px, 1.6vh, 18px);
 }
 .app-col { min-width: 0; }
 
@@ -360,8 +366,10 @@
 }
 .flash[hidden] { display: none; }
 
-.app-foot { margin-top: clamp(10px, 1.4vw, 15px); padding-top: 10px; border-top: 1px solid var(--line); }
-.disclaimer { margin: 0; font-size: 0.75rem; line-height: 1.6; color: var(--text-3); }
+/* Pinned to the bottom by the auto margin, and as small as a line of small
+   print should be: it is a caution, not a section. */
+.app-foot { margin-top: auto; padding-top: 9px; border-top: 1px solid var(--line); }
+.disclaimer { margin: 0; font-size: 0.72rem; line-height: 1.5; color: var(--text-3); }
 
 /* No affordance on the door: a dotted underline would turn a private mode
    into a thing every visitor pokes at. */
