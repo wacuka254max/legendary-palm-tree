@@ -1186,3 +1186,36 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 /* A row that is waiting for the portfolio call. Same height as a real one, so
    the panel does not resize when the accounts land. */
 .acct--wait { color: var(--ink-faint); }
+
+/* ══ Switch ════════════════════════════════════════════════════════════════
+   The martingale on the analysis page, the take profit and stop loss on the
+   bot, "first trade loses" on both simulation cards. It lived in analysis.css
+   until the Automatic AI simulation used one without loading that file and
+   the control simply was not there — a switch you cannot see is a setting
+   nobody knows they have. */
+
+.tog {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  padding: 0;
+  flex: none;
+  background: var(--surface-2);
+  border: 1px solid var(--line-hi);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.tog-dot {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 12px; height: 12px;
+  background: var(--ink-faint);
+  border-radius: 50%;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+/* On is green, and the knob moves as well as the colour changing, so it does
+   not rest on hue alone. */
+.tog[aria-checked="true"] { background: rgba(20, 160, 90, 0.18); border-color: var(--ok); }
+.tog[aria-checked="true"] .tog-dot { transform: translateX(16px); background: var(--ok); }
+

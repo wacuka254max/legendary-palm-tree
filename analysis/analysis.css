@@ -83,33 +83,9 @@
 .fld-i:focus { outline: 2px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
 .fld-i:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* The multiplier sits under its own switch, so the pair reads as one control. */
+/* The multiplier sits under its own switch, so the pair reads as one control.
+   The switch itself is styled in styles.css: three pages use it now. */
 .fld--mart { flex: 0 1 190px; }
-
-.tog {
-  position: relative;
-  width: 34px;
-  height: 18px;
-  padding: 0;
-  flex: none;
-  background: var(--surface-2);
-  border: 1px solid var(--line-hi);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
-}
-.tog-dot {
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 12px; height: 12px;
-  background: var(--ink-faint);
-  border-radius: 50%;
-  transition: transform 0.18s ease, background 0.18s ease;
-}
-/* On is green, and the knob moves as well as the colour changing, so it does
-   not rest on hue alone. */
-.tog[aria-checked="true"] { background: rgba(20, 160, 90, 0.18); border-color: var(--up); }
-.tog[aria-checked="true"] .tog-dot { transform: translateX(16px); background: var(--up); }
 
 .syms { margin-top: 10px; }
 .syms-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
