@@ -49,6 +49,8 @@
       this.activeContractId = null;
       this.contractStreamId = null;
       this.awaitingBuy = false;
+      this.ownContracts = new Set();      // contracts this run bought
+      this.settledContracts = new Set();  // and the ones already counted
       this.tradeInProgress = false;
       this.lastMarket = null;
       this.lastDigit = null;
@@ -101,6 +103,8 @@
       this.activeContractId = null;
       this.contractStreamId = null;
       this.awaitingBuy = false;
+      this.ownContracts = new Set();
+      this.settledContracts = new Set();
       this.tradeInProgress = false;
       this.recoveryMode = false;
       this.recoveryMarket = null;
@@ -367,6 +371,7 @@
           case 'buy':
             if (data.buy?.contract_id) {
               this.activeContractId = data.buy.contract_id;
+              this.ownContracts.add(data.buy.contract_id);
 
               /* Subscribe to THIS contract by id, not only through the blanket
                  "all contracts" stream opened at connect.
@@ -757,9 +762,31 @@
 
     handleContractUpdate(contract) {
       if (!contract || !contract.contract_id) return;
-      if (this.activeContractId && contract.contract_id !== this.activeContractId) return;
+      const id = contract.contract_id;
+
+      /* Only contracts THIS run bought. The blanket subscription reports every
+         contract on the account, including any opened somewhere else. */
+      if (!this.ownContracts.has(id)) return;
+
+      /* And each of them exactly once.
+       *
+       * A settled contract is now announced twice — once down the blanket
+       * stream, once down the per-contract subscription opened when it was
+       * bought. The old guard let the second one through: it compared against
+       * activeContractId, which the FIRST update had just set to null, so the
+       * check short-circuited to false and the duplicate was counted as
+       * another trade. One contract became two rows, two trade counts and
+       * twice the profit — identical market, identical digit, identical
+       * figure, which is exactly what it looked like on screen. */
+      if (contract.is_sold && this.settledContracts.has(id)) return;
 
       if (contract.is_sold) {
+        this.settledContracts.add(id);
+        /* Bounded: a long run must not accumulate ids forever. Well past any
+           window in which a duplicate could still arrive. */
+        if (this.settledContracts.size > 200) {
+          this.settledContracts.delete(this.settledContracts.values().next().value);
+        }
         const isWin = contract.profit > 0;
         const profit = parseFloat(contract.profit) || 0;
         const stake = parseFloat(contract.buy_price) || this.currentStake;
