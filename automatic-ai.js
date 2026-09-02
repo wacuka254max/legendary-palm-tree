@@ -84,7 +84,17 @@
       p.textContent = (s.totalProfit >= 0 ? "+" : "") + Number(s.totalProfit || 0).toFixed(2);
       p.className = s.totalProfit > 0 ? "is-up" : (s.totalProfit < 0 ? "is-down" : "");
       $("s-trades").textContent = s.totalTrades || 0;
-      $("s-rate").textContent = (s.winRate || "0.00") + "%";
+
+      /* The win rate is coloured by what it says, like the profit above it:
+         green while more than half the trades are winning, pink once they are
+         not. Grey until there is a trade to rate. */
+      var rate = $("s-rate");
+      var pct = Number(s.winRate);
+      rate.textContent = (s.winRate || "0.00") + "%";
+      rate.className = "stat--rate" +
+        (!s.totalTrades || isNaN(pct) ? "" : (pct >= 50 ? " is-up" : " is-down"));
+
+
       $("s-stake").textContent = Number(s.currentStake || 0).toFixed(2);
       $("s-market").textContent = s.market || "—";
       if (s.balance != null) balanceEl.textContent = money(s.balance, s.currency);

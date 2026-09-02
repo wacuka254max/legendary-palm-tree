@@ -89,13 +89,16 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <section class="panel-solid">
       <h2 class="grp-t">Session</h2>
 
+      <!-- Each figure carries its own colour, so the six read as six
+           different things at a glance rather than one grey block. Flat
+           colours from the palette the rest of the app uses. -->
       <dl class="stats-grid">
         <div><dt>Profit</dt><dd id="s-profit">0.00</dd></div>
-        <div><dt>Trades</dt><dd id="s-trades">0</dd></div>
-        <div><dt>Win rate</dt><dd id="s-rate">0.00%</dd></div>
-        <div><dt>Next stake</dt><dd id="s-stake">—</dd></div>
-        <div><dt>Market</dt><dd id="s-market">—</dd></div>
-        <div><dt>Running</dt><dd id="s-time">00:00:00</dd></div>
+        <div><dt>Trades</dt><dd class="stat--count" id="s-trades">0</dd></div>
+        <div><dt>Win rate</dt><dd class="stat--rate" id="s-rate">0.00%</dd></div>
+        <div><dt>Next stake</dt><dd class="stat--stake" id="s-stake">&mdash;</dd></div>
+        <div><dt>Market</dt><dd class="stat--market" id="s-market">&mdash;</dd></div>
+        <div><dt>Running</dt><dd class="stat--time" id="s-time">00:00:00</dd></div>
       </dl>
 
       <h3 class="grp-t grp-t--sub">Trades</h3>

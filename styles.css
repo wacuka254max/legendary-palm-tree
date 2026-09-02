@@ -39,6 +39,9 @@
   --blue-hi:   #0a76ae;
   --ok:        #14a05a;
   --danger:    #d92d20;
+  --amber:     #b45309;
+  --violet:    #6d3bd8;
+  --teal:      #0f7f8a;
 
   /* Text sitting ON an accent fill. */
   --on-accent: #ffffff;
@@ -75,6 +78,9 @@
   --blue-hi:   #5bd2ff;
   --ok:        #5fd39a;
   --danger:    #ff6a6a;
+  --amber:     #f5a524;
+  --violet:    #b794ff;
+  --teal:      #4fd1c5;
 
   --on-accent: #0b0b0f;
   --ring:      rgba(255, 255, 255, 0.55);
@@ -769,14 +775,29 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .stats-grid .is-up { color: var(--ok); }
 .stats-grid .is-down { color: var(--pink); }
 
+/* One colour each, so six numbers read as six different things instead of one
+   grey block. Flat fills from the palette already in use — no gradients here
+   or anywhere else on the site. Profit and win rate take their colour from
+   their VALUE, because for those two the colour is information; the rest are
+   simply told apart. */
+.stat--count { color: var(--blue); }
+.stat--stake { color: var(--amber); }
+.stat--market { color: var(--violet); }
+.stat--time { color: var(--teal); }
+.stat--rate.is-up { color: var(--ok); }
+.stat--rate.is-down { color: var(--pink); }
+
 /* The trade list fills the rest of the card and scrolls inside itself, so the
    page never grows a second scrollbar as a session runs on. */
 .hist {
-  flex: 1 1 auto;
+  /* Takes whatever the card has left. The cap this replaces stopped the list
+     short of the bottom of a card that had already been stretched to the
+     height of the settings beside it, leaving a band of empty panel under the
+     trades — space the list could have been using. The card does not grow to
+     suit it: the row height is set by the column opposite, and the list
+     scrolls inside whatever that leaves. */
+  flex: 1 1 0;
   min-height: 150px;
-  /* Bounded, or `flex: 1` simply grows the card to the length of the session:
-     a long run would push the page metres tall instead of scrolling inside. */
-  max-height: clamp(200px, 42vh, 440px);
   margin-top: 8px;
   padding-top: 4px;
   /* A gutter for the scrollbar. Without it the bar is drawn over the profit
@@ -814,12 +835,12 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 }
 .trade:last-child { border-bottom: 0; }
 .trade-r {
-  padding: 2px 8px;
-  font-size: 10px;
+  padding: 5px 11px;
+  font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  border-radius: 6px;
+  border-radius: 7px;
 }
 .trade--win .trade-r { color: var(--ok); background: rgba(95, 211, 154, 0.12); }
 .trade--loss .trade-r { color: var(--pink); background: rgba(255, 61, 135, 0.12); }
@@ -840,6 +861,10 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
   /* Below this the control column has nothing to sit beside. */
   .run { grid-template-columns: minmax(0, 1fr); }
   .run-actions { margin-top: 20px; padding-top: 0; }
+
+  /* Stacked, the card has no column opposite to take its height from, so the
+     list needs a limit of its own or a long session grows the page. */
+  .hist { flex: 0 1 auto; max-height: clamp(200px, 42vh, 440px); }
 }
 
 /* ── Home: content + markets rail ───────────────────────────────────────── */
