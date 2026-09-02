@@ -778,7 +778,15 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
      a long run would push the page metres tall instead of scrolling inside. */
   max-height: clamp(200px, 42vh, 440px);
   margin-top: 8px;
+  padding-top: 4px;
+  /* A gutter for the scrollbar. Without it the bar is drawn over the profit
+     figure — the one number in the row anybody is actually reading. */
+  padding-right: 14px;
   overflow-y: auto;
+  /* The list keeps its own scrolling. Reaching the top used to hand the
+     gesture to the page, which then scrolled the whole card out of view: you
+     went looking for an earlier trade and the panel left the screen. */
+  overscroll-behavior: contain;
   border-top: 1px solid var(--line);
   /* A thin, self-coloured bar — the OS default is a light slab on a dark card. */
   scrollbar-width: thin;
@@ -816,7 +824,15 @@ ul, ol, dl { margin: 0; padding: 0; list-style: none; }
 .trade--win .trade-r { color: var(--ok); background: rgba(95, 211, 154, 0.12); }
 .trade--loss .trade-r { color: var(--pink); background: rgba(255, 61, 135, 0.12); }
 .trade-m { color: var(--ink-muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.trade-p { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* The result of the trade, and the reason the row exists. Everything else in
+   it is context. */
+.trade-p {
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .trade--win .trade-p { color: var(--ok); }
 .trade--loss .trade-p { color: var(--pink); }
 
