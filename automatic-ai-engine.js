@@ -571,32 +571,62 @@
       }
     }
 
-    /** If a contract update never arrives — a dropped subscription, a missed
-     *  message — re-ask for it, and if it is still silent, let the loop go on. */
+    /**
+     * A contract update is late. What to do about it depends entirely on
+     * whether a contract EXISTS.
+     *
+     * If it does — we have its id, Deriv confirmed the buy — then it will
+     * settle, and the only correct response is to keep asking for the update.
+     * The old behaviour was to give up and start another trade, which put two
+     * live contracts on the account at once: the abandoned one settled a
+     * moment later against a bot that had already moved on, and the stake had
+     * been committed twice. That is what "two trades at the same time" was.
+     *
+     * If there is no contract id, nothing was bought and there is nothing to
+     * wait for, so the loop is released and picks up again.
+     *
+     * A contract that never reports at all eventually stops the bot rather
+     * than being traded over. Standing still is recoverable; two positions
+     * nobody asked for is not.
+     */
     armTradeWatchdog() {
       this.clearTradeWatchdog();
       this.tradeStartedAt = Date.now();
-      this.tradeWatchdog = setTimeout(() => {
+      this.watchdogRounds = 0;
+
+      const check = () => {
         if (!this.isRunning || this.stopRequested || !this.tradeInProgress) return;
-        this.ui.showStatus('Trade update is late — re-syncing...', 'warning');
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-          try {
-            this.ws.send(JSON.stringify(this.activeContractId
-              ? { proposal_open_contract: 1, contract_id: this.activeContractId, subscribe: 1 }
-              : { proposal_open_contract: 1, subscribe: 1 }));
-          } catch (_) {}
-        }
-        this.tradeWatchdog = setTimeout(() => {
-          if (this.isRunning && !this.stopRequested && this.tradeInProgress) {
-            this.releaseTrade();
-            this.resumeTrading(1200);
+        this.watchdogRounds++;
+
+        if (this.activeContractId) {
+          // The contract is real. Ask again — never buy over the top of it.
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            try {
+              this.ws.send(JSON.stringify({
+                proposal_open_contract: 1,
+                contract_id: this.activeContractId,
+                subscribe: 1
+              }));
+            } catch (_) {}
           }
-        }, 4000);
-      /* A one-tick contract on these markets settles in about four seconds.
-         Waiting thirty before even asking again turned every missed update
-         into a thirty-five second gap in the run; twelve is still several
-         times longer than a healthy settle, and cheap when it is wrong. */
-      }, 12000);
+
+          if (this.watchdogRounds >= 8) {
+            this.stop('A contract stopped reporting. Stopped rather than trade over it.', 'error');
+            return;
+          }
+
+          this.ui.showStatus('Waiting on a contract update — re-asking Deriv...', 'warning');
+          this.tradeWatchdog = setTimeout(check, 8000);
+          return;
+        }
+
+        // No contract was ever confirmed: nothing is open, so start again.
+        this.ui.showStatus('That trade never opened — starting the next one...', 'warning');
+        this.releaseTrade();
+        this.resumeTrading(1200);
+      };
+
+      this.tradeWatchdog = setTimeout(check, 12000);
     }
 
     clearTradeWatchdog() {
