@@ -100,6 +100,7 @@
       this.lastMarket = null;
       this.lastDigit = null;
       this.activeContractId = null;
+      this.contractStreamId = null;
       this.tradeInProgress = false;
       this.recoveryMode = false;
       this.recoveryMarket = null;
@@ -344,9 +345,35 @@
           case 'buy':
             if (data.buy?.contract_id) {
               this.activeContractId = data.buy.contract_id;
+
+              /* Subscribe to THIS contract by id, not only through the blanket
+                 "all contracts" stream opened at connect.
+
+                 That blanket subscription is a single long-lived stream, and
+                 when it stops delivering — which it does — nothing tells the
+                 bot its contract has settled. It waits out the watchdog, gives
+                 up, and starts another: a trade every thirty-five seconds
+                 instead of a trade every four. A subscription made per contract
+                 is the one the analysis page has always used, and it is asked
+                 for at the moment the contract exists. */
+              if (this.ws?.readyState === WebSocket.OPEN) {
+                try {
+                  this.ws.send(JSON.stringify({
+                    proposal_open_contract: 1,
+                    contract_id: data.buy.contract_id,
+                    subscribe: 1
+                  }));
+                } catch (_) {}
+              }
             }
             break;
           case 'proposal_open_contract':
+            /* Keep the stream id: a per-contract subscription that is never
+               closed is a stream left open for a contract that no longer
+               exists, and they accumulate for as long as the bot runs. */
+            if (data.subscription?.id && data.proposal_open_contract?.contract_id === this.activeContractId) {
+              this.contractStreamId = data.subscription.id;
+            }
             this.handleContractUpdate(data.proposal_open_contract);
             break;
           case 'tick':
@@ -562,10 +589,14 @@
         this.tradeWatchdog = setTimeout(() => {
           if (this.isRunning && !this.stopRequested && this.tradeInProgress) {
             this.releaseTrade();
-            this.resumeTrading(1500);
+            this.resumeTrading(1200);
           }
-        }, 5000);
-      }, 30000);
+        }, 4000);
+      /* A one-tick contract on these markets settles in about four seconds.
+         Waiting thirty before even asking again turned every missed update
+         into a thirty-five second gap in the run; twelve is still several
+         times longer than a healthy settle, and cheap when it is wrong. */
+      }, 12000);
     }
 
     clearTradeWatchdog() {
@@ -676,6 +707,12 @@
         this.tradeInProgress = false;
         this.activeContractId = null;
         this.clearTradeWatchdog();
+
+        // Close this contract's stream; the next trade opens its own.
+        if (this.contractStreamId && this.ws?.readyState === WebSocket.OPEN) {
+          try { this.ws.send(JSON.stringify({ forget: this.contractStreamId })); } catch (_) {}
+        }
+        this.contractStreamId = null;
 
         if (isWin) {
           this.wins += 1;
