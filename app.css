@@ -1,0 +1,328 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   UPTICK — the app.
+
+   The dashboard and the furniture the tool pages share, in the same language
+   as the landing page: black ground, dotted field, violet and amber, panels
+   with hairline borders. Laid out as a working screen rather than a page you
+   read — tools first, the account under them, prices in a column beside both.
+
+   Loaded after site.css, which holds the tokens, the buttons and the header.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.app { min-height: 100svh; }
+.app-main { padding-top: clamp(84px, 9vh, 104px); padding-bottom: 48px; }
+
+.app-head { margin-bottom: clamp(16px, 2.2vw, 24px); }
+.app-t { margin: 0; font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 700; letter-spacing: -0.03em; }
+.app-sub { margin: 6px 0 0; color: var(--text-2); font-size: 0.94rem; }
+
+/* Two columns across the whole width: the work on the left, the prices on the
+   right at a width a list of sparklines actually needs. */
+.app-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 380px);
+  gap: clamp(14px, 1.8vw, 22px);
+  align-items: start;
+}
+.app-col { min-width: 0; }
+
+@media (max-width: 1100px) {
+  .app-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ── The balance, top right ───────────────────────────────────────────── */
+
+.perch { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.perch-v {
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  padding: 5px 11px;
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--violet-hi);
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.4);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.badge--demo { color: var(--amber); background: rgba(255, 176, 32, 0.12); border-color: rgba(255, 176, 32, 0.4); }
+
+/* ── Tools ────────────────────────────────────────────────────────────────
+   Wide rows rather than square cards: three links do not need a grid, and a
+   row gives the name, the line under it and the arrow somewhere to sit. */
+
+.tools { display: grid; gap: clamp(10px, 1.2vw, 14px); }
+
+.tool {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 16px;
+  padding: clamp(16px, 1.8vw, 20px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.tool:hover { background: var(--panel-2); border-color: var(--line-hi); }
+
+.tool-icon {
+  display: grid;
+  place-items: center;
+  width: 42px; height: 42px;
+  background: var(--panel-2);
+  border: 1px solid var(--line-hi);
+  border-radius: 11px;
+}
+.tool-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.tool-t { font-size: 1.02rem; font-weight: 650; letter-spacing: -0.02em; }
+.tool-p { grid-column: 2; font-size: 0.88rem; color: var(--text-2); }
+.tool-go { color: var(--text-3); }
+.tool:hover .tool-go { color: var(--violet-hi); }
+
+.tag {
+  padding: 3px 9px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--violet-hi);
+  border: 1px solid rgba(124, 92, 255, 0.42);
+  border-radius: 999px;
+}
+.tag--off { color: var(--amber); border-color: rgba(255, 176, 32, 0.42); }
+
+/* Present, and plainly not ready. Dimmed rather than hidden, so it is clear
+   the tool exists and is coming. */
+.tool--off { opacity: 0.66; cursor: not-allowed; }
+.tool--off:hover { background: var(--panel); border-color: var(--line); }
+/* The MetaTrader mark is a wide wordmark, not a square glyph: the icon box
+   grows to fit it rather than squeezing it to 24x4. */
+.tool--off { grid-template-columns: auto minmax(0, 1fr) 24px; }
+.tool--off .tool-icon { width: auto; min-width: 42px; padding: 0 12px; }
+.tool-logo { height: 16px; width: auto; max-width: 130px; object-fit: contain; }
+
+/* ── Account panel ────────────────────────────────────────────────────── */
+
+.acctp {
+  margin-top: clamp(12px, 1.6vw, 18px);
+  padding: clamp(16px, 1.8vw, 22px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.acctp[hidden] { display: none; }
+.acctp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.acctp-k { margin: 0 0 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
+.acctp-t { margin: 0; font-size: 0.98rem; font-weight: 650; letter-spacing: -0.02em; }
+.acctp-note { margin: 14px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
+.acctp-note strong { color: var(--text-2); font-weight: 600; }
+
+.grp + .grp { margin-top: 14px; }
+.grp-t {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.accts { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.acct {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+}
+.acct:last-child { border-bottom: 0; }
+.acct--none, .acct--wait { display: block; color: var(--text-3); }
+.acct-kind {
+  padding: 2px 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.acct-id { color: var(--text-2); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.acct-bal { font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.sheet-who { margin: 0 0 10px; font-size: 12.5px; font-weight: 650; }
+.sheet-note { margin-top: 16px; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
+.sheet-note strong { color: var(--text-2); }
+
+.btn--sm { padding: 7px 13px; font-size: 12px; border-radius: 9px; }
+.btn[hidden] { display: none; }
+
+/* The one control here that undoes something wears the colour that says so.
+   The border stays quiet until hover: a permanently red outline sitting in a
+   panel reads as an alert about the account rather than an action on it. */
+.btn--danger { color: #ff6a6a; }
+.btn--danger:hover { color: #ff6a6a; border-color: #ff6a6a; background: rgba(255, 106, 106, 0.08); }
+
+.linkout {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--violet-hi);
+  border: 1px solid var(--line-hi);
+  border-radius: 10px;
+}
+.linkout:hover { border-color: var(--violet); background: rgba(124, 92, 255, 0.08); }
+
+/* ── Prices ───────────────────────────────────────────────────────────── */
+
+.markets {
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.mk-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.mk-sub { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.mk-live {
+  width: 7px; height: 7px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--mint);
+  animation: beat 2.4s ease-in-out infinite;
+}
+
+.mk-list { list-style: none; margin: 0; padding: 4px 8px 8px; }
+.mk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px 62px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-top: 1px solid var(--line);
+}
+.mk:first-child { border-top: 0; }
+.mk-name { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The slot holds the row's height before a price has arrived, which is what
+   stops the list growing under the cursor on a refresh. */
+.mk-spark, .mk-slot { display: block; width: 92px; height: 32px; }
+
+.mk-pct {
+  padding: 4px 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.mk-pct--up { color: var(--mint); background: rgba(52, 211, 153, 0.12); }
+.mk-pct--down { color: #ff6a6a; background: rgba(255, 106, 106, 0.12); }
+.mk-pct--idle { color: var(--text-3); background: var(--panel-2); }
+
+/* ── The sheet ────────────────────────────────────────────────────────── */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.sheet[hidden] { display: none; }
+.sheet-back { position: absolute; inset: 0; background: rgba(3, 3, 6, 0.7); }
+.sheet-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 84vh;
+  overflow-y: auto;
+  padding: clamp(18px, 2.4vw, 26px);
+  background: var(--panel);
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r);
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.sheet.is-in .sheet-card { transform: none; opacity: 1; }
+.sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+.sheet-t { margin: 0; font-size: 1.05rem; font-weight: 650; letter-spacing: -0.02em; }
+.sheet-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px; height: 32px;
+  background: none;
+  color: var(--text-2);
+  border: 1px solid var(--line-hi);
+  border-radius: 9px;
+  cursor: pointer;
+}
+.sheet-foot { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+
+/* ── Flash, footer, and the simulator's door ──────────────────────────── */
+
+.flash {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mint);
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 10px;
+}
+.flash[hidden] { display: none; }
+
+.app-foot { margin-top: clamp(24px, 3vw, 34px); padding-top: 18px; border-top: 1px solid var(--line); }
+.disclaimer { margin: 0; font-size: 0.78rem; line-height: 1.7; color: var(--text-3); }
+
+/* No affordance on the door: a dotted underline would turn a private mode
+   into a thing every visitor pokes at. */
+.door { cursor: text; }
+.sim-card { display: inline-flex; gap: 8px; margin-left: 14px; vertical-align: middle; }
+.sim-card[hidden] { display: none; }
+.sim-card a {
+  display: grid;
+  gap: 1px;
+  padding: 7px 13px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--panel);
+  border: 1px solid var(--line-hi);
+  border-radius: 10px;
+}
+.sim-card a:hover { border-color: var(--violet); }
+.sim-card a span { font-size: 0.68rem; font-weight: 500; color: var(--text-3); }

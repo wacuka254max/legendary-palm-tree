@@ -63,8 +63,33 @@
   }
 
   function fail(message) {
-    amountEl.textContent = "Unavailable";
+    /* A dash, not the word "Unavailable". The header is where a balance goes,
+       and a sentence sitting in it reads as a broken number rather than as an
+       explanation — the explanation belongs in the panel, which has room for
+       one and is where somebody looks next. */
+    amountEl.textContent = "—";
     amountEl.title = message || "Could not reach Deriv.";
+
+    /* deriv.js says "not connected" to its own callers, which is the right
+       length for a log and the wrong one for a panel. */
+    var human = !message || message === "not connected"
+      ? "No Deriv account connected yet."
+      : message;
+    sayPanel(human);
+
+    /* Nothing to disconnect from: a button that undoes nothing is a button
+       that makes somebody wonder what it did. */
+    ["disconnect", "disconnect-inline"].forEach(function (id) {
+      var b = $(id);
+      if (b) b.hidden = true;
+    });
+  }
+
+  /** Put a plain sentence where the accounts would have been. */
+  function sayPanel(message) {
+    var body = $("acctp-body");
+    if (!body) return;
+    body.innerHTML = '<p class="acct acct--none">' + esc(message) + "</p>";
   }
 
   /* ── the detail sheet ───────────────────────────────────────────────────── */

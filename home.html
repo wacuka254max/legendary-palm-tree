@@ -3,41 +3,42 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Home | Evie</title>
+<title>Dashboard | Uptick</title>
 <meta name="robots" content="noindex,nofollow" />
-<meta name="theme-color" content="#f3f4f7" />
+<meta name="theme-color" content="#07070a" />
+
 <link rel="icon" href="/favicon.ico" sizes="48x48" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
-<script>
-/* Applied before paint: a saved dark choice must not flash a light page first.
-   Light is the default when nothing has been chosen. */
-(function(){try{var t=localStorage.getItem("evie_theme");
-document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){}})();
-</script>
-<link rel="stylesheet" href="/styles.css" />
-</head>
-<body class="dash">
 
-<header class="nav">
-  <div class="bleed nav-inner">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="/site.css" />
+<link rel="stylesheet" href="/app.css" />
+</head>
+<body class="app">
+
+<!-- ══ Header ══════════════════════════════════════════════════════════ -->
+<header class="top">
+  <div class="wrap top-in">
     <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff3d87"/><path d="M11 10h10M11 16h7M11 22h10" stroke="#0b0b0f" stroke-width="2.6" stroke-linecap="round"/></svg>
-      </span>
-      <span class="brand-name">Evie</span>
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+        <circle cx="16" cy="16" r="16" fill="#7c5cff"/>
+        <path d="M9 20.5 16 9l7 11.5-7-4.2-7 4.2z" fill="#fff"/>
+      </svg>
+      <span>Uptick</span>
     </a>
 
-    <!-- The real balance, top right. Nothing else: the demo account, the
-         wallets and the per-account detail all live behind the badge. -->
+    <!-- The real balance, and nothing else: the demo account, the wallets and
+         the per-account detail all live behind the badge. -->
     <div class="perch">
-      <button class="btn btn-line btn-install" type="button" data-install hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Install app</span></button>
-      <button class="btn btn-line theme-b" data-theme-toggle type="button" aria-pressed="false" title="Switch to dark">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        <span data-theme-label>Dark</span>
+      <button class="btn btn--install" type="button" data-install hidden>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Install app</span>
       </button>
-      <span class="perch-v" id="amount">—</span>
+      <span class="perch-v" id="amount">&mdash;</span>
       <button class="badge" id="badge" type="button"
               title="Double-click for full account details"
               aria-haspopup="dialog"
@@ -46,128 +47,130 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
   </div>
 </header>
 
-<main class="bleed dash-main">
+<main class="wrap app-main">
 
-  <div class="flash flash--ok" id="connected" hidden>
-    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 7"/></svg>
+  <div class="flash" id="connected" hidden>
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 7"/></svg>
     <span>Deriv account connected</span>
   </div>
 
   <!-- The "o" is the door to the simulator: three clicks on it and the card
-       below appears. Deliberately unmarked — it is a practice mode for whoever
-       already knows it is there, not a feature the dashboard advertises. -->
-  <h1 class="dash-title">H<span class="door" id="door">o</span>me<span class="sim-card" id="sim-card" hidden><a href="/analyss.html">Analysis<span>Simulated</span></a><a href="/automatc-ai.html">Automatic AI<span>Simulated</span></a></span></h1>
-
-  <div class="dash-grid">
-   <div class="dash-col">
-
-  <div class="tiles">
-    <a class="tile" href="/analysis.html">
-      <span class="tile-icon icon-blue" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-      </span>
-      <span class="tile-h"><span class="tile-t">Analysis</span><span class="tag-bot">Bots</span></span>
-      <span class="tile-s">Read the market before you commit to it.</span>
-    </a>
-
-    <a class="tile" href="/automatic-ai.html">
-      <span class="tile-icon icon-pink" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.5-6.5-2.1 2.1M8.6 15.4l-2.1 2.1m0-11.9 2.1 2.1m6.8 6.8 2.1 2.1"/><circle cx="12" cy="12" r="3.4"/></svg>
-      </span>
-      <span class="tile-h"><span class="tile-t">Automatic AI</span><span class="tag-bot">Bots</span></span>
-      <span class="tile-s">Hand it the account and let it trade.</span>
-    </a>
-
-    <div class="tile tile--off" aria-disabled="true">
-      <span class="tile-icon" aria-hidden="true">
-        <img src="/logos/metatrader5-ink.svg" alt="" class="tile-logo tile-logo--ink" />
-        <img src="/logos/metatrader5.svg" alt="" class="tile-logo tile-logo--pale" />
-      </span>
-      <span class="tile-h"><span class="tile-t">MT5 Bots</span><span class="tag-off">Under maintenance</span></span>
-      <span class="tile-s">Expert Advisors for MetaTrader 5. Back shortly.</span>
-    </div>
+       appears. Unmarked on purpose — it is a private practice mode, not a
+       feature the dashboard offers. -->
+  <div class="app-head">
+    <h1 class="app-t">H<span class="door" id="door">o</span>me<span class="sim-card" id="sim-card" hidden><a href="/analyss.html">Analysis<span>Simulated</span></a><a href="/automatc-ai.html">Automatic AI<span>Simulated</span></a></span></h1>
+    <p class="app-sub">Pick a tool. Everything runs on the account in the corner.</p>
   </div>
 
+  <div class="app-grid">
+    <div class="app-col">
 
-  <!-- The account, on the page. It used to live only behind a double click on
-       the badge, which left a wide screen with a column of empty space beside
-       three tiles and the answer to "which account am I on?" hidden. The sheet
-       stays for narrow screens, where a panel this tall would push the tiles
-       off the fold. -->
-  <section class="acctp" id="acctp">
-    <div class="acctp-head">
-      <div>
-        <p class="acctp-k">Account details</p>
-        <h2 class="acctp-t">Your Deriv portfolio</h2>
+      <!-- ══ Tools ══════════════════════════════════════════════════════ -->
+      <div class="tools">
+        <a class="tool" href="/analysis.html">
+          <span class="tool-icon i-violet" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          </span>
+          <span class="tool-h"><span class="tool-t">Analysis</span><span class="tag">Bots</span></span>
+          <span class="tool-p">Read the market before you commit to it.</span>
+          <span class="tool-go" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+
+        <a class="tool" href="/automatic-ai.html">
+          <span class="tool-icon i-amber" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.5-6.5-2.1 2.1M8.6 15.4l-2.1 2.1m0-11.9 2.1 2.1m6.8 6.8 2.1 2.1"/><circle cx="12" cy="12" r="3.4"/></svg>
+          </span>
+          <span class="tool-h"><span class="tool-t">Automatic AI</span><span class="tag">Bots</span></span>
+          <span class="tool-p">Hand it the account and let it trade.</span>
+          <span class="tool-go" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </a>
+
+        <div class="tool tool--off" aria-disabled="true">
+          <span class="tool-icon" aria-hidden="true">
+            <img src="/logos/metatrader5.svg" alt="" class="tool-logo" />
+          </span>
+          <span class="tool-h"><span class="tool-t">MT5 Bots</span><span class="tag tag--off">Under maintenance</span></span>
+          <span class="tool-p">Expert Advisors for MetaTrader 5. Back shortly.</span>
+        </div>
       </div>
-      <button class="btn btn-line btn-sm btn-danger" id="disconnect-inline" type="button">Disconnect</button>
+
+      <!-- ══ Account ════════════════════════════════════════════════════ -->
+      <section class="acctp" id="acctp">
+        <div class="acctp-head">
+          <div>
+            <p class="acctp-k">Account</p>
+            <h2 class="acctp-t">Your Deriv portfolio</h2>
+          </div>
+          <button class="btn btn--danger btn--sm" id="disconnect-inline" type="button">Disconnect</button>
+        </div>
+
+        <!-- Here before the portfolio is, so the panel is its own size from the
+             first paint and the accounts appear inside it rather than the whole
+             card appearing around them. -->
+        <div class="acctp-body" id="acctp-body">
+          <section class="grp"><h3 class="grp-t">Real</h3>
+            <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
+          </section>
+          <section class="grp"><h3 class="grp-t">Demo</h3>
+            <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
+          </section>
+        </div>
+
+        <p class="acctp-note">
+          A bot can only trade the <strong>options</strong> account. Money in a
+          wallet or MT5 has to be moved across first, and an MT5 balance is not
+          reported here at all.
+        </p>
+
+        <a class="linkout" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener noreferrer">
+          Transfer funds to your options account
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+        </a>
+      </section>
+
     </div>
 
-    <!-- The groups are here before the portfolio is, so the panel is its own
-         size from the first paint and the accounts appear inside it rather
-         than the whole card appearing around them. -->
-    <div class="acctp-body" id="acctp-body">
-      <section class="grp"><h3 class="grp-t">Real</h3>
-        <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
-      </section>
-      <section class="grp"><h3 class="grp-t">Demo</h3>
-        <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
-      </section>
-    </div>
-
-    <p class="acctp-note">
-      A bot can only trade the <strong>options</strong> account. Money in a
-      wallet or MT5 has to be moved across first, and an MT5 balance is not
-      reported here at all.
-    </p>
-
-    <p class="acctp-note">
-      Cannot see your full balance here? Move it across in your Deriv portfolio.
-    </p>
-
-    <a class="notice-go notice-go--sm" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener noreferrer">
-      Transfer funds to your options account
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
-    </a>
-  </section>
-   </div>
-
-   <!-- Live volatility prices. On a wide screen this fills the space to the
-        right of the tiles; below 1180px it drops under them. -->
-   <aside class="markets" id="markets">
-     <h2 class="mk-head" id="mk-head">
-       <span>Price changes (5 minutes)</span>
-       <span class="mk-live" id="mk-live" aria-hidden="true"></span>
-     </h2>
-     <ul class="mk-list" id="mk-list"></ul>
-   </aside>
+    <!-- ══ Prices ═══════════════════════════════════════════════════════ -->
+    <aside class="markets" id="markets">
+      <h2 class="mk-head" id="mk-head">
+        <span>Price changes</span>
+        <span class="mk-sub">5 min</span>
+        <span class="mk-live" id="mk-live" aria-hidden="true"></span>
+      </h2>
+      <ul class="mk-list" id="mk-list"></ul>
+    </aside>
 
   </div>
 
-  <footer class="dash-foot">
-    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
+  <footer class="app-foot">
+    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial
+      advice or a profit guarantee. Never risk more than you can afford to lose.</p>
   </footer>
 
 </main>
 
-<!-- Full account detail. Opened by double-clicking the Real badge. -->
+<!-- Full account detail, opened by double-clicking the badge. -->
 <div class="sheet" id="sheet" hidden>
   <div class="sheet-back" data-close></div>
   <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="sheet-head">
       <div>
-        <p class="sheet-k">Account details</p>
+        <p class="acctp-k">Account details</p>
         <h2 class="sheet-t" id="sheet-title">Your Deriv portfolio</h2>
       </div>
       <button class="sheet-x" type="button" data-close aria-label="Close">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
 
     <div class="sheet-body" id="sheet-body"></div>
 
     <div class="sheet-foot">
-      <button class="btn btn-line btn-danger" id="disconnect" type="button">Disconnect</button>
+      <button class="btn btn--danger" id="disconnect" type="button">Disconnect</button>
     </div>
   </div>
 </div>
@@ -175,7 +178,6 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <script src="/deriv.js"></script>
 <script src="/markets.js"></script>
 <script src="/home.js"></script>
-<script src="/theme.js"></script>
 <script src="/install.js"></script>
 </body>
 </html>
