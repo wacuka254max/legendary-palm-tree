@@ -414,3 +414,50 @@ a { color: inherit; text-decoration: none; }
 .how-steps li { margin-bottom: 8px; }
 .how-steps b { color: var(--text); }
 .how-ok { width: 100%; }
+
+/* ══ Names the tool pages already use ══════════════════════════════════════
+   analysis.css was written against the other site's token names. Rather than
+   rewrite seven hundred lines of layout that works, the names are pointed at
+   this site's palette here — one place to look, and the layout file stays a
+   layout file.
+
+   The market colours are this site's own: violet leads, amber answers it, and
+   the rise/fall pair is the mint and red already used for a profit and a loss
+   so a green number means the same thing on every page. */
+:root {
+  --surface:    var(--panel);
+  --surface-2:  var(--panel-2);
+  --raise:      var(--panel-2);
+  --base:       var(--void);
+  --bg:         var(--void);
+  --ink:        var(--text);
+  --ink-soft:   var(--text-2);
+  --ink-muted:  var(--text-2);
+  --ink-faint:  var(--text-3);
+  --on-accent:  #ffffff;
+  --ring:       rgba(255, 255, 255, 0.5);
+  --radius:     var(--r);
+  --radius-sm:  var(--r-sm);
+  --pink:       var(--danger);
+  --blue:       var(--violet);
+
+  --up:     var(--mint);
+  --down:   var(--danger);
+  --even:   #38bdf8;
+  --odd:    #f472b6;
+  --over:   var(--amber);
+  --under:  #2dd4bf;
+  --match:  var(--violet-hi);
+  --differ: #94a3b8;
+  --cur:    var(--violet-hi);
+}
+
+:root[data-theme="light"] {
+  --on-accent: #ffffff;
+  --ring:      rgba(0, 0, 0, 0.45);
+
+  --even:   #0284c7;
+  --odd:    #db2777;
+  --under:  #0d9488;
+  --differ: #64748b;
+}

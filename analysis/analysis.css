@@ -11,31 +11,12 @@
    orange over, cyan under. Flat colours only — no gradients anywhere.
    ══════════════════════════════════════════════════════════════════════ */
 
-:root {
-  /* Deep enough to carry white text on a filled button and to read as text on
-     a white card. The dark theme brightens all of them below. */
-  --up:    #15a34a;
-  --down:  #dc2626;
-  --even:  #2563eb;
-  --odd:   #dc2626;
-  --over:  #d97706;
-  --under: #0891b2;
-  --match: #9333ea;
-  --differ:#64748b;
-  --cur:   #4f46e5;
-}
+/* The market colours and every surface token now come from site.css, so this
+   file is layout and nothing else. */
 
-:root[data-theme="dark"] {
-  --up:    #22c55e;
-  --down:  #ef4444;
-  --even:  #3b82f6;
-  --odd:   #ef4444;
-  --over:  #f59e0b;
-  --under: #06b6d4;
-  --match: #a855f7;
-  --differ:#94a3b8;
-  --cur:   #818cf8;
-}
+/* The header is sticky and holds its own space, so the main column needs
+   breathing room rather than clearance. */
+.dash-main { padding-top: clamp(14px, 2vh, 20px); padding-bottom: clamp(16px, 2.4vh, 26px); }
 
 /* ── settings ───────────────────────────────────────────────────────────
    Kept deliberately short. On a 768px-tall laptop the whole panel plus the
@@ -125,7 +106,11 @@
   /* auto-FILL, not auto-fit. auto-fit collapses the empty tracks, so a single
      selected symbol would stretch its card across the whole page; auto-fill
      keeps them, and one card stays exactly one card wide. */
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  /* 360. Narrower than this and three cards fit across a 1500px screen, which
+     sounds like a win until the pair rows read "Over 5: 43…" — two
+     percentages and two buttons do not go into 290px. A card that scrolls is
+     better than a label that lies. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
   gap: 14px;
   margin-top: 14px;
 }
@@ -195,7 +180,7 @@
 
 .pbar {
   padding: 7px 9px;
-  font-size: 11.5px;
+  font-size: 11.2px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   border-radius: 7px;
@@ -210,9 +195,9 @@
 
 .acts { display: inline-flex; gap: 5px; }
 .act {
-  padding: 7px 11px;
+  padding: 7px 10px;
   font: inherit;
-  font-size: 11.5px;
+  font-size: 11.2px;
   font-weight: 700;
   color: var(--on-accent);
   border: 0;

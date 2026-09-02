@@ -80,9 +80,13 @@
 
 /* Three across on a wide screen. Stacked, the three rows plus the account
    panel under them ran past the bottom of a laptop; across, the whole
-   dashboard fits above the fold. */
-.tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 1.2vw, 14px); }
-@media (max-width: 1000px) { .tools { grid-template-columns: minmax(0, 1fr); } }
+   dashboard fits above the fold.
+
+   Named dash-tools, not tools: the analysis page's settings panel is a
+   .tools, and this grid was reaching across and forcing it into three
+   columns — a class collision between two pages that share a stylesheet. */
+.dash-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 1.2vw, 14px); }
+@media (max-width: 1000px) { .dash-tools { grid-template-columns: minmax(0, 1fr); } }
 
 .tool {
   display: grid;
@@ -407,3 +411,30 @@
 .ico-sun { display: none; }
 :root[data-theme="light"] .ico-sun { display: block; }
 :root[data-theme="light"] .ico-moon { display: none; }
+
+/* ── The bar on a small screen ────────────────────────────────────────────
+   A balance like "USD 1,284.55" plus a badge plus two buttons will not fit
+   389px at full size: the figure wrapped onto two lines and Home ran off the
+   edge. Everything shrinks together and the wordmark goes last — each part
+   here answers a question somebody opened the page to ask, so nothing is
+   dropped until it has to be. */
+
+@media (max-width: 700px) {
+  .top-in { gap: 8px; height: 58px; }
+  .perch { gap: 6px; min-width: 0; }
+  .perch-v {
+    font-size: 13px;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .badge { padding: 4px 8px; font-size: 9.5px; letter-spacing: 0.06em; }
+  .btn { padding: 9px 12px; font-size: 13px; }
+  .btn--icon { padding: 9px; }
+}
+
+@media (max-width: 430px) {
+  /* The mark carries the brand on its own at this width. */
+  .brand span { display: none; }
+}
