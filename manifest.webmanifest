@@ -1,13 +1,13 @@
 {
   "id": "/",
-  "name": "Kestrel - free automated trading bots",
-  "short_name": "Kestrel",
-  "description": "Free automated trading bots that run on a broker account you already own.",
+  "name": "Kairos - fully automated AI trading bots",
+  "short_name": "Kairos",
+  "description": "Fully automated AI trading bots that run on a broker account you already own.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f6f4ee",
-  "theme_color": "#f6f4ee",
+  "background_color": "#07070a",
+  "theme_color": "#07070a",
   "icons": [
     {
       "src": "/icons/icon-96.png",

@@ -3,24 +3,25 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Kestrel | Free automated trading bots</title>
-<meta name="description" content="Kestrel runs free automated trading bots on an account you already own. Connect Deriv, choose a market, set a target and a limit, and let it trade. No subscription, no deposits, no code." />
-<meta name="theme-color" content="#f6f4ee" />
+<title>Kairos | Fully Automated AI Trading Bots</title>
+<meta name="description" content="Kairos runs fully automated AI trading bots on a broker account you already own. Connect Deriv, set a target and a limit, and let it trade. Free, no subscription, no deposits, no code." />
+<meta name="theme-color" content="#07070a" />
 <meta name="robots" content="index,follow,max-image-preview:large" />
 
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="Kestrel" />
-<meta property="og:title" content="Kestrel | Free automated trading bots" />
-<meta property="og:description" content="Free automated trading bots on an account you already own. Connect, set your limits, let it run." />
+<meta property="og:site_name" content="Kairos" />
+<meta property="og:title" content="Kairos | Fully Automated AI Trading Bots" />
+<meta property="og:description" content="Fully automated AI trading bots that run on your own account. Set the target and the limit; the bot does the rest." />
 <meta name="twitter:card" content="summary_large_image" />
 
-<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="/favicon.ico" sizes="48x48" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;650;700;800&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
 <link rel="stylesheet" href="/site.css" />
 </head>
 <body>
@@ -29,140 +30,150 @@
 <header class="top">
   <div class="wrap top-in">
     <a class="brand" href="/">
-      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-        <circle cx="16" cy="16" r="16" fill="#121210"/>
-        <path d="M9 20.5 16 9l7 11.5-7-4.2-7 4.2z" fill="#d8ff3e"/>
+      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="#7c5cff"/>
+        <path d="M10 22V10m0 6 7-6m-7 6 7 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="23" cy="11" r="2.6" fill="#ffb020"/>
       </svg>
-      <span>Kestrel</span>
+      <span>Kairos</span>
     </a>
 
     <div class="top-cta">
-      <button class="btn btn--ghost btn--install" type="button" data-install hidden>
+      <button class="btn btn--install" type="button" data-install hidden>
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        <span>Install</span>
+        <span>Install app</span>
       </button>
-      <a class="btn btn--ink js-connect" href="/home.html">Connect</a>
+      <a class="btn btn--violet js-connect" href="/home.html">Connect</a>
     </div>
   </div>
 </header>
 
 <main>
 
-  <!-- ══ Hero ══════════════════════════════════════════════════════════
-       The headline carries the page. Beside it, a spec sheet rather than a
-       chart: every line is something the software genuinely does, so there
-       is no invented figure anywhere on the fold. -->
+  <!-- ══ Hero ══════════════════════════════════════════════════════════ -->
   <section class="hero">
-    <div class="wrap hero-grid">
-      <div>
-        <p class="eyebrow">Free &middot; no card &middot; no deposit to us</p>
-        <h1 class="display">
-          Bots that trade<br />
-          <span class="mark-hl">your account</span><br />
-          while you don&rsquo;t.
-        </h1>
-        <p class="lede">
-          Connect the broker account you already have, choose a market, set the
-          target and the limit you are comfortable with. Kestrel places the
-          trades and stops itself when it gets there.
-        </p>
-        <div class="hero-actions">
-          <a class="btn btn--lime btn--lg js-connect" href="/home.html">Start free</a>
-          <a class="btn btn--ghost btn--lg" href="#how">How it works</a>
-        </div>
-      </div>
-
-      <aside class="spec" aria-label="What it does">
-        <div class="spec-head">What it does</div>
-        <div class="spec-row"><span class="spec-k">Runs on</span><span class="spec-v">your own account</span></div>
-        <div class="spec-row"><span class="spec-k">Markets</span><span class="spec-v">volatility indices</span></div>
-        <div class="spec-row"><span class="spec-k">Stops at</span><span class="spec-v">your take profit</span></div>
-        <div class="spec-row"><span class="spec-k">Stops at</span><span class="spec-v">your stop loss</span></div>
-        <div class="spec-row"><span class="spec-k">Practice mode</span><span class="spec-v">included</span></div>
-        <div class="spec-row"><span class="spec-k">Cost</span><span class="spec-v">0.00</span></div>
-      </aside>
-    </div>
-  </section>
-
-  <!-- ══ Platforms ═════════════════════════════════════════════════════
-       On black: most of these marks are white on transparent and would be
-       invisible on paper, and the page wants one hard break across it. -->
-  <section class="band" aria-label="Platforms">
-    <div class="wrap"><p class="band-k">Built for the platforms people already trade on</p></div>
-    <div class="rail">
-      <div class="run">
-        <img src="/logos/deriv-wordmark.svg" alt="Deriv" />
-        <img src="/logos/metatrader5.svg" alt="MetaTrader 5" />
-        <img src="/logos/mt4.svg" alt="MetaTrader 4" />
-        <img src="/logos/tradingview.svg" alt="TradingView" />
-        <img src="/logos/binance.svg" alt="Binance" />
-        <img src="/logos/exness.svg" alt="Exness" />
-        <img src="/logos/ctrader.svg" alt="cTrader" />
-        <img src="/logos/oanda.svg" alt="OANDA" />
-        <img src="/logos/fundingpips.svg" alt="Funding Pips" />
-        <img src="/logos/ftmo.svg" alt="FTMO" />
-        <img src="/logos/fundednext.png" alt="FundedNext" />
-        <img src="/logos/the5ers.svg" alt="The5ers" />
-      </div>
-      <div class="run" aria-hidden="true">
-        <img src="/logos/deriv-wordmark.svg" alt="" />
-        <img src="/logos/metatrader5.svg" alt="" />
-        <img src="/logos/mt4.svg" alt="" />
-        <img src="/logos/tradingview.svg" alt="" />
-        <img src="/logos/binance.svg" alt="" />
-        <img src="/logos/exness.svg" alt="" />
-        <img src="/logos/ctrader.svg" alt="" />
-        <img src="/logos/oanda.svg" alt="" />
-        <img src="/logos/fundingpips.svg" alt="" />
-        <img src="/logos/ftmo.svg" alt="" />
-        <img src="/logos/fundednext.png" alt="" />
-        <img src="/logos/the5ers.svg" alt="" />
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ How ═══════════════════════════════════════════════════════════ -->
-  <section class="steps" id="how">
     <div class="wrap">
-      <div class="steps-head">
-        <p class="eyebrow">Three steps</p>
-        <h2 class="steps-t">Connected in about a minute.</h2>
-      </div>
+      <span class="pill"><span class="pill-dot" aria-hidden="true"></span> Free forever &mdash; <b>no card, no deposits</b></span>
 
-      <div class="step">
-        <span class="step-n">01</span>
+      <h1 class="h1">Fully automated <em>AI trading bots</em></h1>
+
+      <p class="sub">
+        Connect the broker account you already have, set the target and the
+        limit you are comfortable with, and let the bot trade. It stops itself
+        the moment it gets there.
+      </p>
+
+      <div class="cta-row">
+        <a class="btn btn--violet btn--lg js-connect" href="/home.html">Start free</a>
+        <a class="btn btn--lg" href="#how">See how it works</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Bento ═════════════════════════════════════════════════════════
+       The wide panel shows what the bot is doing as the three states it
+       moves between. Deliberately no prices and no percentages: a figure on
+       a landing page about trading is a figure somebody had to invent. -->
+  <div class="wrap bento">
+
+    <section class="tile tile--wide">
+      <p class="tile-k">Running</p>
+      <h2 class="tile-t">It waits, it enters, it stops at your target</h2>
+      <p class="tile-p">One trade at a time on the market you chose, under the limits you set.</p>
+
+      <div class="flow" aria-label="What the bot does, in order">
+        <div class="state"><span class="state-led" aria-hidden="true"></span><span><b>Waiting</b> — reading the market</span></div>
+        <div class="state"><span class="state-led" aria-hidden="true"></span><span><b>In a trade</b> — one at a time</span></div>
+        <div class="state"><span class="state-led" aria-hidden="true"></span><span><b>Stopped</b> — target or limit hit</span></div>
+      </div>
+    </section>
+
+    <section class="tile tile--third">
+      <span class="tile-icon i-violet" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4z"/></svg>
+      </span>
+      <h3 class="tile-t">Your account, your money</h3>
+      <p class="tile-p">Kairos holds no funds and takes no deposits. Trades are placed on the
+        broker account you already own, and you can disconnect at any moment.</p>
+    </section>
+
+    <section class="tile tile--third">
+      <span class="tile-icon i-amber" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
+      </span>
+      <h3 class="tile-t">Limits it respects</h3>
+      <p class="tile-p">A take profit and a stop loss, both yours to set. The bot stops itself at
+        either, and you can stop it by hand whenever you like.</p>
+    </section>
+
+    <section class="tile tile--third">
+      <span class="tile-icon i-mint" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+      </span>
+      <h3 class="tile-t">Practice mode built in</h3>
+      <p class="tile-p">A full simulation with no money and no broker attached. Watch a strategy
+        behave for an hour before you put anything real near it.</p>
+    </section>
+
+  </div>
+
+  <!-- ══ Platforms ═════════════════════════════════════════════════════ -->
+  <section class="wrap plat">
+    <p class="plat-k">Built for the platforms people already trade on</p>
+    <div class="plat-grid">
+      <div class="plat-cell"><img src="/logos/deriv-wordmark.svg" alt="Deriv" /></div>
+      <div class="plat-cell"><img src="/logos/metatrader5.svg" alt="MetaTrader 5" /></div>
+      <div class="plat-cell"><img src="/logos/mt4.svg" alt="MetaTrader 4" /></div>
+      <div class="plat-cell"><img src="/logos/tradingview.svg" alt="TradingView" /></div>
+      <div class="plat-cell"><img src="/logos/binance.svg" alt="Binance" /></div>
+      <div class="plat-cell"><img src="/logos/exness.svg" alt="Exness" /></div>
+      <div class="plat-cell"><img src="/logos/ctrader.svg" alt="cTrader" /></div>
+      <div class="plat-cell"><img src="/logos/oanda.svg" alt="OANDA" /></div>
+      <div class="plat-cell"><img src="/logos/fundingpips.svg" alt="Funding Pips" /></div>
+      <div class="plat-cell"><img src="/logos/ftmo.svg" alt="FTMO" /></div>
+      <div class="plat-cell"><img src="/logos/fundednext.png" alt="FundedNext" /></div>
+      <div class="plat-cell"><img src="/logos/the5ers.svg" alt="The5ers" /></div>
+    </div>
+  </section>
+
+  <!-- ══ Steps ═════════════════════════════════════════════════════════ -->
+  <section class="wrap steps" id="how">
+    <div class="sec-head">
+      <p class="tile-k">How it works</p>
+      <h2 class="sec-t">Running in about a minute</h2>
+      <p class="sec-p">Three steps, and the third one costs nothing to get wrong.</p>
+    </div>
+
+    <div class="steps-grid">
+      <article class="step">
+        <span class="step-n">1</span>
         <h3 class="step-t">Connect your broker</h3>
-        <p class="step-p">Sign in through Deriv&rsquo;s own page. Kestrel never sees your
-          password, holds no money and takes no deposits &mdash; the account stays
-          entirely yours.</p>
-      </div>
-
-      <div class="step">
-        <span class="step-n">02</span>
-        <h3 class="step-t">Set your limits</h3>
-        <p class="step-p">Stake, take profit, stop loss. The bot stops itself the moment
-          it reaches either, and you can stop it by hand at any point.</p>
-      </div>
-
-      <div class="step">
-        <span class="step-n">03</span>
-        <h3 class="step-t">Practise, then run it</h3>
-        <p class="step-p">There is a full practice mode with no money and no broker
-          attached. Watch a strategy behave before you put anything real near it.</p>
-      </div>
+        <p class="step-p">Sign in through Deriv&rsquo;s own page. Kairos never sees your password,
+          and there is no account to create here.</p>
+      </article>
+      <article class="step">
+        <span class="step-n">2</span>
+        <h3 class="step-t">Set stake and limits</h3>
+        <p class="step-p">Choose the market, the stake, and the take profit and stop loss you
+          want the bot to answer to.</p>
+      </article>
+      <article class="step">
+        <span class="step-n">3</span>
+        <h3 class="step-t">Practise, then run</h3>
+        <p class="step-p">Try it in the simulation first. When you are satisfied, run the same
+          bot on your own account.</p>
+      </article>
     </div>
   </section>
 
   <!-- ══ Closing ═══════════════════════════════════════════════════════ -->
-  <section class="end">
-    <div class="wrap">
-      <div class="end-in">
-        <h2 class="end-t">Free, for every trader.</h2>
-        <p class="end-p">No subscription, no licence, nothing to buy and nowhere to send
-          money. Bring your own account and keep everything it makes.</p>
-        <div class="end-actions">
-          <a class="btn btn--ink btn--lg js-connect" href="/home.html">Connect an account</a>
-        </div>
+  <section class="wrap end">
+    <div class="end-in">
+      <h2 class="end-t">Free for every trader</h2>
+      <p class="end-p">No subscription, no licence, nothing to buy and nowhere to send money.
+        Bring your own account and keep everything it makes.</p>
+      <div class="cta-row">
+        <a class="btn btn--violet btn--lg js-connect" href="/home.html">Connect an account</a>
       </div>
     </div>
   </section>
@@ -173,16 +184,23 @@
 <footer class="foot">
   <div class="wrap">
     <div class="foot-in">
-      <span class="foot-brand">Kestrel</span>
-      <p class="foot-note">Software for automating trades on a broker account you already
-        own. Kestrel is not a broker: it holds no funds, accepts no deposits and
-        executes trades only on your own account.</p>
+      <span class="foot-brand">
+        <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="#7c5cff"/>
+          <path d="M10 22V10m0 6 7-6m-7 6 7 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="23" cy="11" r="2.6" fill="#ffb020"/>
+        </svg>
+        Kairos
+      </span>
+      <p class="foot-note">Software for automating trades on a broker account you already own.
+        Kairos is not a broker: it holds no funds, accepts no deposits, and executes
+        trades only on your own account.</p>
     </div>
     <p class="foot-legal">
-      Trading carries risk. This is an automated tool, not financial advice or a
-      profit guarantee. Never risk more than you can afford to lose. All trademarks
-      and platform logos are the property of their respective owners and are shown
-      for compatibility reference only.
+      Trading carries risk. This is an automated tool, not financial advice or a profit
+      guarantee. Never risk more than you can afford to lose. All trademarks and platform
+      logos are the property of their respective owners and are shown for compatibility
+      reference only.
     </p>
   </div>
 </footer>

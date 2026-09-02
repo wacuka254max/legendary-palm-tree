@@ -1,339 +1,374 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   KESTREL — the site's own look.
+   KAIROS — the site's look.
 
-   Deliberately not the other one. Where that site is near-black with pink and
-   light blue on a dotted ground, this is PAPER: a warm off-white, ink-black
-   type set large and tight, and a single acid-lime accent used as a fill
-   behind black text rather than as coloured text itself.
+   Black, with a dotted field. The difference from the other site is not the
+   ground, it is the STRUCTURE and the colour: a bento grid where that one has
+   a single hero panel, a bordered table of platform marks where that one has
+   a loose strip, violet and amber where that one is pink and light blue, and
+   generous rounded panels where that one is flat cards and pills.
 
-   The other rules it keeps, because they are good practice rather than
-   somebody's house style: no gradients anywhere, flat fills and 1px rules for
-   depth, and every size in clamp() so the page holds together from a phone to
-   a wide desktop without a media query per element.
-
-   One thing this layout needs that a light page normally cannot have: six of
-   the platform marks are white on transparent and would vanish here. So the
-   logo strip sits on a black band — which is also the strongest structural
-   device on the page, and the reason it is built that way.
+   Rules kept because they are good practice, not house style: no gradients
+   anywhere, depth from solid fills and hairline borders, and every size in
+   clamp() so one set of rules holds from a phone to a wide desktop.
    ══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --paper:     #f6f4ee;
-  --paper-2:   #efece2;
-  --ink:       #121210;
-  --ink-2:     #52514b;
-  --ink-3:     #8a887f;
-  --lime:      #d8ff3e;
-  --lime-deep: #b6dd18;
-  --line:      rgba(18, 18, 16, 0.14);
-  --line-2:    rgba(18, 18, 16, 0.28);
+  --void:      #07070a;   /* the page */
+  --panel:     #0e0e14;   /* a card on it */
+  --panel-2:   #14141c;   /* something raised on the card */
+  --line:      #1e1e28;
+  --line-hi:   #2b2b38;
 
-  --gutter: clamp(20px, 5vw, 72px);
-  --radius: 4px;              /* nearly square: the other site is all pills */
+  --text:      #f4f4f7;
+  --text-2:    #a2a2b4;
+  --text-3:    #6b6b80;
+
+  --violet:    #7c5cff;
+  --violet-hi: #9b83ff;
+  --amber:     #ffb020;
+  --mint:      #34d399;
+
+  --gutter: clamp(18px, 4.5vw, 64px);
+  --r:      16px;
+  --r-sm:   12px;
+
+  /* The dotted field. Bigger and fainter than a texture wants to be, so it
+     reads as depth behind the panels rather than as pattern on them. */
+  --dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Ccircle cx='2' cy='2' r='1.4' fill='%23ffffff' fill-opacity='0.07'/%3E%3C/svg%3E");
 }
 
 * { box-sizing: border-box; }
-
 html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background-color: var(--void);
+  background-image: var(--dots);
+  color: var(--text);
   font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
 img { max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 
-.wrap { width: 100%; padding-inline: var(--gutter); }
-
-/* ── Type ─────────────────────────────────────────────────────────────────
-   Set big and tight. The headline is the design; everything else stays out
-   of its way. */
-
-.display {
-  margin: 0;
-  font-size: clamp(2.6rem, 8.2vw, 6.4rem);
-  line-height: 0.94;
-  letter-spacing: -0.045em;
-  font-weight: 800;
-}
-
-.lede {
-  margin: clamp(18px, 2.4vw, 26px) 0 0;
-  max-width: 46ch;
-  font-size: clamp(1.02rem, 1.5vw, 1.22rem);
-  line-height: 1.55;
-  color: var(--ink-2);
-}
-
-/* A lime block behind a word, cut square. Black on lime, never lime on
-   paper — lime type on this ground is barely legible. */
-.mark-hl {
-  background: var(--lime);
-  padding: 0 0.14em;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-}
-.eyebrow::before {
-  content: "";
-  width: 26px;
-  height: 2px;
-  background: var(--ink);
-}
+.wrap { width: 100%; max-width: 1240px; margin-inline: auto; padding-inline: var(--gutter); }
 
 /* ── Header ───────────────────────────────────────────────────────────── */
 
 .top {
   position: sticky;
   top: 0;
-  z-index: 50;
-  background: var(--paper);
+  z-index: 60;
+  background: rgba(7, 7, 10, 0.82);
+  backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
 }
-.top-in {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: 68px;
-}
+.top-in { display: flex; align-items: center; gap: 14px; height: 66px; }
 
-.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.03em; font-size: 19px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
 .brand svg { display: block; }
-
 .top-cta { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 
-/* ── Buttons ──────────────────────────────────────────────────────────────
-   Square, not pills. Solid ink is the primary; lime is the one that asks for
-   the click. */
+/* ── Buttons ──────────────────────────────────────────────────────────── */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 11px 18px;
   font: inherit;
   font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  border: 1px solid var(--ink);
-  border-radius: var(--radius);
-  background: none;
-  color: var(--ink);
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--line-hi);
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.08s ease;
 }
+.btn:hover { background: var(--panel-2); border-color: #3a3a4a; }
 .btn:active { transform: translateY(1px); }
-.btn--lime { background: var(--lime); border-color: var(--lime); }
-.btn--lime:hover { background: var(--lime-deep); border-color: var(--lime-deep); }
-.btn--ink { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.btn--ink:hover { background: #000; }
-.btn--ghost:hover { background: var(--paper-2); }
-.btn--lg { padding: 16px 26px; font-size: 15.5px; }
 .btn[hidden] { display: none; }
 
-@media (max-width: 720px) {
-  .btn--install span { display: none; }
-}
+.btn--violet { background: var(--violet); border-color: var(--violet); color: #fff; }
+.btn--violet:hover { background: var(--violet-hi); border-color: var(--violet-hi); }
+.btn--lg { padding: 14px 24px; font-size: 15px; border-radius: 12px; }
+
+@media (max-width: 700px) { .btn--install span { display: none; } }
 
 /* ── Hero ─────────────────────────────────────────────────────────────────
-   Asymmetric on purpose: the headline takes two thirds and the panel beside
-   it is a plain list of what the thing does, set in mono. */
+   Centred, because the bento grid under it is the width of the page and a
+   left-aligned headline would leave it hanging off one edge. */
 
-.hero { padding: clamp(46px, 8vw, 96px) 0 clamp(40px, 6vw, 72px); }
-.hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-  gap: clamp(28px, 5vw, 64px);
-  align-items: end;
-}
-.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(26px, 3.4vw, 38px); }
+.hero { padding: clamp(46px, 8vw, 92px) 0 clamp(26px, 4vw, 40px); text-align: center; }
 
-/* The card beside the headline: a spec sheet, not a fake chart. Nothing on it
-   is a number we would have had to invent. */
-.spec {
-  border: 1px solid var(--ink);
-  border-radius: var(--radius);
-  background: var(--paper);
-}
-.spec-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--line);
-  font-size: 13.5px;
-}
-.spec-row:last-child { border-bottom: 0; }
-.spec-k { color: var(--ink-3); }
-.spec-v {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 8px;
   font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 550;
+  color: var(--text-2);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
 }
-.spec-head {
+.pill b { color: var(--text); font-weight: 650; }
+.pill-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.16);
+  animation: beat 2.4s ease-in-out infinite;
+}
+@keyframes beat { 50% { opacity: 0.35; } }
+
+.h1 {
+  margin: clamp(20px, 3vw, 30px) auto 0;
+  max-width: 17ch;
+  font-size: clamp(2.3rem, 6.4vw, 4.4rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 700;
+}
+.h1 em { font-style: normal; color: var(--violet-hi); }
+
+.sub {
+  margin: clamp(16px, 2.2vw, 22px) auto 0;
+  max-width: 56ch;
+  font-size: clamp(1rem, 1.35vw, 1.1rem);
+  color: var(--text-2);
+}
+
+.cta-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: clamp(24px, 3.2vw, 34px); }
+
+/* ── Bento ────────────────────────────────────────────────────────────────
+   Four panels on a six-column grid: a wide one that shows the bot's states,
+   and three that each answer one question. This is the shape of the page. */
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 16px);
+  padding-bottom: clamp(40px, 6vw, 72px);
+}
+.tile {
+  padding: clamp(20px, 2.2vw, 26px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.tile--wide { grid-column: span 6; }
+.tile--third { grid-column: span 2; }
+
+.tile-k {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.tile-t { margin: 0 0 6px; font-size: 1.06rem; font-weight: 650; letter-spacing: -0.02em; }
+.tile-p { margin: 0; font-size: 0.92rem; color: var(--text-2); }
+
+.tile-icon {
+  display: grid;
+  place-items: center;
+  width: 38px; height: 38px;
+  margin-bottom: 14px;
+  border: 1px solid var(--line-hi);
+  border-radius: 10px;
+  background: var(--panel-2);
+}
+.i-violet { color: var(--violet-hi); }
+.i-amber { color: var(--amber); }
+.i-mint { color: var(--mint); }
+
+@media (max-width: 860px) {
+  .tile--third { grid-column: span 6; }
+}
+
+/* ── The states strip ─────────────────────────────────────────────────────
+   What the bot is doing, as the three states it moves between. No prices and
+   no figures: a number on a landing page about trading is a number somebody
+   had to make up. */
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(10px, 1.2vw, 14px);
+  margin-top: clamp(16px, 2vw, 22px);
+}
+.state {
+  display: flex;
+  align-items: center;
+  gap: 11px;
   padding: 14px 16px;
-  background: var(--ink);
-  color: var(--paper);
-  border-radius: var(--radius) var(--radius) 0 0;
-  font-size: 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-size: 0.92rem;
+  color: var(--text-2);
+}
+.state b { color: var(--text); font-weight: 600; }
+.state-led {
+  flex: none;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--line-hi);
+}
+
+/* Each state lights in turn, so the strip reads as a cycle rather than three
+   labels. Nine seconds: long enough to notice, slow enough to ignore. */
+.state:nth-child(1) .state-led { animation: lamp 9s linear infinite; }
+.state:nth-child(2) .state-led { animation: lamp 9s linear infinite 3s; }
+.state:nth-child(3) .state-led { animation: lamp 9s linear infinite 6s; }
+
+@keyframes lamp {
+  0%, 33.4% { background: var(--violet); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.2); }
+  33.5%, 100% { background: var(--line-hi); box-shadow: none; }
+}
+
+@media (max-width: 700px) { .flow { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  .state-led, .pill-dot { animation: none; }
+}
+
+/* ── Platforms ────────────────────────────────────────────────────────────
+   A bordered table rather than a floating strip: hairlines between cells, so
+   twelve marks of twelve different widths read as one block. */
+
+.plat { padding-bottom: clamp(44px, 6vw, 80px); }
+.plat-k {
+  margin: 0 0 clamp(14px, 2vw, 20px);
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  color: var(--text-3);
 }
-
-@media (max-width: 900px) {
-  .hero-grid { grid-template-columns: minmax(0, 1fr); align-items: start; }
-}
-
-/* ── The black band ───────────────────────────────────────────────────────
-   Platform marks, scrolling. On black because most of these marks are white
-   on transparent, and because the page needs one hard horizontal break. */
-
-.band {
-  background: var(--ink);
-  color: var(--paper);
-  padding: clamp(30px, 4vw, 44px) 0;
+.plat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   overflow: hidden;
 }
-.band-k {
-  margin: 0 0 clamp(18px, 2.4vw, 26px);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #9a998f;
-}
-
-/* Two identical runs, side by side, sliding left by exactly one run's width:
-   when the first has travelled its own length the second is where it began,
-   so the loop has no seam. Paused when someone hovers, and still for anyone
-   who has asked for less motion. */
-.rail { display: flex; width: max-content; animation: rail 42s linear infinite; }
-.rail:hover { animation-play-state: paused; }
-.run { display: flex; align-items: center; gap: clamp(38px, 5vw, 78px); padding-right: clamp(38px, 5vw, 78px); }
-.run img { height: 26px; width: auto; max-width: 132px; object-fit: contain; opacity: 0.85; }
-
-@keyframes rail { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-@media (prefers-reduced-motion: reduce) {
-  .rail { animation: none; flex-wrap: wrap; width: auto; }
-}
-
-/* ── Numbered steps ───────────────────────────────────────────────────────
-   Thick rule, big number, short sentence. The whole section is three rows and
-   no boxes — the other site is all cards, this one is all rules. */
-
-.steps { padding: clamp(52px, 8vw, 104px) 0; }
-.steps-head { max-width: 34ch; margin-bottom: clamp(30px, 4vw, 52px); }
-.steps-t {
-  margin: 14px 0 0;
-  font-size: clamp(1.7rem, 3.6vw, 2.7rem);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
-  font-weight: 800;
-}
-
-.step {
+.plat-cell {
   display: grid;
-  /* The title column is deliberately narrower than the text: a three-word
-     heading in a half-page column reads as a mistake rather than a rhythm. */
-  grid-template-columns: clamp(58px, 8vw, 104px) minmax(0, 0.62fr) minmax(0, 1fr);
-  gap: clamp(14px, 3vw, 40px);
-  align-items: start;
-  padding: clamp(22px, 3vw, 34px) 0;
-  border-top: 2px solid var(--ink);
+  place-items: center;
+  min-height: 92px;
+  padding: 18px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
-.step:last-child { border-bottom: 2px solid var(--ink); }
-.step-n {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-}
-.step-t { margin: 0; font-size: clamp(1.12rem, 1.9vw, 1.45rem); font-weight: 700; letter-spacing: -0.025em; }
-.step-p { margin: 0; max-width: 62ch; color: var(--ink-2); font-size: 0.97rem; line-height: 1.6; }
+/* The last cell in each row, and the whole bottom row, keep the panel's own
+   edge instead of doubling it. */
+.plat-cell:nth-child(6n) { border-right: 0; }
+.plat-cell:nth-last-child(-n + 6) { border-bottom: 0; }
+.plat-cell img { height: 24px; width: auto; max-width: 118px; object-fit: contain; opacity: 0.72; transition: opacity 0.16s ease; }
+.plat-cell:hover img { opacity: 1; }
 
-@media (max-width: 760px) {
-  .step { grid-template-columns: clamp(44px, 12vw, 64px) minmax(0, 1fr); }
-  .step-p { grid-column: 2; }
+@media (max-width: 900px) {
+  .plat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .plat-cell:nth-child(6n) { border-right: 1px solid var(--line); }
+  .plat-cell:nth-child(3n) { border-right: 0; }
+  .plat-cell:nth-last-child(-n + 6) { border-bottom: 1px solid var(--line); }
+  .plat-cell:nth-last-child(-n + 3) { border-bottom: 0; }
 }
+@media (max-width: 520px) {
+  .plat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plat-cell { min-height: 78px; }
+  .plat-cell:nth-child(3n) { border-right: 1px solid var(--line); }
+  .plat-cell:nth-child(2n) { border-right: 0; }
+  .plat-cell:nth-last-child(-n + 3) { border-bottom: 1px solid var(--line); }
+  .plat-cell:nth-last-child(-n + 2) { border-bottom: 0; }
+}
+
+/* ── Steps ────────────────────────────────────────────────────────────── */
+
+.steps { padding-bottom: clamp(44px, 6vw, 80px); }
+.sec-head { max-width: 46ch; margin-bottom: clamp(20px, 3vw, 30px); }
+.sec-t { margin: 8px 0 0; font-size: clamp(1.5rem, 3vw, 2.1rem); line-height: 1.1; letter-spacing: -0.03em; font-weight: 700; }
+.sec-p { margin: 12px 0 0; color: var(--text-2); font-size: 0.98rem; }
+
+.steps-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 1.4vw, 16px); }
+.step {
+  padding: clamp(20px, 2.2vw, 26px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.step-n {
+  display: inline-grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--violet-hi);
+  background: rgba(124, 92, 255, 0.12);
+  border: 1px solid rgba(124, 92, 255, 0.34);
+  border-radius: 9px;
+}
+.step-t { margin: 0 0 6px; font-size: 1.04rem; font-weight: 650; letter-spacing: -0.02em; }
+.step-p { margin: 0; font-size: 0.92rem; color: var(--text-2); }
+
+@media (max-width: 860px) { .steps-grid { grid-template-columns: minmax(0, 1fr); } }
 
 /* ── Closing ──────────────────────────────────────────────────────────── */
 
-.end { padding: clamp(48px, 7vw, 92px) 0 clamp(56px, 8vw, 104px); }
+.end { padding-bottom: clamp(48px, 7vw, 88px); }
 .end-in {
-  border: 2px solid var(--ink);
-  border-radius: var(--radius);
-  padding: clamp(28px, 4.5vw, 56px);
-  background: var(--lime);
+  padding: clamp(28px, 4vw, 52px);
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--line-hi);
+  border-radius: calc(var(--r) + 4px);
 }
-.end-t {
-  margin: 0;
-  max-width: 22ch;
-  font-size: clamp(1.8rem, 4.4vw, 3.1rem);
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-  font-weight: 800;
-}
-.end-p { margin: 16px 0 0; max-width: 48ch; font-size: 1rem; color: #33351a; }
-.end-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(22px, 3vw, 30px); }
+.end-t { margin: 0 auto; max-width: 20ch; font-size: clamp(1.6rem, 3.4vw, 2.5rem); line-height: 1.06; letter-spacing: -0.035em; font-weight: 700; }
+.end-p { margin: 14px auto 0; max-width: 52ch; color: var(--text-2); font-size: 1rem; }
 
 /* ── Footer ───────────────────────────────────────────────────────────── */
 
-.foot { border-top: 1px solid var(--line); padding: clamp(30px, 4vw, 46px) 0 clamp(34px, 4vw, 48px); }
-.foot-in { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: space-between; }
-.foot-brand { font-weight: 800; letter-spacing: -0.03em; font-size: 17px; }
-.foot-note { max-width: 62ch; margin: 0; font-size: 0.82rem; line-height: 1.65; color: var(--ink-3); }
-.foot-legal { margin: clamp(22px, 3vw, 30px) 0 0; padding-top: 20px; border-top: 1px solid var(--line); font-size: 0.76rem; line-height: 1.7; color: var(--ink-3); }
+.foot { border-top: 1px solid var(--line); padding: clamp(28px, 4vw, 44px) 0 clamp(32px, 4vw, 46px); }
+.foot-in { display: flex; flex-wrap: wrap; gap: 20px 40px; justify-content: space-between; align-items: flex-start; }
+.foot-brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: -0.02em; }
+.foot-note { max-width: 58ch; margin: 0; font-size: 0.86rem; color: var(--text-2); }
+.foot-legal { margin: clamp(20px, 3vw, 28px) 0 0; padding-top: 18px; border-top: 1px solid var(--line); font-size: 0.78rem; line-height: 1.7; color: var(--text-3); }
 
-/* ── The install prompt, borrowed from install.js ─────────────────────── */
+/* ── The install prompt, for install.js ───────────────────────────────── */
 
 .how {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
   padding: 20px;
-  background: rgba(18, 18, 16, 0.5);
+  background: rgba(3, 3, 6, 0.66);
 }
 .how-card {
-  width: 100%;
-  max-width: 380px;
+  width: 100%; max-width: 380px;
   padding: 22px;
-  background: var(--paper);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--line-hi);
+  border-radius: var(--r);
 }
 .how-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.how-head h3 { margin: 0; font-size: 1.05rem; letter-spacing: -0.02em; }
+.how-head h3 { margin: 0; font-size: 1.02rem; letter-spacing: -0.02em; }
 .how-x {
   flex: none; display: grid; place-items: center;
   width: 30px; height: 30px;
-  border: 1px solid var(--line-2); border-radius: var(--radius);
-  background: none; color: var(--ink); cursor: pointer;
+  background: none; color: var(--text-2);
+  border: 1px solid var(--line-hi); border-radius: 9px; cursor: pointer;
 }
-.how-card > p { margin: 10px 0 14px; font-size: 0.88rem; color: var(--ink-2); }
-.how-steps { margin: 0 0 18px; padding-left: 20px; font-size: 0.9rem; }
+.how-card > p { margin: 10px 0 14px; font-size: 0.9rem; color: var(--text-2); }
+.how-steps { margin: 0 0 18px; padding-left: 20px; font-size: 0.92rem; color: var(--text-2); }
 .how-steps li { margin-bottom: 8px; }
+.how-steps b { color: var(--text); }
 .how-ok { width: 100%; }
