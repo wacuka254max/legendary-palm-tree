@@ -1,9 +1,12 @@
 /**
- * EVIE — connecting a Deriv account, and reading what is in it.
+ * UPTICK — connecting a Deriv account, and reading what is in it.
  *
- * The same shape magicbotslab.com and clunoid.com use, because the app id here
- * is the same kind: a 21-character OIDC client id, not a classic numeric
- * app_id. That decides the whole flow —
+ * Uptick has its own Deriv app id, the way evietrader.site, clunoid.com and
+ * magicbotslab.com each have theirs: one app per platform, so the trades each
+ * one places are attributed to it and a user revoking one does not revoke the
+ * others. The flow below is the same on all four because the id is the same
+ * kind — a 21-character OIDC client id, not a classic numeric app_id. That
+ * decides the whole flow —
  *
  *   1. authorize → auth.deriv.com/oauth2/auth with PKCE (S256). Public client,
  *      no secret, so the verifier never leaves this browser.
@@ -14,7 +17,7 @@
  *      and this app has neither, which is what "Could not reach Deriv" was.
  *
  * Nothing is stored on a server. The tokens live in this browser and only this
- * browser; Evie never sees them, and there is no account to sign in to.
+ * browser; Uptick never sees them, and there is no account to sign in to.
  *
  * The stored token EXPIRES — about an hour. That single fact is what makes a
  * connection look like it "failed" a day later, so every read goes through
@@ -26,7 +29,7 @@
 
   /* ── configuration ─────────────────────────────────────────────────────── */
 
-  var APP_ID = "34gG4jgJ0gHGbGDC2XvY5";
+  var APP_ID = "34hMNQ8a0upKxPhFT6O0X";
   var AUTH_URL = "https://auth.deriv.com/oauth2/auth";
   var TOKEN_URL = "https://auth.deriv.com/oauth2/token";
 
@@ -54,14 +57,14 @@
    * registered — Deriv hands the code back there. Clunoid points at a dashboard
    * route the same way (/trading/command), not at its front door.
    *
-   * window.EVIE_DERIV_REDIRECT_URI still overrides the whole thing, for the odd
-   * case of the app being registered against a different host than the one
+   * window.UPTICK_DERIV_REDIRECT_URI still overrides the whole thing, for the
+   * odd case of the app being registered against a different host than the one
    * serving the page.
    */
   var REDIRECT_PATH = "/home.html";
 
   function redirectUri() {
-    return global.EVIE_DERIV_REDIRECT_URI || (global.location.origin + REDIRECT_PATH);
+    return global.UPTICK_DERIV_REDIRECT_URI || (global.location.origin + REDIRECT_PATH);
   }
 
   var TOKEN_KEY = "evie_deriv_token";
@@ -513,18 +516,10 @@
     /* Every page behind the connection opens the same way: no session means
        nothing to show, so go back to the door. Shared so a page added later
        cannot forget it. Returns false when it has sent them away. */
-    /* TEMPORARY — the gate is open.
-     *
-     * While this site is being designed, the pages behind it have to be
-     * reachable without a Deriv account: the landing page links straight to
-     * the dashboard and nothing asks anyone to connect. Restore the two lines
-     * below before this goes anywhere near a real user — without them every
-     * page behind the connection is public. */
     requireConnection: function () {
-      return true;
-      // if (isConnected()) return true;
-      // global.location.replace("/");
-      // return false;
+      if (isConnected()) return true;
+      global.location.replace("/");
+      return false;
     }
   };
 })(window);

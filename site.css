@@ -50,10 +50,15 @@
 }
 
 /* ── Light ────────────────────────────────────────────────────────────────
-   Dark is this site's default and light is the option, so only what changes
-   is written here. The accents darken: violet and mint that read well on
-   black are washed out on white, and a figure nobody can read is worse than
-   one that is not coloured at all. */
+   Light is what a first-time visitor gets on every page behind the front
+   door; the pages stamp data-theme="light" before they paint unless dark was
+   chosen. The landing page is the exception and stays black on purpose, so
+   the bare :root above is still the dark set and only what changes is
+   written here.
+
+   The accents darken: violet and mint that read well on black are washed out
+   on white, and a figure nobody can read is worse than one that is not
+   coloured at all. */
 :root[data-theme="light"] {
   --void:      #f7f7fb;
   --panel:     #ffffff;
@@ -187,6 +192,48 @@ a { color: inherit; text-decoration: none; }
 .tog[aria-checked="true"] .tog-dot { transform: translateX(16px); background: var(--mint); }
 
 @media (max-width: 700px) { .btn--install span { display: none; } }
+
+/* ── Flash ────────────────────────────────────────────────────────────────
+   Two of them: the dashboard's "connected" line, which sits in the flow and
+   fades itself out, and the landing page's failure, which floats over the
+   page because there is no column there to sit in.
+
+   Both fade rather than appear: a banner that pops in is read as an error by
+   somebody who was not looking at that part of the screen. */
+
+.flash {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mint);
+  background: var(--mint-tint);
+  border: 1px solid var(--mint-edge);
+  border-radius: 10px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.flash.is-in { opacity: 1; transform: none; }
+.flash[hidden] { display: none; }
+
+.flash--error {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 80;
+  margin: 0;
+  max-width: calc(100vw - 40px);
+  color: var(--danger);
+  background: var(--panel);
+  border-color: var(--danger);
+  transform: translate(-50%, 8px);
+  text-align: center;
+}
+.flash--error.is-in { transform: translate(-50%, 0); }
 
 /* ── Hero ─────────────────────────────────────────────────────────────────
    Centred, because the bento grid under it is the width of the page and a

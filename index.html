@@ -42,7 +42,7 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         <span>Install app</span>
       </button>
-      <a class="btn btn--violet" href="/home.html">Get started</a>
+      <a class="btn btn--violet js-connect" href="/home.html">Get started</a>
     </div>
   </div>
 </header>
@@ -63,7 +63,7 @@
       </p>
 
       <div class="cta-row">
-        <a class="btn btn--violet btn--lg" href="/home.html">Get started</a>
+        <a class="btn btn--violet btn--lg js-connect" href="/home.html">Get started</a>
       </div>
     </div>
   </section>
@@ -141,7 +141,7 @@
       <p class="end-p">No subscription, no licence, nothing to buy and nowhere to send money.
         Bring your own account and keep everything it makes.</p>
       <div class="cta-row">
-        <a class="btn btn--violet btn--lg" href="/home.html">Get started</a>
+        <a class="btn btn--violet btn--lg js-connect" href="/home.html">Get started</a>
       </div>
     </div>
   </section>
@@ -172,9 +172,8 @@
   </div>
 </footer>
 
-<!-- The Deriv connect flow is off for now: Get started is a plain link so the
-     dashboard can be worked on. connect.js is not loaded, and deriv.js is only
-     here for install.js to sit beside — see the note in deriv.js. -->
+<script src="/deriv.js"></script>
+<script src="/connect.js"></script>
 <script src="/install.js"></script>
 </body>
 </html>

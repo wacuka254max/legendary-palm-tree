@@ -1,13 +1,16 @@
 /**
  * UPTICK — light or dark, remembered.
  *
- * Dark is the default here: the site is a black one, and light is the option. The choice lives in localStorage and is applied to
+ * Light is the default. The choice lives in localStorage and is applied to
  * <html> as data-theme, which every colour token keys off.
  *
  * The APPLYING happens in a tiny inline script in each page's <head>, before
- * the browser paints — doing it here, after the stylesheet has already drawn a
- * light page, would flash white at someone who chose dark. This file only
+ * the browser paints — doing it here, after the stylesheet has already drawn
+ * the light page, would flash white at someone who chose dark. This file only
  * wires the button.
+ *
+ * The landing page is not in this: it is black by design, has no toggle, and
+ * loads none of this.
  */
 
 (function (global) {
@@ -16,11 +19,11 @@
   var KEY = "uptick_theme";
 
   function current() {
-    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
   }
 
   function apply(theme) {
-    var dark = theme !== "light";
+    var dark = theme === "dark";
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
     try { localStorage.setItem(KEY, dark ? "dark" : "light"); } catch (e) {}
 

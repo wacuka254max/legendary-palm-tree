@@ -355,20 +355,8 @@
 
 /* ── Flash, footer, and the simulator's door ──────────────────────────── */
 
-.flash {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 16px;
-  padding: 9px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--mint);
-  background: var(--mint-tint);
-  border: 1px solid var(--mint-edge);
-  border-radius: 10px;
-}
-.flash[hidden] { display: none; }
+/* The flash is in site.css: the landing page raises one too, and that is
+   the only stylesheet it loads. */
 
 /* Pinned to the bottom by the auto margin, and as small as a line of small
    print should be: it is a caution, not a section. */

@@ -1,5 +1,5 @@
 /**
- * EVIE — the landing page's half of the Deriv connection.
+ * UPTICK — the landing page's half of the Deriv connection.
  *
  * Three jobs, in the order they matter:
  *
@@ -8,9 +8,9 @@
  *  2. Somebody returning FROM Deriv arrives here with ?code=…, because this
  *     page is the registered redirect. The code is exchanged, then they go on
  *     to the dashboard with a success flag.
- *  3. Start and Connect both begin the hop to Deriv rather than following
- *     their href — the href is the fallback for a browser with no JS, and the
- *     dashboard bounces an unconnected visitor straight back.
+ *  3. Get started begins the hop to Deriv rather than following its href —
+ *     the href is the fallback for a browser with no JS, and the dashboard
+ *     bounces an unconnected visitor straight back.
  */
 
 (function () {
@@ -70,7 +70,7 @@
     // A redirect_uri rejection is the one failure the user can actually fix,
     // and Deriv's message never says which URL it received — so say it.
     if (/redirect_uri/i.test(message || "")) {
-      console.error("[evie] Deriv redirect_uri sent:", D.redirectUri());
+      console.error("[uptick] Deriv redirect_uri sent:", D.redirectUri());
       return "Deriv rejected the redirect URL. Register this exact URL on the Deriv app: " + D.redirectUri();
     }
     return message || "Connection failed.";
