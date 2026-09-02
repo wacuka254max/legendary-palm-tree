@@ -58,14 +58,25 @@
       rung++;
       bot.recoveryMode = true;
       bot.currentStake = round2(base() * Math.pow(multiplier(), rung));
-      ui.showStatus("Recovery drill — Over/Under at " + bot.currentStake.toFixed(2) + ".", "info");
+      ui.showStatus("Martingale step — Over/Under at " + bot.currentStake.toFixed(2) + ".", "info");
     }
 
     function endDrill() {
-      stepsLeft = 0;
+      rungsLeft = 0;
       rung = 0;
       nextAt = trades + GAP_MIN + Math.floor(Math.random() * (GAP_MAX - GAP_MIN + 1));
     }
+
+    /* The engine says "Recovery successful!" when it leaves recovery mode,
+       which is true in a live session and misleading here: nothing was lost,
+       so there was nothing to recover. The word comes out. */
+    var realStatus = ui.showStatus;
+    ui.showStatus = function (message, kind) {
+      if (message === "Recovery successful! Returning to normal mode...") {
+        message = "Successful! Returning to normal mode...";
+      }
+      realStatus.call(ui, message, kind);
+    };
 
     var realAdd = ui.addHistoryEntry;
 
@@ -101,6 +112,9 @@
      engine knowing it is there. */
   global.EvieAutomaticAI = function (ui, options) {
     var bot = new Real(ui, options);
+    /* A handle on the running bot. This is the simulation, where being able to
+       read the engine's state from the console is the point. */
+    global.EvieSimBot = bot;
     try { attach(bot, ui); } catch (e) {}
     return bot;
   };
