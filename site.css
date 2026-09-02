@@ -1,0 +1,339 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   KESTREL — the site's own look.
+
+   Deliberately not the other one. Where that site is near-black with pink and
+   light blue on a dotted ground, this is PAPER: a warm off-white, ink-black
+   type set large and tight, and a single acid-lime accent used as a fill
+   behind black text rather than as coloured text itself.
+
+   The other rules it keeps, because they are good practice rather than
+   somebody's house style: no gradients anywhere, flat fills and 1px rules for
+   depth, and every size in clamp() so the page holds together from a phone to
+   a wide desktop without a media query per element.
+
+   One thing this layout needs that a light page normally cannot have: six of
+   the platform marks are white on transparent and would vanish here. So the
+   logo strip sits on a black band — which is also the strongest structural
+   device on the page, and the reason it is built that way.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --paper:     #f6f4ee;
+  --paper-2:   #efece2;
+  --ink:       #121210;
+  --ink-2:     #52514b;
+  --ink-3:     #8a887f;
+  --lime:      #d8ff3e;
+  --lime-deep: #b6dd18;
+  --line:      rgba(18, 18, 16, 0.14);
+  --line-2:    rgba(18, 18, 16, 0.28);
+
+  --gutter: clamp(20px, 5vw, 72px);
+  --radius: 4px;              /* nearly square: the other site is all pills */
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+img { max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+.wrap { width: 100%; padding-inline: var(--gutter); }
+
+/* ── Type ─────────────────────────────────────────────────────────────────
+   Set big and tight. The headline is the design; everything else stays out
+   of its way. */
+
+.display {
+  margin: 0;
+  font-size: clamp(2.6rem, 8.2vw, 6.4rem);
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+}
+
+.lede {
+  margin: clamp(18px, 2.4vw, 26px) 0 0;
+  max-width: 46ch;
+  font-size: clamp(1.02rem, 1.5vw, 1.22rem);
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+/* A lime block behind a word, cut square. Black on lime, never lime on
+   paper — lime type on this ground is barely legible. */
+.mark-hl {
+  background: var(--lime);
+  padding: 0 0.14em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 2px;
+  background: var(--ink);
+}
+
+/* ── Header ───────────────────────────────────────────────────────────── */
+
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+.top-in {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 68px;
+}
+
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.03em; font-size: 19px; }
+.brand svg { display: block; }
+
+.top-cta { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+/* ── Buttons ──────────────────────────────────────────────────────────────
+   Square, not pills. Solid ink is the primary; lime is the one that asks for
+   the click. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn--lime { background: var(--lime); border-color: var(--lime); }
+.btn--lime:hover { background: var(--lime-deep); border-color: var(--lime-deep); }
+.btn--ink { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn--ink:hover { background: #000; }
+.btn--ghost:hover { background: var(--paper-2); }
+.btn--lg { padding: 16px 26px; font-size: 15.5px; }
+.btn[hidden] { display: none; }
+
+@media (max-width: 720px) {
+  .btn--install span { display: none; }
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────
+   Asymmetric on purpose: the headline takes two thirds and the panel beside
+   it is a plain list of what the thing does, set in mono. */
+
+.hero { padding: clamp(46px, 8vw, 96px) 0 clamp(40px, 6vw, 72px); }
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 64px);
+  align-items: end;
+}
+.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(26px, 3.4vw, 38px); }
+
+/* The card beside the headline: a spec sheet, not a fake chart. Nothing on it
+   is a number we would have had to invent. */
+.spec {
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+.spec-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.spec-row:last-child { border-bottom: 0; }
+.spec-k { color: var(--ink-3); }
+.spec-v {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.spec-head {
+  padding: 14px 16px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius) var(--radius) 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: minmax(0, 1fr); align-items: start; }
+}
+
+/* ── The black band ───────────────────────────────────────────────────────
+   Platform marks, scrolling. On black because most of these marks are white
+   on transparent, and because the page needs one hard horizontal break. */
+
+.band {
+  background: var(--ink);
+  color: var(--paper);
+  padding: clamp(30px, 4vw, 44px) 0;
+  overflow: hidden;
+}
+.band-k {
+  margin: 0 0 clamp(18px, 2.4vw, 26px);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #9a998f;
+}
+
+/* Two identical runs, side by side, sliding left by exactly one run's width:
+   when the first has travelled its own length the second is where it began,
+   so the loop has no seam. Paused when someone hovers, and still for anyone
+   who has asked for less motion. */
+.rail { display: flex; width: max-content; animation: rail 42s linear infinite; }
+.rail:hover { animation-play-state: paused; }
+.run { display: flex; align-items: center; gap: clamp(38px, 5vw, 78px); padding-right: clamp(38px, 5vw, 78px); }
+.run img { height: 26px; width: auto; max-width: 132px; object-fit: contain; opacity: 0.85; }
+
+@keyframes rail { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rail { animation: none; flex-wrap: wrap; width: auto; }
+}
+
+/* ── Numbered steps ───────────────────────────────────────────────────────
+   Thick rule, big number, short sentence. The whole section is three rows and
+   no boxes — the other site is all cards, this one is all rules. */
+
+.steps { padding: clamp(52px, 8vw, 104px) 0; }
+.steps-head { max-width: 34ch; margin-bottom: clamp(30px, 4vw, 52px); }
+.steps-t {
+  margin: 14px 0 0;
+  font-size: clamp(1.7rem, 3.6vw, 2.7rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+
+.step {
+  display: grid;
+  /* The title column is deliberately narrower than the text: a three-word
+     heading in a half-page column reads as a mistake rather than a rhythm. */
+  grid-template-columns: clamp(58px, 8vw, 104px) minmax(0, 0.62fr) minmax(0, 1fr);
+  gap: clamp(14px, 3vw, 40px);
+  align-items: start;
+  padding: clamp(22px, 3vw, 34px) 0;
+  border-top: 2px solid var(--ink);
+}
+.step:last-child { border-bottom: 2px solid var(--ink); }
+.step-n {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+.step-t { margin: 0; font-size: clamp(1.12rem, 1.9vw, 1.45rem); font-weight: 700; letter-spacing: -0.025em; }
+.step-p { margin: 0; max-width: 62ch; color: var(--ink-2); font-size: 0.97rem; line-height: 1.6; }
+
+@media (max-width: 760px) {
+  .step { grid-template-columns: clamp(44px, 12vw, 64px) minmax(0, 1fr); }
+  .step-p { grid-column: 2; }
+}
+
+/* ── Closing ──────────────────────────────────────────────────────────── */
+
+.end { padding: clamp(48px, 7vw, 92px) 0 clamp(56px, 8vw, 104px); }
+.end-in {
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: clamp(28px, 4.5vw, 56px);
+  background: var(--lime);
+}
+.end-t {
+  margin: 0;
+  max-width: 22ch;
+  font-size: clamp(1.8rem, 4.4vw, 3.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+.end-p { margin: 16px 0 0; max-width: 48ch; font-size: 1rem; color: #33351a; }
+.end-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: clamp(22px, 3vw, 30px); }
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+
+.foot { border-top: 1px solid var(--line); padding: clamp(30px, 4vw, 46px) 0 clamp(34px, 4vw, 48px); }
+.foot-in { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: flex-start; justify-content: space-between; }
+.foot-brand { font-weight: 800; letter-spacing: -0.03em; font-size: 17px; }
+.foot-note { max-width: 62ch; margin: 0; font-size: 0.82rem; line-height: 1.65; color: var(--ink-3); }
+.foot-legal { margin: clamp(22px, 3vw, 30px) 0 0; padding-top: 20px; border-top: 1px solid var(--line); font-size: 0.76rem; line-height: 1.7; color: var(--ink-3); }
+
+/* ── The install prompt, borrowed from install.js ─────────────────────── */
+
+.how {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(18, 18, 16, 0.5);
+}
+.how-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 22px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+}
+.how-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.how-head h3 { margin: 0; font-size: 1.05rem; letter-spacing: -0.02em; }
+.how-x {
+  flex: none; display: grid; place-items: center;
+  width: 30px; height: 30px;
+  border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: none; color: var(--ink); cursor: pointer;
+}
+.how-card > p { margin: 10px 0 14px; font-size: 0.88rem; color: var(--ink-2); }
+.how-steps { margin: 0 0 18px; padding-left: 20px; font-size: 0.9rem; }
+.how-steps li { margin-bottom: 8px; }
+.how-ok { width: 100%; }

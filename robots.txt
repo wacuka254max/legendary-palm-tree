@@ -1,23 +1,18 @@
-# Evie — https://www.evietrader.site/
+# Kestrel
 #
-# One page is meant to be found: the front door. Everything behind the Deriv
-# connection is somebody's own dashboard, carries no useful search result, and
-# is marked noindex in its own head as well as here.
+# The front door is meant to be found. Everything behind the broker connection
+# is somebody's own dashboard and is marked noindex in its own head as well.
+#
+# No sitemap line yet: this site has no domain of its own. Add one here, and a
+# canonical to each page, the moment it does.
 
 User-agent: *
 Allow: /$
-Allow: /og.png
-Allow: /logos/
-Allow: /icons/
 
 Disallow: /home.html
 Disallow: /analysis.html
 Disallow: /analyss.html
 Disallow: /automatic-ai.html
+Disallow: /automatc-ai.html
 Disallow: /sim/
 Disallow: /analysis/
-
-# IndexNow key: 9a23fb3eb59f730783ec614a76ccbce3 — served at
-# /9a23fb3eb59f730783ec614a76ccbce3.txt for Bing, Yandex and Seznam.
-
-Sitemap: https://www.evietrader.site/sitemap.xml

@@ -1,13 +1,13 @@
 {
   "id": "/",
-  "name": "Evie \u2014 free automated AI trading bots",
-  "short_name": "Evie",
-  "description": "Free, fully automated AI trading bots. Connect a Deriv account, read the market, and let a bot trade it.",
+  "name": "Kestrel - free automated trading bots",
+  "short_name": "Kestrel",
+  "description": "Free automated trading bots that run on a broker account you already own.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0b0b0f",
-  "theme_color": "#0b0b0f",
+  "background_color": "#f6f4ee",
+  "theme_color": "#f6f4ee",
   "icons": [
     {
       "src": "/icons/icon-96.png",

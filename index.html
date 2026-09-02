@@ -3,207 +3,191 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Evie | Free Fully Automated AI Trading Bots</title>
-<meta name="description" content="Evie builds free, fully automated AI trading bots that run 24/7 on MetaTrader 5, MetaTrader 4, Deriv, TradingView, Binance, Exness, cTrader and OANDA — and hold to the rules on Funding Pips, FTMO, FundedNext and The5ers. No subscription, no code." />
-<meta name="theme-color" content="#0b0b0f" />
-<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
-
-<!-- One address for this page, and it is the www one. Without this, the same
-     content served from the bare domain and from the Vercel preview URL is
-     three pages competing with each other for the same search result. -->
-<link rel="canonical" href="https://www.evietrader.site/" />
+<title>Kestrel | Free automated trading bots</title>
+<meta name="description" content="Kestrel runs free automated trading bots on an account you already own. Connect Deriv, choose a market, set a target and a limit, and let it trade. No subscription, no deposits, no code." />
+<meta name="theme-color" content="#f6f4ee" />
+<meta name="robots" content="index,follow,max-image-preview:large" />
 
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="Evie" />
-<meta property="og:url" content="https://www.evietrader.site/" />
-<meta property="og:title" content="Evie | Free Fully Automated AI Trading Bots" />
-<meta property="og:description" content="Free, fully automated AI trading bots that run 24/7 across MT5, MT4, Deriv, TradingView, Binance and more. No subscription, no code." />
-<!-- PNG, and absolute. Facebook, X, WhatsApp and LinkedIn will not render an
-     SVG card, and they do not resolve relative paths. -->
-<meta property="og:image" content="https://www.evietrader.site/og.png" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="Evie — free, fully automated AI trading bots" />
-<meta property="og:locale" content="en_US" />
-
+<meta property="og:site_name" content="Kestrel" />
+<meta property="og:title" content="Kestrel | Free automated trading bots" />
+<meta property="og:description" content="Free automated trading bots on an account you already own. Connect, set your limits, let it run." />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Evie | Free Fully Automated AI Trading Bots" />
-<meta name="twitter:description" content="Free, fully automated AI trading bots that run 24/7 across MT5, MT4, Deriv, TradingView, Binance and more." />
-<meta name="twitter:image" content="https://www.evietrader.site/og.png" />
-<link rel="icon" href="/favicon.ico" sizes="48x48" />
-<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
-<script>
-/* The landing page is dark, always. Six of the platform marks it shows are
-   white on transparent — on a light page they would simply not be there. The
-   app pages behind the connection are the ones that theme. */
-document.documentElement.setAttribute("data-theme","dark");
-</script>
-<link rel="stylesheet" href="/styles.css" />
 
-<!-- What the page is, in the form search engines read directly rather than
-     infer. Kept to what is actually true on the page: a free web application
-     and the organisation behind it. -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      "@id": "https://www.evietrader.site/#organization",
-      "name": "Evie",
-      "url": "https://www.evietrader.site/",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://www.evietrader.site/icons/icon-512.png",
-        "width": 512,
-        "height": 512
-      }
-    },
-    {
-      "@type": "WebSite",
-      "@id": "https://www.evietrader.site/#website",
-      "url": "https://www.evietrader.site/",
-      "name": "Evie",
-      "description": "Free, fully automated AI trading bots for MT5, MT4, Deriv, TradingView, Binance, Exness, cTrader and OANDA.",
-      "publisher": { "@id": "https://www.evietrader.site/#organization" },
-      "inLanguage": "en"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "name": "Evie",
-      "url": "https://www.evietrader.site/",
-      "applicationCategory": "FinanceApplication",
-      "operatingSystem": "Web browser, Android, iOS, Windows, macOS",
-      "description": "Connect a Deriv account, read the market, and let a bot trade it. Free, fully automated AI trading bots with take profit, stop loss and martingale recovery.",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "availability": "https://schema.org/InStock"
-      },
-      "publisher": { "@id": "https://www.evietrader.site/#organization" }
-    }
-  ]
-}
-</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;650;700;800&display=swap" />
+<link rel="stylesheet" href="/site.css" />
 </head>
 <body>
 
-<!-- ══ Nav ══ -->
-<header class="nav">
-  <div class="bleed nav-inner">
+<!-- ══ Header ══════════════════════════════════════════════════════════ -->
+<header class="top">
+  <div class="wrap top-in">
     <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="32" height="32"><rect width="32" height="32" rx="8" fill="#ff3d87"/><path d="M11 10h10M11 16h7M11 22h10" stroke="#0b0b0f" stroke-width="2.6" stroke-linecap="round"/></svg>
-      </span>
-      <span class="brand-name">Evie</span>
+      <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+        <circle cx="16" cy="16" r="16" fill="#121210"/>
+        <path d="M9 20.5 16 9l7 11.5-7-4.2-7 4.2z" fill="#d8ff3e"/>
+      </svg>
+      <span>Kestrel</span>
     </a>
 
-    <div class="nav-cta">
-      <button class="btn btn-line btn-install" type="button" data-install hidden><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span>Install app</span></button>
-      <a class="btn btn-solid js-connect" href="/home.html">Connect</a>
+    <div class="top-cta">
+      <button class="btn btn--ghost btn--install" type="button" data-install hidden>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        <span>Install</span>
+      </button>
+      <a class="btn btn--ink js-connect" href="/home.html">Connect</a>
     </div>
   </div>
 </header>
 
 <main>
 
-  <!-- ══ Hero ══ -->
+  <!-- ══ Hero ══════════════════════════════════════════════════════════
+       The headline carries the page. Beside it, a spec sheet rather than a
+       chart: every line is something the software genuinely does, so there
+       is no invented figure anywhere on the fold. -->
   <section class="hero">
-    <div class="bleed hero-inner">
-      <div class="hero-copy">
-        <p class="kicker"><span class="dot" aria-hidden="true"></span> Free — no card, no subscription</p>
-        <h1 class="hero-title">Fully automated AI trading bots</h1>
-        <p class="hero-sub">
-          Automatically executes trades and stops when profit target is hit.
+    <div class="wrap hero-grid">
+      <div>
+        <p class="eyebrow">Free &middot; no card &middot; no deposit to us</p>
+        <h1 class="display">
+          Bots that trade<br />
+          <span class="mark-hl">your account</span><br />
+          while you don&rsquo;t.
+        </h1>
+        <p class="lede">
+          Connect the broker account you already have, choose a market, set the
+          target and the limit you are comfortable with. Kestrel places the
+          trades and stops itself when it gets there.
         </p>
-        <div class="actions">
-          <a class="btn btn-blue btn-lg js-connect" href="/home.html">Start</a>
+        <div class="hero-actions">
+          <a class="btn btn--lime btn--lg js-connect" href="/home.html">Start free</a>
+          <a class="btn btn--ghost btn--lg" href="#how">How it works</a>
         </div>
       </div>
 
-      <!-- A market, moving. No numbers on it and nothing claimed: the panel
-           used to state a symbol, a timeframe and a risk figure that were
-           decoration dressed as data. This says the same thing honestly —
-           something is running — and says it in a way a still card cannot.
+      <aside class="spec" aria-label="What it does">
+        <div class="spec-head">What it does</div>
+        <div class="spec-row"><span class="spec-k">Runs on</span><span class="spec-v">your own account</span></div>
+        <div class="spec-row"><span class="spec-k">Markets</span><span class="spec-v">volatility indices</span></div>
+        <div class="spec-row"><span class="spec-k">Stops at</span><span class="spec-v">your take profit</span></div>
+        <div class="spec-row"><span class="spec-k">Stops at</span><span class="spec-v">your stop loss</span></div>
+        <div class="spec-row"><span class="spec-k">Practice mode</span><span class="spec-v">included</span></div>
+        <div class="spec-row"><span class="spec-k">Cost</span><span class="spec-v">0.00</span></div>
+      </aside>
+    </div>
+  </section>
 
-           The tape is one wave drawn twice, end to end, sliding left by
-           exactly its own width. That is what makes the loop seamless: the
-           moment it has travelled one full period, the second copy is sitting
-           where the first began. -->
-      <div class="hero-panel" aria-hidden="true">
-        <span class="live">Live</span>
-        <svg class="tape" viewBox="0 0 600 320" preserveAspectRatio="none" role="presentation">
-          <g class="tape-grid">
-            <line x1="0" y1="64" x2="600" y2="64" />
-            <line x1="0" y1="128" x2="600" y2="128" />
-            <line x1="0" y1="192" x2="600" y2="192" />
-            <line x1="0" y1="256" x2="600" y2="256" />
-          </g>
-          <!-- The same wave twice, the second sitting exactly one width to
-               the right. Sliding the pair left by that width lands the copy
-               where the original began, so the loop has no seam to see. The
-               curve is periodic by construction: it is built from sines that
-               each complete a whole number of cycles across the width, which
-               is the only way the two ends meet perfectly. -->
-          <g class="tape-run">
-            <g>
-              <path class="tape-fill" d="M0.00,124.06 C1.67,122.66 6.67,116.82 10.00,115.61 C13.33,114.41 16.67,115.15 20.00,116.81 C23.33,118.47 26.67,122.32 30.00,125.57 C33.33,128.81 36.67,133.42 40.00,136.29 C43.33,139.17 46.67,141.90 50.00,142.82 C53.33,143.74 56.67,143.20 60.00,141.80 C63.33,140.40 66.67,137.15 70.00,134.44 C73.33,131.73 76.67,127.87 80.00,125.54 C83.33,123.21 86.67,121.08 90.00,120.48 C93.33,119.88 96.67,120.61 100.00,121.96 C103.33,123.31 106.67,126.25 110.00,128.60 C113.33,130.95 116.67,134.17 120.00,136.05 C123.33,137.94 126.67,139.54 130.00,139.92 C133.33,140.30 136.67,139.53 140.00,138.33 C143.33,137.13 146.67,134.72 150.00,132.72 C153.33,130.73 156.67,128.19 160.00,126.33 C163.33,124.47 166.67,122.91 170.00,121.58 C173.33,120.26 176.67,119.58 180.00,118.36 C183.33,117.15 186.67,116.20 190.00,114.31 C193.33,112.43 196.67,109.98 200.00,107.04 C203.33,104.09 206.67,100.03 210.00,96.64 C213.33,93.25 216.67,88.99 220.00,86.70 C223.33,84.41 226.67,82.38 230.00,82.90 C233.33,83.41 236.67,85.61 240.00,89.80 C243.33,93.99 246.67,100.77 250.00,108.03 C253.33,115.29 256.67,124.93 260.00,133.38 C263.33,141.83 266.67,151.36 270.00,158.73 C273.33,166.11 276.67,172.87 280.00,177.62 C283.33,182.37 286.67,185.28 290.00,187.23 C293.33,189.18 296.67,189.13 300.00,189.31 C303.33,189.48 306.67,188.47 310.00,188.30 C313.33,188.13 316.67,187.91 320.00,188.29 C323.33,188.67 326.67,189.72 330.00,190.58 C333.33,191.44 336.67,192.87 340.00,193.45 C343.33,194.04 346.67,194.47 350.00,194.07 C353.33,193.68 356.67,192.43 360.00,191.06 C363.33,189.70 366.67,187.39 370.00,185.88 C373.33,184.38 376.67,182.58 380.00,182.03 C383.33,181.47 386.67,181.60 390.00,182.56 C393.33,183.52 396.67,185.76 400.00,187.77 C403.33,189.79 406.67,192.84 410.00,194.63 C413.33,196.42 416.67,198.24 420.00,198.53 C423.33,198.82 426.67,197.98 430.00,196.37 C433.33,194.76 436.67,191.51 440.00,188.89 C443.33,186.27 446.67,182.53 450.00,180.65 C453.33,178.76 456.67,177.10 460.00,177.58 C463.33,178.06 466.67,180.15 470.00,183.51 C473.33,186.88 476.67,192.46 480.00,197.78 C483.33,203.10 486.67,210.09 490.00,215.43 C493.33,220.78 496.67,226.39 500.00,229.86 C503.33,233.32 506.67,235.60 510.00,236.23 C513.33,236.85 516.67,235.54 520.00,233.62 C523.33,231.69 526.67,228.07 530.00,224.67 C533.33,221.27 536.67,217.06 540.00,213.23 C543.33,209.41 546.67,205.60 550.00,201.71 C553.33,197.81 556.67,194.16 560.00,189.85 C563.33,185.54 566.67,181.04 570.00,175.85 C573.33,170.65 576.67,164.65 580.00,158.67 C583.33,152.69 586.67,145.75 590.00,139.98 C593.33,134.22 598.33,126.72 600.00,124.06 L600.00,320 L0,320 Z" />
-              <path class="tape-line" d="M0.00,124.06 C1.67,122.66 6.67,116.82 10.00,115.61 C13.33,114.41 16.67,115.15 20.00,116.81 C23.33,118.47 26.67,122.32 30.00,125.57 C33.33,128.81 36.67,133.42 40.00,136.29 C43.33,139.17 46.67,141.90 50.00,142.82 C53.33,143.74 56.67,143.20 60.00,141.80 C63.33,140.40 66.67,137.15 70.00,134.44 C73.33,131.73 76.67,127.87 80.00,125.54 C83.33,123.21 86.67,121.08 90.00,120.48 C93.33,119.88 96.67,120.61 100.00,121.96 C103.33,123.31 106.67,126.25 110.00,128.60 C113.33,130.95 116.67,134.17 120.00,136.05 C123.33,137.94 126.67,139.54 130.00,139.92 C133.33,140.30 136.67,139.53 140.00,138.33 C143.33,137.13 146.67,134.72 150.00,132.72 C153.33,130.73 156.67,128.19 160.00,126.33 C163.33,124.47 166.67,122.91 170.00,121.58 C173.33,120.26 176.67,119.58 180.00,118.36 C183.33,117.15 186.67,116.20 190.00,114.31 C193.33,112.43 196.67,109.98 200.00,107.04 C203.33,104.09 206.67,100.03 210.00,96.64 C213.33,93.25 216.67,88.99 220.00,86.70 C223.33,84.41 226.67,82.38 230.00,82.90 C233.33,83.41 236.67,85.61 240.00,89.80 C243.33,93.99 246.67,100.77 250.00,108.03 C253.33,115.29 256.67,124.93 260.00,133.38 C263.33,141.83 266.67,151.36 270.00,158.73 C273.33,166.11 276.67,172.87 280.00,177.62 C283.33,182.37 286.67,185.28 290.00,187.23 C293.33,189.18 296.67,189.13 300.00,189.31 C303.33,189.48 306.67,188.47 310.00,188.30 C313.33,188.13 316.67,187.91 320.00,188.29 C323.33,188.67 326.67,189.72 330.00,190.58 C333.33,191.44 336.67,192.87 340.00,193.45 C343.33,194.04 346.67,194.47 350.00,194.07 C353.33,193.68 356.67,192.43 360.00,191.06 C363.33,189.70 366.67,187.39 370.00,185.88 C373.33,184.38 376.67,182.58 380.00,182.03 C383.33,181.47 386.67,181.60 390.00,182.56 C393.33,183.52 396.67,185.76 400.00,187.77 C403.33,189.79 406.67,192.84 410.00,194.63 C413.33,196.42 416.67,198.24 420.00,198.53 C423.33,198.82 426.67,197.98 430.00,196.37 C433.33,194.76 436.67,191.51 440.00,188.89 C443.33,186.27 446.67,182.53 450.00,180.65 C453.33,178.76 456.67,177.10 460.00,177.58 C463.33,178.06 466.67,180.15 470.00,183.51 C473.33,186.88 476.67,192.46 480.00,197.78 C483.33,203.10 486.67,210.09 490.00,215.43 C493.33,220.78 496.67,226.39 500.00,229.86 C503.33,233.32 506.67,235.60 510.00,236.23 C513.33,236.85 516.67,235.54 520.00,233.62 C523.33,231.69 526.67,228.07 530.00,224.67 C533.33,221.27 536.67,217.06 540.00,213.23 C543.33,209.41 546.67,205.60 550.00,201.71 C553.33,197.81 556.67,194.16 560.00,189.85 C563.33,185.54 566.67,181.04 570.00,175.85 C573.33,170.65 576.67,164.65 580.00,158.67 C583.33,152.69 586.67,145.75 590.00,139.98 C593.33,134.22 598.33,126.72 600.00,124.06" />
-            </g>
-            <g transform="translate(600,0)">
-              <path class="tape-fill" d="M0.00,124.06 C1.67,122.66 6.67,116.82 10.00,115.61 C13.33,114.41 16.67,115.15 20.00,116.81 C23.33,118.47 26.67,122.32 30.00,125.57 C33.33,128.81 36.67,133.42 40.00,136.29 C43.33,139.17 46.67,141.90 50.00,142.82 C53.33,143.74 56.67,143.20 60.00,141.80 C63.33,140.40 66.67,137.15 70.00,134.44 C73.33,131.73 76.67,127.87 80.00,125.54 C83.33,123.21 86.67,121.08 90.00,120.48 C93.33,119.88 96.67,120.61 100.00,121.96 C103.33,123.31 106.67,126.25 110.00,128.60 C113.33,130.95 116.67,134.17 120.00,136.05 C123.33,137.94 126.67,139.54 130.00,139.92 C133.33,140.30 136.67,139.53 140.00,138.33 C143.33,137.13 146.67,134.72 150.00,132.72 C153.33,130.73 156.67,128.19 160.00,126.33 C163.33,124.47 166.67,122.91 170.00,121.58 C173.33,120.26 176.67,119.58 180.00,118.36 C183.33,117.15 186.67,116.20 190.00,114.31 C193.33,112.43 196.67,109.98 200.00,107.04 C203.33,104.09 206.67,100.03 210.00,96.64 C213.33,93.25 216.67,88.99 220.00,86.70 C223.33,84.41 226.67,82.38 230.00,82.90 C233.33,83.41 236.67,85.61 240.00,89.80 C243.33,93.99 246.67,100.77 250.00,108.03 C253.33,115.29 256.67,124.93 260.00,133.38 C263.33,141.83 266.67,151.36 270.00,158.73 C273.33,166.11 276.67,172.87 280.00,177.62 C283.33,182.37 286.67,185.28 290.00,187.23 C293.33,189.18 296.67,189.13 300.00,189.31 C303.33,189.48 306.67,188.47 310.00,188.30 C313.33,188.13 316.67,187.91 320.00,188.29 C323.33,188.67 326.67,189.72 330.00,190.58 C333.33,191.44 336.67,192.87 340.00,193.45 C343.33,194.04 346.67,194.47 350.00,194.07 C353.33,193.68 356.67,192.43 360.00,191.06 C363.33,189.70 366.67,187.39 370.00,185.88 C373.33,184.38 376.67,182.58 380.00,182.03 C383.33,181.47 386.67,181.60 390.00,182.56 C393.33,183.52 396.67,185.76 400.00,187.77 C403.33,189.79 406.67,192.84 410.00,194.63 C413.33,196.42 416.67,198.24 420.00,198.53 C423.33,198.82 426.67,197.98 430.00,196.37 C433.33,194.76 436.67,191.51 440.00,188.89 C443.33,186.27 446.67,182.53 450.00,180.65 C453.33,178.76 456.67,177.10 460.00,177.58 C463.33,178.06 466.67,180.15 470.00,183.51 C473.33,186.88 476.67,192.46 480.00,197.78 C483.33,203.10 486.67,210.09 490.00,215.43 C493.33,220.78 496.67,226.39 500.00,229.86 C503.33,233.32 506.67,235.60 510.00,236.23 C513.33,236.85 516.67,235.54 520.00,233.62 C523.33,231.69 526.67,228.07 530.00,224.67 C533.33,221.27 536.67,217.06 540.00,213.23 C543.33,209.41 546.67,205.60 550.00,201.71 C553.33,197.81 556.67,194.16 560.00,189.85 C563.33,185.54 566.67,181.04 570.00,175.85 C573.33,170.65 576.67,164.65 580.00,158.67 C583.33,152.69 586.67,145.75 590.00,139.98 C593.33,134.22 598.33,126.72 600.00,124.06 L600.00,320 L0,320 Z" />
-              <path class="tape-line" d="M0.00,124.06 C1.67,122.66 6.67,116.82 10.00,115.61 C13.33,114.41 16.67,115.15 20.00,116.81 C23.33,118.47 26.67,122.32 30.00,125.57 C33.33,128.81 36.67,133.42 40.00,136.29 C43.33,139.17 46.67,141.90 50.00,142.82 C53.33,143.74 56.67,143.20 60.00,141.80 C63.33,140.40 66.67,137.15 70.00,134.44 C73.33,131.73 76.67,127.87 80.00,125.54 C83.33,123.21 86.67,121.08 90.00,120.48 C93.33,119.88 96.67,120.61 100.00,121.96 C103.33,123.31 106.67,126.25 110.00,128.60 C113.33,130.95 116.67,134.17 120.00,136.05 C123.33,137.94 126.67,139.54 130.00,139.92 C133.33,140.30 136.67,139.53 140.00,138.33 C143.33,137.13 146.67,134.72 150.00,132.72 C153.33,130.73 156.67,128.19 160.00,126.33 C163.33,124.47 166.67,122.91 170.00,121.58 C173.33,120.26 176.67,119.58 180.00,118.36 C183.33,117.15 186.67,116.20 190.00,114.31 C193.33,112.43 196.67,109.98 200.00,107.04 C203.33,104.09 206.67,100.03 210.00,96.64 C213.33,93.25 216.67,88.99 220.00,86.70 C223.33,84.41 226.67,82.38 230.00,82.90 C233.33,83.41 236.67,85.61 240.00,89.80 C243.33,93.99 246.67,100.77 250.00,108.03 C253.33,115.29 256.67,124.93 260.00,133.38 C263.33,141.83 266.67,151.36 270.00,158.73 C273.33,166.11 276.67,172.87 280.00,177.62 C283.33,182.37 286.67,185.28 290.00,187.23 C293.33,189.18 296.67,189.13 300.00,189.31 C303.33,189.48 306.67,188.47 310.00,188.30 C313.33,188.13 316.67,187.91 320.00,188.29 C323.33,188.67 326.67,189.72 330.00,190.58 C333.33,191.44 336.67,192.87 340.00,193.45 C343.33,194.04 346.67,194.47 350.00,194.07 C353.33,193.68 356.67,192.43 360.00,191.06 C363.33,189.70 366.67,187.39 370.00,185.88 C373.33,184.38 376.67,182.58 380.00,182.03 C383.33,181.47 386.67,181.60 390.00,182.56 C393.33,183.52 396.67,185.76 400.00,187.77 C403.33,189.79 406.67,192.84 410.00,194.63 C413.33,196.42 416.67,198.24 420.00,198.53 C423.33,198.82 426.67,197.98 430.00,196.37 C433.33,194.76 436.67,191.51 440.00,188.89 C443.33,186.27 446.67,182.53 450.00,180.65 C453.33,178.76 456.67,177.10 460.00,177.58 C463.33,178.06 466.67,180.15 470.00,183.51 C473.33,186.88 476.67,192.46 480.00,197.78 C483.33,203.10 486.67,210.09 490.00,215.43 C493.33,220.78 496.67,226.39 500.00,229.86 C503.33,233.32 506.67,235.60 510.00,236.23 C513.33,236.85 516.67,235.54 520.00,233.62 C523.33,231.69 526.67,228.07 530.00,224.67 C533.33,221.27 536.67,217.06 540.00,213.23 C543.33,209.41 546.67,205.60 550.00,201.71 C553.33,197.81 556.67,194.16 560.00,189.85 C563.33,185.54 566.67,181.04 570.00,175.85 C573.33,170.65 576.67,164.65 580.00,158.67 C583.33,152.69 586.67,145.75 590.00,139.98 C593.33,134.22 598.33,126.72 600.00,124.06" />
-            </g>
-          </g>
-        </svg>
+  <!-- ══ Platforms ═════════════════════════════════════════════════════
+       On black: most of these marks are white on transparent and would be
+       invisible on paper, and the page wants one hard break across it. -->
+  <section class="band" aria-label="Platforms">
+    <div class="wrap"><p class="band-k">Built for the platforms people already trade on</p></div>
+    <div class="rail">
+      <div class="run">
+        <img src="/logos/deriv-wordmark.svg" alt="Deriv" />
+        <img src="/logos/metatrader5.svg" alt="MetaTrader 5" />
+        <img src="/logos/mt4.svg" alt="MetaTrader 4" />
+        <img src="/logos/tradingview.svg" alt="TradingView" />
+        <img src="/logos/binance.svg" alt="Binance" />
+        <img src="/logos/exness.svg" alt="Exness" />
+        <img src="/logos/ctrader.svg" alt="cTrader" />
+        <img src="/logos/oanda.svg" alt="OANDA" />
+        <img src="/logos/fundingpips.svg" alt="Funding Pips" />
+        <img src="/logos/ftmo.svg" alt="FTMO" />
+        <img src="/logos/fundednext.png" alt="FundedNext" />
+        <img src="/logos/the5ers.svg" alt="The5ers" />
+      </div>
+      <div class="run" aria-hidden="true">
+        <img src="/logos/deriv-wordmark.svg" alt="" />
+        <img src="/logos/metatrader5.svg" alt="" />
+        <img src="/logos/mt4.svg" alt="" />
+        <img src="/logos/tradingview.svg" alt="" />
+        <img src="/logos/binance.svg" alt="" />
+        <img src="/logos/exness.svg" alt="" />
+        <img src="/logos/ctrader.svg" alt="" />
+        <img src="/logos/oanda.svg" alt="" />
+        <img src="/logos/fundingpips.svg" alt="" />
+        <img src="/logos/ftmo.svg" alt="" />
+        <img src="/logos/fundednext.png" alt="" />
+        <img src="/logos/the5ers.svg" alt="" />
       </div>
     </div>
+  </section>
 
-    <div class="bleed marks">
-      <p class="marks-label">Trade on any platform</p>
-      <ul class="marks-row">
-        <li><img src="/logos/metatrader5.svg" alt="MetaTrader 5" /></li>
-        <li><img src="/logos/mt4.svg" alt="MetaTrader 4" /></li>
-        <li><img src="/logos/deriv-wordmark.svg" alt="Deriv" /></li>
-        <li><img src="/logos/tradingview.svg" alt="TradingView" /></li>
-        <li><img src="/logos/binance.svg" alt="Binance" /></li>
-        <li><img src="/logos/exness.svg" alt="Exness" /></li>
-        <li><img src="/logos/ctrader.svg" alt="cTrader" /></li>
-        <li><img src="/logos/oanda.svg" alt="OANDA" /></li>
-        <li><img src="/logos/fundingpips.svg" alt="Funding Pips" /></li>
-        <li><img src="/logos/ftmo.svg" alt="FTMO" /></li>
-        <li><img src="/logos/fundednext.png" alt="FundedNext" /></li>
-        <li><img src="/logos/the5ers.svg" alt="The5ers" /></li>
-      </ul>
+  <!-- ══ How ═══════════════════════════════════════════════════════════ -->
+  <section class="steps" id="how">
+    <div class="wrap">
+      <div class="steps-head">
+        <p class="eyebrow">Three steps</p>
+        <h2 class="steps-t">Connected in about a minute.</h2>
+      </div>
+
+      <div class="step">
+        <span class="step-n">01</span>
+        <h3 class="step-t">Connect your broker</h3>
+        <p class="step-p">Sign in through Deriv&rsquo;s own page. Kestrel never sees your
+          password, holds no money and takes no deposits &mdash; the account stays
+          entirely yours.</p>
+      </div>
+
+      <div class="step">
+        <span class="step-n">02</span>
+        <h3 class="step-t">Set your limits</h3>
+        <p class="step-p">Stake, take profit, stop loss. The bot stops itself the moment
+          it reaches either, and you can stop it by hand at any point.</p>
+      </div>
+
+      <div class="step">
+        <span class="step-n">03</span>
+        <h3 class="step-t">Practise, then run it</h3>
+        <p class="step-p">There is a full practice mode with no money and no broker
+          attached. Watch a strategy behave before you put anything real near it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Closing ═══════════════════════════════════════════════════════ -->
+  <section class="end">
+    <div class="wrap">
+      <div class="end-in">
+        <h2 class="end-t">Free, for every trader.</h2>
+        <p class="end-p">No subscription, no licence, nothing to buy and nowhere to send
+          money. Bring your own account and keep everything it makes.</p>
+        <div class="end-actions">
+          <a class="btn btn--ink btn--lg js-connect" href="/home.html">Connect an account</a>
+        </div>
+      </div>
     </div>
   </section>
 
 </main>
 
-<footer class="footer">
-  <div class="bleed footer-inner">
-    <div class="footer-brand">
-      <span class="brand-name">Evie</span>
-      <p>Free, fully automated AI trading bots for the platforms people actually trade on.</p>
+<!-- ══ Footer ══════════════════════════════════════════════════════════ -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <span class="foot-brand">Kestrel</span>
+      <p class="foot-note">Software for automating trades on a broker account you already
+        own. Kestrel is not a broker: it holds no funds, accepts no deposits and
+        executes trades only on your own account.</p>
     </div>
-  </div>
-  <div class="bleed footer-legal">
-    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial advice or a profit guarantee. Never risk more than you can afford to lose.</p>
-    <p>&copy; 2026 Evie. Trading carries risk; past performance does not guarantee future results. All trademarks and platform logos are the property of their respective owners and are shown for compatibility reference only.</p>
+    <p class="foot-legal">
+      Trading carries risk. This is an automated tool, not financial advice or a
+      profit guarantee. Never risk more than you can afford to lose. All trademarks
+      and platform logos are the property of their respective owners and are shown
+      for compatibility reference only.
+    </p>
   </div>
 </footer>
 
-<!-- The Deriv redirect URL is DERIVED, not written down: the origin comes
-     from wherever this is served and only the path is fixed (/home.html, the
-     registered one). Moving to a bought domain therefore needs no code change
-     — just register https://<new-domain>/home.html on the Deriv app.
-     Override only if the app is registered against a different host:
-     <script>window.EVIE_DERIV_REDIRECT_URI = "...";</script> -->
 <script src="/deriv.js"></script>
-<script src="/main.js" defer></script>
 <script src="/connect.js"></script>
 <script src="/install.js"></script>
 </body>
