@@ -131,65 +131,45 @@
       : { type: pair.b, pct: s[pair.b] };
   }
 
-  /** How far behind this run is. Nothing to make back when it is in front. */
-  function deficit() {
-    var p = totals.profit || 0;
-    return p < 0 ? -p : 0;
-  }
-
-  /** Would one win at this type, at this stake, make back what is owed? */
-  function clears(type, pct, stake, owed) {
-    var C = global.EvieContracts;
-    if (!C || !C.estimatePayout) return true;   // no estimate: leave it alone
-    var mult = C.estimatePayout(type, pct);
-    if (!mult || mult <= 1) return false;
-    return stake * (mult - 1) >= owed;
-  }
-
   /**
    * Which trade to place.
    *
-   * Normally the chosen pair's own leader, exactly as before. The exception is
-   * recovery, and it exists because of one pair.
+   * Normally the chosen pair's own leader: whichever side the analysis puts
+   * ahead. The exception is the trade straight after a loss, and it exists
+   * because of one pair.
    *
    * Differs carries the highest percentage on the card and the smallest payout
    * on Deriv — about nine per cent, because it wins nine times in ten. Put a
    * 3.1x martingale behind that and a winning trade returns roughly a quarter
-   * of what the ladder just lost. The run cannot climb out: it keeps winning
-   * and keeps falling further behind, which is the worst way for a bot to
-   * lose money.
+   * of what the ladder just lost. It cannot be the trade that recovers a loss,
+   * however good its percentage looks, and Matches cannot either: it pays
+   * handsomely but wins one time in ten, which is a gamble and not a recovery.
    *
-   * So while a run is down, if the pair's own leader cannot make the deficit
-   * back in one win, every other type is considered and the best CHANCE that
-   * can is taken instead. Best chance, not best payout — Matches would clear
-   * the deficit twenty times over but only wins one time in ten, and the point
-   * is to get out, not to gamble on getting out.
-   *
-   * The moment the run is level again the pair's own leader comes back, which
-   * is what the user chose and what the analysis favours.
+   * So after a loss on Matches/Differs, NEITHER side of that pair is a
+   * candidate. The highest percentage among everything else takes the trade.
+   * After a win the pair comes straight back, which is what was chosen and
+   * what the analysis favours.
    */
-  function pickSide(pair, sym, stake) {
+  function pickSide(pair, sym, recovering) {
     var s = host.statsFor(sym);
     if (!s || !s.total) return null;
 
     var chosen = pickFromPair(pair, s);
-    var owed = deficit();
+    if (!chosen) return null;
 
-    // In front, or the pair can dig itself out: nothing to change.
-    if (!chosen || !owed) return chosen;
-    if (clears(chosen.type, chosen.pct, stake, owed)) return chosen;
+    // Not recovering, or not the pair with the payout problem: leave it alone.
+    if (!recovering) return chosen;
+    if (chosen.type !== "match" && chosen.type !== "differ") return chosen;
 
     var best = null;
-    ["even", "odd", "rise", "fall", "over", "under", "match", "differ"].forEach(function (t) {
+    ["even", "odd", "rise", "fall", "over", "under"].forEach(function (t) {
       if (!usable(t, s)) return;
       var pct = s[t];
       if (typeof pct !== "number" || !isFinite(pct) || pct <= 0) return;
-      if (!clears(t, pct, stake, owed)) return;
       if (!best || pct > best.pct) best = { type: t, pct: pct };
     });
 
-    // Nothing can make it back in one win. Carry on as before rather than
-    // inventing a worse choice — the stop loss is what ends this, not us.
+    // Nothing else is showing a percentage yet: the pair is all there is.
     if (!best) return chosen;
 
     best.recovering = true;
@@ -255,6 +235,7 @@
        for ever is not persistence, it is a loop that never ends. */
     var fails = 0;
     var busyFor = 0;
+    var lastLost = false;   // did the trade before this one lose?
     var MAX_FAILS = 8;
 
     try {
@@ -275,12 +256,11 @@
         }
         waitedFor = 0;
 
-        /* The stake comes first now: which trade to place depends on what
-           this stake could make back, and that is the whole of the recovery
-           rule below. */
         var stake = host.nextStake();
 
-        var side = pickSide(pair, sym, stake);
+        /* lastLost is the whole of the recovery rule: the trade after a loss
+           may not be Matches or Differs. A win clears it and the pair returns. */
+        var side = pickSide(pair, sym, lastLost);
         if (!side) { say("Waiting for enough ticks…", "warning"); await sleep(1200); continue; }
 
         say((side.recovering ? "Recovering on " : "Trading ") +
@@ -341,6 +321,7 @@
 
         fails = 0;              // a trade got through; the counts start over
         busyFor = 0;
+        lastLost = !r.win;      // decides what the NEXT trade may be
         syncStats();
 
         var stop = stopReason(totals);
@@ -452,6 +433,12 @@
     el("bot-pair").innerHTML = PAIRS.map(function (p) {
       return '<option value="' + p.id + '">' + p.label + "</option>";
     }).join("");
+
+    /* Matches / Differs by default. Set here rather than by reordering the
+       list, so the options stay in the order they have always been in — and
+       before the prefs are restored below, so a choice already made in this
+       tab still wins. */
+    el("bot-pair").value = "match_differ";
 
     // Take profit and stop loss are hidden until asked for.
     [["bot-tp-tog", "bot-tp-row"], ["bot-sl-tog", "bot-sl-row"]].forEach(function (pair) {
