@@ -45,8 +45,23 @@
       handle.addEventListener("click", function () {
         var open = self.root.classList.toggle("is-open");
         handle.setAttribute("aria-expanded", String(open));
+        clearTimeout(self.peekTimer);
       });
     }
+
+    /* Scrolling puts the sheet away.
+       It covers the bottom of the page while it is up, so somebody who starts
+       reading the cards again has already said what they want - asking them
+       to find the handle first would be the panel arguing with them. Passive,
+       because this only ever removes a class and must not hold up the scroll.
+       The rows scroll inside their own container and contain their overscroll,
+       so reading the list does not count as scrolling the page. */
+    global.addEventListener("scroll", function () {
+      if (!self.root.classList.contains("is-open")) return;
+      if (!self.isSheet()) return;
+      if (self.openedAt && Date.now() - self.openedAt < 400) return;
+      self.close();
+    }, { passive: true });
   };
 
   /**
@@ -57,6 +72,41 @@
    * already open and there is nothing to do. A second call while a peek is in
    * progress restarts the clock rather than stacking timers.
    */
+  /** Is this the narrow layout, where the panel is a sheet at the bottom? */
+  Txn.prototype.isSheet = function () {
+    var handle = this.q("[data-handle]");
+    return !!(handle && handle.offsetParent);
+  };
+
+  Txn.prototype.setOpen = function (on) {
+    var handle = this.q("[data-handle]");
+    if (!handle) return;
+    this.root.classList.toggle("is-open", !!on);
+    handle.setAttribute("aria-expanded", String(!!on));
+  };
+
+  /**
+   * Raise the sheet and leave it up.
+   *
+   * For the start of a bot run: the trades are about to arrive and on a phone
+   * they arrive out of sight. Unlike peek this does not time out - a run is
+   * not one result to glance at - so it stays until the reader puts it away,
+   * by the handle or by scrolling.
+   */
+  Txn.prototype.open = function () {
+    if (!this.isSheet()) return;         // the rail is already open
+    clearTimeout(this.peekTimer);
+    this.setOpen(true);
+    /* A scroll is what dismisses it, and opening the sheet can itself settle
+       the page by a pixel. Ignore anything that arrives in the same moment. */
+    this.openedAt = Date.now();
+  };
+
+  Txn.prototype.close = function () {
+    clearTimeout(this.peekTimer);
+    this.setOpen(false);
+  };
+
   Txn.prototype.peek = function (ms) {
     var self = this;
     var handle = this.q("[data-handle]");

@@ -149,8 +149,15 @@
    * candidate. The highest percentage among everything else takes the trade.
    * After a win the pair comes straight back, which is what was chosen and
    * what the analysis favours.
+   *
+   * A recovery STAYS on the type it opened with until it wins. The percentages
+   * move a little with every tick, so re-deciding each time would hop between
+   * types that are within a point of each other in the middle of a martingale
+   * ladder - three trades into a recovery on three different contracts, none
+   * of them the one the ladder was sized against. It picks once, on the
+   * highest percentage at the moment the recovery starts, and sees it through.
    */
-  function pickSide(pair, sym, recovering) {
+  function pickSide(pair, sym, recovering, locked) {
     var s = host.statsFor(sym);
     if (!s || !s.total) return null;
 
@@ -160,6 +167,12 @@
     // Not recovering, or not the pair with the payout problem: leave it alone.
     if (!recovering) return chosen;
     if (chosen.type !== "match" && chosen.type !== "differ") return chosen;
+
+    /* Already recovering on something: keep it. Only a type Deriv would now
+       refuse - Over or Under gone out of range - is given up on. */
+    if (locked && usable(locked, s) && typeof s[locked] === "number") {
+      return { type: locked, pct: s[locked], recovering: true };
+    }
 
     var best = null;
     ["even", "odd", "rise", "fall", "over", "under"].forEach(function (t) {
@@ -235,7 +248,8 @@
        for ever is not persistence, it is a loop that never ends. */
     var fails = 0;
     var busyFor = 0;
-    var lastLost = false;   // did the trade before this one lose?
+    var lastLost = false;    // did the trade before this one lose?
+    var recoverWith = null;  // the type this recovery opened on, kept until it wins
     var MAX_FAILS = 8;
 
     try {
@@ -260,7 +274,7 @@
 
         /* lastLost is the whole of the recovery rule: the trade after a loss
            may not be Matches or Differs. A win clears it and the pair returns. */
-        var side = pickSide(pair, sym, lastLost);
+        var side = pickSide(pair, sym, lastLost, recoverWith);
         if (!side) { say("Waiting for enough ticks…", "warning"); await sleep(1200); continue; }
 
         say((side.recovering ? "Recovering on " : "Trading ") +
@@ -321,7 +335,11 @@
 
         fails = 0;              // a trade got through; the counts start over
         busyFor = 0;
-        lastLost = !r.win;      // decides what the NEXT trade may be
+        /* A win ends the recovery and frees the type; a loss keeps both, so
+           the next trade is the same contract at the next rung. */
+        lastLost = !r.win;
+        if (r.win) recoverWith = null;
+        else if (side.recovering) recoverWith = side.type;
         syncStats();
 
         var stop = stopReason(totals);
@@ -491,6 +509,12 @@
       syncStats();
       setRunning(true);
       say("Starting…", "info");
+
+      /* The trades are about to start arriving. On a phone they arrive at the
+         bottom of the page, out of sight, so the sheet comes up - and stays up
+         until it is closed or scrolled away. */
+      if (host.showTransactions) host.showTransactions();
+
       loop(++generation);
     });
 
@@ -518,11 +542,9 @@
     /* On a narrow screen the card would sit on top of the analysis the moment
        the page opened. It starts closed there, and the button brings it up
        when there is actually something to trade. */
-    if (global.innerWidth < 900) {
-      card.hidden = true;
-      var opener = el("bot-open");
-      if (opener) opener.hidden = false;
-    }
+    card.hidden = true;
+    var opener = el("bot-open");
+    if (opener) opener.hidden = false;
 
     paintOpener();
   }

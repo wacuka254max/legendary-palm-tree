@@ -999,6 +999,11 @@
       /* What this account is denominated in, so the bot's own figures and the
          card it raises are not printed in dollars on a euro account. */
       currency: currencyOf,
+
+      /* The bot raises the transactions when a run starts. On a phone they are
+         parked at the bottom and the trades would otherwise land out of sight;
+         on a wide screen the rail is already open and this does nothing. */
+      showTransactions: function () { txn.open(); },
       isLive: function () { return session.isLive(); },
       busy: function () { return inFlight; },
       settings: settings,
