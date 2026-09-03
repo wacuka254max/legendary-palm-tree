@@ -31,23 +31,40 @@
 (function (global) {
   "use strict";
 
+  /* Verified live against Deriv's own website_status.currencies_config on
+     3 September 2026 — every code below, and every fractional_digits, is
+     what the API returned. Twelve currencies: four fiat, eight they class as
+     crypto, of which four are dollar stablecoins carrying two digits like
+     the fiat ones.
+
+     XRP is the one that catches you out: six digits, neither the two of the
+     stablecoins nor the eight of the other coins. Treated as two it breaks
+     exactly the way BTC did. */
   var CONFIG = {
-    /* Fiat and the stablecoins: two digits, and a floor that does not move. */
+    /* Fiat. The floors are Deriv's published minimum stake and do not move. */
     USD:   { digits: 2, min: 0.35 },
     EUR:   { digits: 2, min: 0.30 },
     GBP:   { digits: 2, min: 0.30 },
     AUD:   { digits: 2, min: 0.50 },
+
+    /* Dollar stablecoins. Deriv class these as crypto, but they are priced
+       and stated like the dollar, two digits and the same floor. */
     USDC:  { digits: 2, min: 0.35 },
-    USDT:  { digits: 2, min: 0.35 },
+    UST:   { digits: 2, min: 0.35 },
     eUSDT: { digits: 2, min: 0.35 },
     tUSDT: { digits: 2, min: 0.35 },
-    UST:   { digits: 2, min: 0.35 },
+    /* Not a code Deriv returns — the tethers are eUSDT and tUSDT — but a
+       plain USDT account elsewhere would otherwise fall to the default. */
+    USDT:  { digits: 2, min: 0.35 },
 
-    /* Crypto: eight digits, and a floor that moves with the rate — Deriv's to
-       state, not ours to guess. */
+    /* Crypto proper: the digits are Deriv's, and the floor moves with the
+       exchange rate, so it is Deriv's to state and not ours to guess. */
+    XRP:   { digits: 6, min: null },
     BTC:   { digits: 8, min: null },
     ETH:   { digits: 8, min: null },
     LTC:   { digits: 8, min: null },
+    /* Deriv no longer list BCH, but it carried eight digits when they did
+       and an unused entry costs nothing if it comes back. */
     BCH:   { digits: 8, min: null }
   };
 
