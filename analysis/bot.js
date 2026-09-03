@@ -89,16 +89,6 @@
       var e = el(id);
       if (e) e.disabled = on;
     });
-    /* What was set stays set across a reload: the market, the side, and the
-       take profit or stop loss someone armed. The run itself cannot survive a
-       reload — the socket and the ladder go with the page — but the setup does,
-       so restarting is one click rather than four. Tab-scoped: closing the tab
-       ends the session and the next one starts on the defaults. */
-    var prefs = global.EviePrefs ? global.EviePrefs.scope("bot") : null;
-    if (prefs) {
-      prefs.fields(["bot-market", "bot-pair", "bot-tp", "bot-sl"]);
-      prefs.switches(["bot-tp-tog", "bot-sl-tog"]);
-    }
 
     paintOpener();
   }
@@ -381,6 +371,29 @@
         row.hidden = !on;
       });
     });
+
+    /* What was set stays set across a reload: the market, the side, and the
+       take profit or stop loss someone armed. The run itself cannot survive a
+       reload — the socket and the ladder go with the page — but the setup does,
+       so restarting is one click rather than four. Tab-scoped: closing the tab
+       ends the session and the next one starts on the defaults.
+
+       ONCE, here, and not from setRunning. Restoring is done by writing the
+       stored value into the field, and setRunning is called on every start and
+       every stop — so pressing Start re-applied whatever had been stored
+       earlier in the tab, over whatever was on screen. Somebody who set 500,
+       put it back to 100 and pressed Start ran to 500. It also stacked another
+       pair of listeners on every field each time, and meant the listeners that
+       SAVE were not attached until the first run either.
+
+       After the selects are filled and the toggles wired, because a restore
+       replays the interaction: a value needs its <option> to exist, and a
+       switch needs its own handler to hide or show the row. */
+    var prefs = global.EviePrefs ? global.EviePrefs.scope("bot") : null;
+    if (prefs) {
+      prefs.fields(["bot-market", "bot-pair", "bot-tp", "bot-sl"]);
+      prefs.switches(["bot-tp-tog", "bot-sl-tog"]);
+    }
 
     el("bot-run").addEventListener("click", function () {
       if (running) {
