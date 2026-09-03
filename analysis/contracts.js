@@ -69,6 +69,36 @@
     }
   };
 
+  /* ── What a win is worth, roughly ────────────────────────────────────────
+     A fair payout is 1/probability. Deriv quote that less a margin, and the
+     margin VARIES BY TYPE: a near-certainty like Differs is priced very tight,
+     a long shot like Matches very wide. These are the same figures the
+     simulation is calibrated with, taken from Deriv's published returns.
+
+     An ESTIMATE, and used for exactly one thing: choosing between types before
+     a trade. Every trade still takes its real payout from Deriv's own
+     proposal — nothing here is shown as a figure, and nothing here settles
+     anything. */
+
+  var MARGIN = {
+    even: 0.025, odd: 0.025, rise: 0.025, fall: 0.025,
+    over: 0.035, under: 0.035,
+    differ: 0.012,   // priced tightest: it wins nine times in ten
+    match: 0.091     // priced widest: it wins one time in ten
+  };
+
+  /**
+   * What one unit staked would come back as, given the chance the analysis is
+   * showing. 1.09 for Differs at 91%, about 1.9 for an even-money type.
+   */
+  function estimatePayout(type, pct) {
+    var p = Number(pct) / 100;
+    if (!isFinite(p) || p <= 0) return 0;
+    if (p > 0.999) p = 0.999;         // a certainty pays nothing; do not divide by ~0
+    var m = MARGIN[type] != null ? MARGIN[type] : 0.03;
+    return (1 / p) * (1 - m);
+  }
+
   /** The barrier this type would actually accept, nearest to what was asked. */
   function clampBarrier(type, digit) {
     var t = TYPES[type];
@@ -124,6 +154,7 @@
   }
 
   global.EvieContracts = {
+    estimatePayout: estimatePayout,
     TYPES: TYPES,
     order: ["rise", "fall", "even", "odd", "over", "under", "match", "differ"],
     clampBarrier: clampBarrier,

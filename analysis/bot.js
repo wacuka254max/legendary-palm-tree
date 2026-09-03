@@ -112,21 +112,88 @@
   /* ── deciding ───────────────────────────────────────────────────────── */
 
   /** The side of the chosen pair that is ahead right now. */
-  function pickSide(pair, sym) {
+  /** Over is impossible above reference 8, Under below 1 — Deriv rejects the
+      barrier, so those are not choices even when they lead. */
+  function usable(type, s) {
+    if (type === "over" && s.reference > 8) return false;
+    if (type === "under" && s.reference < 1) return false;
+    return true;
+  }
+
+  /** The chosen pair's own answer: whichever side the analysis puts ahead. */
+  function pickFromPair(pair, s) {
+    var aOK = usable(pair.a, s), bOK = usable(pair.b, s);
+    if (!aOK && !bOK) return null;
+    if (!aOK) return { type: pair.b, pct: s[pair.b] };
+    if (!bOK) return { type: pair.a, pct: s[pair.a] };
+    return s[pair.a] >= s[pair.b]
+      ? { type: pair.a, pct: s[pair.a] }
+      : { type: pair.b, pct: s[pair.b] };
+  }
+
+  /** How far behind this run is. Nothing to make back when it is in front. */
+  function deficit() {
+    var p = totals.profit || 0;
+    return p < 0 ? -p : 0;
+  }
+
+  /** Would one win at this type, at this stake, make back what is owed? */
+  function clears(type, pct, stake, owed) {
+    var C = global.EvieContracts;
+    if (!C || !C.estimatePayout) return true;   // no estimate: leave it alone
+    var mult = C.estimatePayout(type, pct);
+    if (!mult || mult <= 1) return false;
+    return stake * (mult - 1) >= owed;
+  }
+
+  /**
+   * Which trade to place.
+   *
+   * Normally the chosen pair's own leader, exactly as before. The exception is
+   * recovery, and it exists because of one pair.
+   *
+   * Differs carries the highest percentage on the card and the smallest payout
+   * on Deriv — about nine per cent, because it wins nine times in ten. Put a
+   * 3.1x martingale behind that and a winning trade returns roughly a quarter
+   * of what the ladder just lost. The run cannot climb out: it keeps winning
+   * and keeps falling further behind, which is the worst way for a bot to
+   * lose money.
+   *
+   * So while a run is down, if the pair's own leader cannot make the deficit
+   * back in one win, every other type is considered and the best CHANCE that
+   * can is taken instead. Best chance, not best payout — Matches would clear
+   * the deficit twenty times over but only wins one time in ten, and the point
+   * is to get out, not to gamble on getting out.
+   *
+   * The moment the run is level again the pair's own leader comes back, which
+   * is what the user chose and what the analysis favours.
+   */
+  function pickSide(pair, sym, stake) {
     var s = host.statsFor(sym);
     if (!s || !s.total) return null;
 
-    var av = s[pair.a], bv = s[pair.b];
+    var chosen = pickFromPair(pair, s);
+    var owed = deficit();
 
-    // Over is impossible above reference 8, Under below 1 — Deriv rejects the
-    // barrier, so those are not choices even when they lead.
-    var aOK = !(pair.a === "over" && s.reference > 8);
-    var bOK = !(pair.b === "under" && s.reference < 1);
+    // In front, or the pair can dig itself out: nothing to change.
+    if (!chosen || !owed) return chosen;
+    if (clears(chosen.type, chosen.pct, stake, owed)) return chosen;
 
-    if (!aOK && !bOK) return null;
-    if (!aOK) return { type: pair.b, pct: bv };
-    if (!bOK) return { type: pair.a, pct: av };
-    return av >= bv ? { type: pair.a, pct: av } : { type: pair.b, pct: bv };
+    var best = null;
+    ["even", "odd", "rise", "fall", "over", "under", "match", "differ"].forEach(function (t) {
+      if (!usable(t, s)) return;
+      var pct = s[t];
+      if (typeof pct !== "number" || !isFinite(pct) || pct <= 0) return;
+      if (!clears(t, pct, stake, owed)) return;
+      if (!best || pct > best.pct) best = { type: t, pct: pct };
+    });
+
+    // Nothing can make it back in one win. Carry on as before rather than
+    // inventing a worse choice — the stop loss is what ends this, not us.
+    if (!best) return chosen;
+
+    best.recovering = true;
+    return best;
   }
 
   function limits() {
@@ -208,11 +275,16 @@
         }
         waitedFor = 0;
 
-        var side = pickSide(pair, sym);
+        /* The stake comes first now: which trade to place depends on what
+           this stake could make back, and that is the whole of the recovery
+           rule below. */
+        var stake = host.nextStake();
+
+        var side = pickSide(pair, sym, stake);
         if (!side) { say("Waiting for enough ticks…", "warning"); await sleep(1200); continue; }
 
-        var stake = host.nextStake();
-        say("Trading " + host.types[side.type].label + " at " +
+        say((side.recovering ? "Recovering on " : "Trading ") +
+            host.types[side.type].label + " at " +
             side.pct.toFixed(1) + "% · " + bare(stake), "info");
 
         var r;
