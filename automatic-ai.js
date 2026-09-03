@@ -42,8 +42,9 @@
 
   function money(n, cur) {
     if (n == null || isNaN(Number(n))) return "—";
+    var d = window.EvieCurrency ? window.EvieCurrency.digits(cur) : 2;
     return (cur || "USD") + " " + Number(n).toLocaleString(undefined, {
-      minimumFractionDigits: 2, maximumFractionDigits: 2
+      minimumFractionDigits: d, maximumFractionDigits: d
     });
   }
 
@@ -55,6 +56,24 @@
 
   function chosen() {
     return accounts.filter(function (a) { return a.id === selectEl.value; })[0] || null;
+  }
+
+  /** Point the stake field at whatever the chosen account is denominated in:
+      its floor, the size of one step, and the name on the label. A crypto
+      account steps in hundred-millionths, not cents. */
+  function applyCurrency() {
+    var a = chosen();
+    var cur = (a && a.currency) || "USD";
+    var stakeEl = $("stake");
+    if (stakeEl && window.EvieCurrency) {
+      var floor = window.EvieCurrency.min(cur);
+      if (floor == null) stakeEl.removeAttribute("min");
+      else stakeEl.setAttribute("min", String(floor));
+      stakeEl.setAttribute("step", window.EvieCurrency.step(cur));
+    }
+    var fld = stakeEl && stakeEl.closest(".fld");
+    var k = fld && fld.querySelector(".fld-k");
+    if (k) k.textContent = "Stake (" + cur + ")";
   }
 
   /* ── the UI the engine talks to ─────────────────────────────────────────
@@ -81,7 +100,9 @@
 
     updateStats: function (s) {
       var p = $("s-profit");
-      p.textContent = (s.totalProfit >= 0 ? "+" : "") + Number(s.totalProfit || 0).toFixed(2);
+      p.textContent = (s.totalProfit >= 0 ? "+" : "") + (window.EvieCurrency
+        ? window.EvieCurrency.bare(s.totalProfit || 0, s.currency)
+        : Number(s.totalProfit || 0).toFixed(2));
       p.className = s.totalProfit > 0 ? "is-up" : (s.totalProfit < 0 ? "is-down" : "");
       $("s-trades").textContent = s.totalTrades || 0;
 
@@ -95,7 +116,9 @@
         (!s.totalTrades || isNaN(pct) ? "" : (pct >= 50 ? " is-up" : " is-down"));
 
 
-      $("s-stake").textContent = Number(s.currentStake || 0).toFixed(2);
+      $("s-stake").textContent = window.EvieCurrency
+        ? window.EvieCurrency.bare(s.currentStake || 0, s.currency)
+        : Number(s.currentStake || 0).toFixed(2);
       $("s-market").textContent = s.market || "—";
       if (s.balance != null) balanceEl.textContent = money(s.balance, s.currency);
     },
@@ -136,6 +159,9 @@
     // deliberate gesture, and the badge beside the balance already says Demo.
     riskEl.textContent = a.demo ? "" : "Real account — every trade placed here uses your own money.";
     riskEl.className = "risk" + (a.demo ? "" : " risk--real");
+
+    // The stake field belongs to this account's currency, not to the dollar.
+    applyCurrency();
   }
 
   selectEl.addEventListener("change", describeChoice);
@@ -242,8 +268,13 @@
       stopLoss: num($("sl"), 1000)
     };
 
-    if (config.initialStake < 0.35) {
-      return ui.showStatus("Deriv's minimum stake is 0.35.", "error");
+    /* The floor belongs to the account's currency. Where Deriv's moves with
+       the exchange rate we do not guess it — refusing here would block a
+       trade the account could place. See currency.js. */
+    var cur = (account && account.currency) || "USD";
+    var floor = window.EvieCurrency ? window.EvieCurrency.min(cur) : 0.35;
+    if (floor != null && config.initialStake < floor) {
+      return ui.showStatus("Deriv's minimum stake is " + floor + " " + cur + ".", "error");
     }
 
     startBtn.disabled = true;

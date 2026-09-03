@@ -60,6 +60,12 @@
 
   /* ── the panel ──────────────────────────────────────────────────────── */
 
+  /* The account's own currency, at its own precision — the host knows it. */
+  function bare(n) {
+    var cur = host && host.currency && host.currency();
+    return global.EvieCurrency ? global.EvieCurrency.bare(n, cur) : Number(n || 0).toFixed(2);
+  }
+
   function say(msg, kind) {
     var s = el("bot-status");
     if (!s) return;
@@ -77,7 +83,7 @@
 
     var p = el("bot-pl");
     var v = totals.profit || 0;
-    p.textContent = (v >= 0 ? "+" : "") + v.toFixed(2);
+    p.textContent = (v >= 0 ? "+" : "") + bare(v);
     p.className = "bot-v " + (v > 0 ? "is-up" : v < 0 ? "is-down" : "");
   }
 
@@ -140,10 +146,10 @@
     var profit = t.profit || 0;
 
     if (l.sl != null && !isNaN(l.sl) && profit <= -Math.abs(l.sl)) {
-      return { msg: "Stop loss hit at " + profit.toFixed(2) + ".", kind: "warning", hit: "sl" };
+      return { msg: "Stop loss hit at " + bare(profit) + ".", kind: "warning", hit: "sl" };
     }
     if (l.tp != null && !isNaN(l.tp) && profit >= Math.abs(l.tp)) {
-      return { msg: "Take profit hit at +" + profit.toFixed(2) + ".", kind: "success", hit: "tp" };
+      return { msg: "Take profit hit at +" + bare(profit) + ".", kind: "success", hit: "tp" };
     }
 
     var noLimits = (l.tp == null || isNaN(l.tp)) && (l.sl == null || isNaN(l.sl));
@@ -151,7 +157,7 @@
        Stopping merely because the last trade won called a ladder recovered
        while it was still behind. */
     if (noLimits && t.trades > 0 && profit > 0) {
-      return { msg: "Recovered. Stopped in front at +" + profit.toFixed(2) + ".", kind: "success" };
+      return { msg: "Recovered. Stopped in front at +" + bare(profit) + ".", kind: "success" };
     }
     return null;
   }
@@ -207,7 +213,7 @@
 
         var stake = host.nextStake();
         say("Trading " + host.types[side.type].label + " at " +
-            side.pct.toFixed(1) + "% · " + stake.toFixed(2), "info");
+            side.pct.toFixed(1) + "% · " + bare(stake), "info");
 
         var r;
         try {
@@ -285,7 +291,11 @@
            worth interrupting for, because setting one is what you do INSTEAD
            of watching. Nothing else raises it. */
         if (ended && ended.hit && global.PopupNotifications) {
-          var card = { profit: totals.profit, trades: totals.trades };
+          var card = {
+            profit: totals.profit,
+            trades: totals.trades,
+            currency: host && host.currency && host.currency()
+          };
           if (ended.hit === "tp") global.PopupNotifications.showTakeProfit(card);
           else if (ended.hit === "funds") global.PopupNotifications.showNeedsDeposit();
           else global.PopupNotifications.showStopLoss(card);

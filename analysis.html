@@ -68,7 +68,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <select class="fld-i" id="account"></select>
       </label>
       <label class="fld">
-        <span class="fld-k">Stake (USD)</span>
+        <span class="fld-k">Stake</span>
         <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
       </label>
       <label class="fld">
@@ -133,12 +133,12 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <ul class="txn-rows" data-rows><li class="tx-none">No transactions yet.</li></ul>
 
     <div class="sum">
-      <div class="sum-c"><span class="sum-k">Total stake</span><span class="sum-v" data-stake>0.00 USD</span></div>
-      <div class="sum-c"><span class="sum-k">Total payout</span><span class="sum-v" data-payout>0.00 USD</span></div>
+      <div class="sum-c"><span class="sum-k">Total stake</span><span class="sum-v" data-stake>&mdash;</span></div>
+      <div class="sum-c"><span class="sum-k">Total payout</span><span class="sum-v" data-payout>&mdash;</span></div>
       <div class="sum-c"><span class="sum-k">No. of runs</span><span class="sum-v" data-runs>0</span></div>
       <div class="sum-c"><span class="sum-k">Contracts lost</span><span class="sum-v" data-lost>0</span></div>
       <div class="sum-c"><span class="sum-k">Contracts won</span><span class="sum-v" data-won>0</span></div>
-      <div class="sum-c"><span class="sum-k">Total profit/loss</span><span class="sum-v" data-pl>0.00 USD</span></div>
+      <div class="sum-c"><span class="sum-k">Total profit/loss</span><span class="sum-v" data-pl>&mdash;</span></div>
     </div>
 
     <button class="btn txn-reset" data-reset type="button">Reset</button>
@@ -210,6 +210,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 
 <script src="/alert/alert.js"></script>
 <script src="/deriv.js"></script>
+<script src="/currency.js"></script>
 <script src="/prefs.js"></script>
 <script src="/analysis/contracts.js"></script>
 <script src="/analysis/session.js"></script>

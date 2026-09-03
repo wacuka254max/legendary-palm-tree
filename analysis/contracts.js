@@ -86,12 +86,17 @@
     var t = TYPES[opts.type];
     if (!t) throw new Error("Unknown trade type.");
 
+    /* At the CURRENCY's precision, not two places. A BTC stake of 0.00000023
+       rounded to two is "0.00", which Deriv refuses — see currency.js. */
+    var cur = opts.currency || "USD";
     var req = {
       proposal: 1,
-      amount: Number(opts.stake).toFixed(2),
+      amount: global.EvieCurrency
+        ? global.EvieCurrency.amount(opts.stake, cur)
+        : Number(opts.stake).toFixed(2),
       basis: "stake",
       contract_type: t.contract,
-      currency: opts.currency || "USD",
+      currency: cur,
       duration: 1,
       duration_unit: "t",
       underlying_symbol: opts.market

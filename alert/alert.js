@@ -51,10 +51,16 @@
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  function money(n) {
+  /* The account's own currency at its own precision: a euro account showing
+     a dollar figure, or a BTC one rounded to cents, is a lie about money in
+     the one place it matters most. */
+  function money(n, cur) {
     var v = Number(n);
     if (!isFinite(v)) return null;
-    return (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(2);
+    var abs = global.EvieCurrency
+      ? global.EvieCurrency.bare(Math.abs(v), cur)
+      : Math.abs(v).toFixed(2);
+    return (v >= 0 ? "+" : "−") + abs;
   }
 
   function figure(key, value) {
@@ -83,7 +89,7 @@
 
     details = details || {};
     var figs = "";
-    if (details.profit != null && money(details.profit) != null) figs += figure("profit", money(details.profit));
+    if (details.profit != null && money(details.profit, details.currency) != null) figs += figure("profit", money(details.profit, details.currency));
     if (details.trades != null) figs += figure("trades", details.trades);
     if (details.time) figs += figure("time", details.time);
 

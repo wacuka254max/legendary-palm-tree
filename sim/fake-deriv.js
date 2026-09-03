@@ -247,7 +247,23 @@
 
 
 
-  function round2(n) { return Math.round(n * 100) / 100; }
+  function money(n) {
+    return global.EvieCurrency
+      ? global.EvieCurrency.amount(n, currency)
+      : Number(n || 0).toFixed(2);
+  }
+
+  /* Deriv rounds money at the CURRENCY's precision, and so does this. Two
+     places is right for the fiat and stablecoin accounts and ruinous for the
+     crypto ones: a BTC balance of 0.005 rounded to two is 0.00, so the
+     account emptied itself on the first trade and every payout came back as
+     nothing. Named round2 still because that is what it is on a dollar
+     account, which is nearly all of them. */
+  function round2(n) {
+    var d = global.EvieCurrency ? global.EvieCurrency.digits(currency) : 2;
+    var f = Math.pow(10, d);
+    return Math.round(n * f) / f;
+  }
 
   /* ── the socket ──────────────────────────────────────────────────────────
    *
@@ -486,7 +502,7 @@
         id: id,
         ask_price: stake,
         payout: payoutFor(req.contract_type, barrier, stake),
-        display_value: stake.toFixed(2),
+        display_value: money(stake),
         longcode: "Simulated contract."
       }
     });
@@ -516,8 +532,8 @@
         echo_req: req,
         error: {
           code: "InsufficientBalance",
-          message: "Your account balance (" + balance.toFixed(2) + " " + currency +
-            ") is insufficient to buy this contract (" + price.toFixed(2) + " " + currency + ")."
+          message: "Your account balance (" + money(balance) + " " + currency +
+            ") is insufficient to buy this contract (" + money(price) + " " + currency + ")."
         }
       });
     }

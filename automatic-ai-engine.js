@@ -737,7 +737,11 @@
 
       const proposal = {
         proposal: 1,
-        amount: this.currentStake.toFixed(2),
+        /* At the CURRENCY's precision. Two places turns a BTC stake into
+           "0.00", which Deriv refuses — see currency.js. */
+        amount: window.EvieCurrency
+          ? window.EvieCurrency.amount(this.currentStake, this.accountCurrency)
+          : this.currentStake.toFixed(2),
         basis: 'stake',
         contract_type: contractType,
         currency: this.accountCurrency || 'USD',
@@ -799,7 +803,9 @@
         const profit = parseFloat(contract.profit) || 0;
         const stake = parseFloat(contract.buy_price) || this.currentStake;
 
-        this.totalProfit = parseFloat((this.totalProfit + profit).toFixed(2));
+        this.totalProfit = parseFloat(window.EvieCurrency
+          ? window.EvieCurrency.amount(this.totalProfit + profit, this.accountCurrency)
+          : (this.totalProfit + profit).toFixed(2));
         this.totalTrades += 1;
         this.tradeInProgress = false;
         this.awaitingBuy = false;
@@ -828,7 +834,11 @@
           this.consecutiveLosses += 1;
           
           // Apply martingale
-          this.currentStake = parseFloat((this.currentStake * (this.config.martingaleMultiplier || 3.1)).toFixed(2));
+          /* Rounded at the currency's precision too: at two places a crypto
+             ladder either never moves or collapses to zero. */
+          this.currentStake = parseFloat(window.EvieCurrency
+            ? window.EvieCurrency.amount(this.currentStake * (this.config.martingaleMultiplier || 3.1), this.accountCurrency)
+            : (this.currentStake * (this.config.martingaleMultiplier || 3.1)).toFixed(2));
           
           /* Enter recovery. The market and the side are NOT chosen here:
              queueNextTrade reads them fresh at the moment it buys, so deciding
@@ -873,7 +883,8 @@
           window.PopupNotifications.showTakeProfit({
             profit: stats.totalProfit,
             trades: stats.totalTrades,
-            time: stats.runningTime
+            time: stats.runningTime,
+            currency: stats.currency
           });
         }
         this.stop('Take profit reached. Bot stopped.', 'success');
@@ -886,7 +897,8 @@
           window.PopupNotifications.showStopLoss({
             profit: stats.totalProfit,
             trades: stats.totalTrades,
-            time: stats.runningTime
+            time: stats.runningTime,
+            currency: stats.currency
           });
         }
         this.stop('Stop loss hit. Bot stopped.', 'error');

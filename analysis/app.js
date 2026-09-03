@@ -139,8 +139,12 @@
      the ledger instead of keeping a second copy that can disagree with it. */
   var runSeq = 0;       // the last run number handed out
 
-  /** Deriv's floor. A stake under this is refused, so stop before sending. */
-  var MIN_STAKE = 0.35;
+  /** Deriv's floor for THIS account's currency, or null when it is not ours
+      to know — see currency.js. Null means send it and let Deriv answer,
+      which beats refusing a trade the account could have placed. */
+  function minStake() {
+    return window.EvieCurrency ? window.EvieCurrency.min(currencyOf()) : 0.35;
+  }
 
   var pending = {};            // sym -> needs repaint
   var painter = null;
@@ -153,8 +157,9 @@
 
   function money(n, cur) {
     if (n == null || isNaN(Number(n))) return "—";
+    var d = window.EvieCurrency ? window.EvieCurrency.digits(cur) : 2;
     return (cur || "USD") + " " + Number(n).toLocaleString(undefined, {
-      minimumFractionDigits: 2, maximumFractionDigits: 2
+      minimumFractionDigits: d, maximumFractionDigits: d
     });
   }
 
@@ -420,8 +425,14 @@
     var sym = b.getAttribute("data-sym");
     var stake = settings.martingale ? nextStake : settings.stake;
 
-    if (isNaN(stake) || stake < MIN_STAKE) {
-      return status("Deriv's minimum stake is " + MIN_STAKE.toFixed(2) + ".", "error");
+    /* A floor we know is worth checking before sending. One we do not — the
+       crypto currencies, whose floor moves with the rate — is Deriv's to
+       state: refusing here would block a trade the account could place. */
+    var floor = minStake();
+    if (isNaN(stake) || (floor != null && stake < floor)) {
+      return status(floor == null
+        ? "Enter a stake."
+        : "Deriv's minimum stake is " + floor + " " + currencyOf() + ".", "error");
     }
 
     /* One trade per click. The ladder lives here rather than inside the
@@ -634,8 +645,9 @@
     var el = $("next-stake");
     if (!settings.martingale) { el.textContent = ""; return; }
     var recovering = nextStake > settings.stake + 1e-9;
-    el.textContent = "Next stake " + nextStake.toFixed(2) +
-      (recovering ? " — recovering" : "");
+    el.textContent = "Next stake " + (window.EvieCurrency
+      ? window.EvieCurrency.bare(nextStake, currencyOf())
+      : nextStake.toFixed(2)) + (recovering ? " — recovering" : "");
     el.className = "next-stake" + (recovering ? " is-recovering" : "");
   }
 
@@ -650,8 +662,14 @@
 
     if (isNaN(ref) || ref < 0 || ref > 9) return status("Reference digit must be 0 to 9.", "error");
     if (isNaN(count) || count < 10) return status("Analysis count must be at least 10.", "error");
-    if (isNaN(stake) || stake < MIN_STAKE) {
-      return status("Deriv's minimum stake is " + MIN_STAKE.toFixed(2) + ".", "error");
+    /* A floor we know is worth checking before sending. One we do not — the
+       crypto currencies, whose floor moves with the rate — is Deriv's to
+       state: refusing here would block a trade the account could place. */
+    var floor = minStake();
+    if (isNaN(stake) || (floor != null && stake < floor)) {
+      return status(floor == null
+        ? "Enter a stake."
+        : "Deriv's minimum stake is " + floor + " " + currencyOf() + ".", "error");
     }
     if (isNaN(mult) || mult < 1) return status("Martingale must be 1 or more.", "error");
 
@@ -698,7 +716,9 @@
     showNextStake();
     status(settings.martingale
       ? "Martingale on — a loss multiplies the next stake by " + settings.multiplier + "."
-      : "Martingale off — the stake stays at " + settings.stake.toFixed(2) + ".", "success");
+      : "Martingale off — the stake stays at " + (window.EvieCurrency
+          ? window.EvieCurrency.bare(settings.stake, currencyOf())
+          : settings.stake.toFixed(2)) + ".", "success");
   });
 
   /* ── accounts ───────────────────────────────────────────────────────── */
@@ -713,6 +733,35 @@
       ? "Demo account — trades here are practice money."
       : "Real account — every trade placed here uses your own money.";
     $("risk").className = "risk" + (a.demo ? "" : " risk--real");
+
+    /* Everything that prints money follows the account, not the dollar: the
+       ledger's own figures, the stake field's floor and the size of one step
+       in it. A crypto account steps in hundred-millionths, not cents. */
+    applyCurrency(a.currency);
+  }
+
+  /** Point the page's money at whatever this account is denominated in. */
+  function applyCurrency(cur) {
+    if (txn && txn.setCurrency) txn.setCurrency(cur);
+
+    var stakeEl = $("stake");
+    if (stakeEl && window.EvieCurrency) {
+      var floor = window.EvieCurrency.min(cur);
+      /* No floor of ours where Deriv's moves with the rate: an input that
+         refuses the number the account can actually trade is worse than one
+         that lets Deriv answer. */
+      if (floor == null) stakeEl.removeAttribute("min");
+      else stakeEl.setAttribute("min", String(floor));
+      stakeEl.setAttribute("step", window.EvieCurrency.step(cur));
+    }
+
+    /* The field is titled with the currency, so nobody types dollars into a
+       euro account because the label told them to. */
+    var fld = stakeEl && stakeEl.closest(".fld");
+    var k = fld && fld.querySelector(".fld-k");
+    if (k) k.textContent = "Stake (" + (cur || "USD") + ")";
+
+    showNextStake();
   }
 
   var ACCOUNT_KEY = "evie_analysis_account";
@@ -946,6 +995,10 @@
   if (window.EvieBot) {
     window.EvieBot.attach({
       markets: MARKETS,
+
+      /* What this account is denominated in, so the bot's own figures and the
+         card it raises are not printed in dollars on a euro account. */
+      currency: currencyOf,
       isLive: function () { return session.isLive(); },
       busy: function () { return inFlight; },
       settings: settings,

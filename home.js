@@ -31,9 +31,10 @@
 
   function money(n, currency) {
     if (n == null) return "—";
+    var d = window.EvieCurrency ? window.EvieCurrency.digits(currency) : 2;
     return (currency || "USD") + " " + Number(n).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      minimumFractionDigits: d,
+      maximumFractionDigits: d
     });
   }
 
