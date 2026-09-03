@@ -521,8 +521,11 @@
    the roomier spacing elsewhere is untouched. */
 
 @media (min-width: 1000px) {
-  /* The nav is 68px; 100px of clearance was 30 more than it needed. */
-  .dash-main { padding-top: 84px; padding-bottom: 24px; }
+  /* No clearance at all. This carried 84px over from a site whose nav is
+     POSITION: FIXED and therefore floats over the page. Here the header is
+     sticky, so it already occupies its own space in the flow, and 84px on top
+     of it was 84px of nothing between the header and the first panel. */
+  .dash-main { padding-top: clamp(10px, 1.4vh, 16px); padding-bottom: 24px; }
 
   .tools-head { margin-bottom: 8px; }
   .tools { padding: 12px 16px; }

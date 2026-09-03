@@ -287,6 +287,14 @@
             return;
           }
           
+          /* An account that cannot cover the stake will not start covering it
+             by being retried. Stop, and say the one thing that fixes it. */
+          if (/insufficient/i.test(message)) {
+            if (window.PopupNotifications) window.PopupNotifications.showNeedsDeposit();
+            this.stop('Stopped — the account balance is insufficient.', 'error');
+            return;
+          }
+
           console.error('Deriv API error:', data.error);
           this.ui.showStatus(message, 'error');
 

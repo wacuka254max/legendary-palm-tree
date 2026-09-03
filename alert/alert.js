@@ -35,6 +35,14 @@
     '<path d="M9 20.5 16 9l7 11.5-7-4.2-7 4.2z" fill="#fff"/>' +
     "</svg>";
 
+  /* Deriv's own portfolio, where money is moved into the options account the
+     bots trade. The referral token is this platform's, so a deposit made from
+     here is still attributed to it — Deriv attribute a Trader's Hub deep link
+     by the `t` parameter appended to the destination, which is why this is not
+     the bare referral link: that would land them on the front page, one more
+     hop from the thing they came to do. */
+  var DEPOSIT_URL = "https://home.deriv.com/dashboard/portfolio?t=8XPRHR2Y8SN8";
+
   var open = null;   // only ever one: a second card over the first says nothing
 
   function esc(v) {
@@ -67,7 +75,7 @@
     if (e.key === "Escape") close();
   }
 
-  function show(kind, kicker, title, message, details) {
+  function show(kind, kicker, title, message, details, action) {
     if (!document.body) return null;
 
     // A run cannot hit two targets, but a stray second call must not stack.
@@ -92,7 +100,14 @@
         '<h2 class="tpop-t" id="tpop-t">' + esc(title) + "</h2>" +
         '<p class="tpop-p">' + esc(message) + "</p>" +
         (figs ? '<dl class="tpop-figs">' + figs + "</dl>" : "") +
-        '<button class="tpop-go" type="button" data-tpop-close>Done</button>' +
+        (action
+          ? '<div class="tpop-actions">' +
+              '<a class="tpop-go" href="' + esc(action.href) + '" target="_blank" rel="noopener noreferrer sponsored">' +
+                esc(action.label) +
+              "</a>" +
+              '<button class="tpop-quit" type="button" data-tpop-close>Not now</button>' +
+            "</div>"
+          : '<button class="tpop-go" type="button" data-tpop-close>Done</button>') +
       "</div>";
 
     el.addEventListener("click", function (e) {
@@ -110,7 +125,7 @@
     setTimeout(function () { el.classList.add("is-in"); }, 20);
 
     var go = el.querySelector(".tpop-go");
-    if (go) go.focus();
+    if (go && go.focus) go.focus();
 
     return el;
   }
@@ -129,6 +144,16 @@
     showStopLoss: function (details) {
       return show("loss", "Limit reached", "Stop loss hit",
         "Try the minimum stake on the next run — a smaller stake rides out more losing streaks.", details);
+    },
+
+    /* Not a result — a wall. The run stopped because the account cannot cover
+       the next stake, and no amount of waiting fixes that, so the card carries
+       the one thing that does. The figures are left off: what the session made
+       is beside the point when the answer is "top it up". */
+    showNeedsDeposit: function (details) {
+      return show("loss", "Bot stopped", "Your account balance is insufficient",
+        "There is not enough in the options account to place the next trade.",
+        details, { href: DEPOSIT_URL, label: "Deposit" });
     },
 
     close: function () { close(); }

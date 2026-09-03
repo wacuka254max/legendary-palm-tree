@@ -236,6 +236,14 @@
           }
           busyFor = 0;
 
+          /* An account that cannot cover the stake will not start covering it
+             by being asked eight times. Stop on the first refusal and say the
+             one thing that fixes it. */
+          if (/insufficient/i.test((e && e.message) || "")) {
+            ended = { msg: "Stopped — the account balance is insufficient.", kind: "error", hit: "funds" };
+            break;
+          }
+
           fails++;
           if (fails >= MAX_FAILS) {
             ended = {
@@ -279,6 +287,7 @@
         if (ended && ended.hit && global.PopupNotifications) {
           var card = { profit: totals.profit, trades: totals.trades };
           if (ended.hit === "tp") global.PopupNotifications.showTakeProfit(card);
+          else if (ended.hit === "funds") global.PopupNotifications.showNeedsDeposit();
           else global.PopupNotifications.showStopLoss(card);
         }
       }
