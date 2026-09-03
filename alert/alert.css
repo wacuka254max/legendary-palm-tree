@@ -1,0 +1,156 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   UPTICK — the one thing worth interrupting for.
+
+   A bot that stops itself has finished doing what it was told, and the person
+   who set it is usually not looking at the tab. A line in a status bar is not
+   enough for that; this is.
+
+   It fires on exactly two outcomes and no others: the take profit was reached,
+   or the stop loss was. Both are targets the user typed in — a run that ends
+   any other way says so in the status line, as before.
+
+   The colours are the site's own mint and danger, the ones the trade rows and
+   the session figures already use, so the card agrees with the ledger it is
+   summarising. Every page that raises this loads site.css, so they are taken
+   from there and follow the theme without a second set to keep in step.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.tpop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.tpop[hidden] { display: none; }
+
+/* Whichever outcome this is, in one place: everything below paints from it. */
+.tpop--win  { --tpop: var(--mint, #0f9d63); }
+.tpop--loss { --tpop: var(--danger, #d92d20); }
+
+.tpop-back {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.tpop.is-in .tpop-back { opacity: 1; }
+
+.tpop-card {
+  position: relative;
+  width: min(100%, 400px);
+  padding: clamp(24px, 4vw, 30px);
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  /* The one line of colour on the card's own edge: enough to say which of the
+     two this is before a word of it is read. */
+  border-top: 3px solid var(--tpop);
+  border-radius: var(--r, 16px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(12px) scale(0.97);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1.2, 0.4, 1);
+}
+.tpop.is-in .tpop-card { opacity: 1; transform: none; }
+
+/* The platform's own mark, ringed in the outcome's colour. */
+.tpop-mark {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--tpop) 12%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--tpop) 34%, transparent);
+}
+@supports not (background: color-mix(in srgb, red 50%, transparent)) {
+  .tpop-mark { background: var(--panel-2); box-shadow: 0 0 0 1px var(--line-hi); }
+}
+.tpop-mark svg { display: block; }
+
+.tpop-k {
+  margin: 16px 0 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tpop);
+}
+
+.tpop-t {
+  margin: 6px 0 0;
+  font-size: clamp(1.15rem, 3vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.tpop-p {
+  margin: 9px auto 0;
+  max-width: 30ch;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* What the run actually did. Three figures, no more: this is a summary of a
+   session, not a second copy of the ledger. */
+.tpop-figs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  padding: 14px 10px;
+  background: var(--panel-2);
+  border-radius: 12px;
+}
+.tpop-fig { min-width: 0; }
+.tpop-fig dt {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.tpop-fig dd {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.tpop-fig--profit dd { color: var(--tpop); }
+
+.tpop-go {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 20px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  color: #fff;
+  background: var(--tpop);
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: filter 0.18s ease, transform 0.12s ease;
+}
+.tpop-go:hover { filter: brightness(1.07); }
+.tpop-go:active { transform: translateY(1px); }
+
+@media (max-width: 380px) {
+  .tpop { padding: 12px; }
+  .tpop-figs { gap: 8px; padding: 12px 8px; }
+  .tpop-fig dd { font-size: 14px; }
+}
+
+/* Somebody who asked for less movement gets the card without the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .tpop-back, .tpop-card { transition: none; }
+  .tpop-card { transform: none; }
+}

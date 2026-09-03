@@ -142,16 +142,18 @@
     };
   }
 
-  /** Why the run should end, or null to carry on. Judged on the ledger. */
+  /** Why the run should end, or null to carry on. Judged on the ledger.
+      `hit` names the target so the run's end can raise the card for it. Only
+      the two limits carry one: they are the only endings the user asked for. */
   function stopReason(t) {
     var l = limits();
     var profit = t.profit || 0;
 
     if (l.sl != null && !isNaN(l.sl) && profit <= -Math.abs(l.sl)) {
-      return { msg: "Stop loss hit at " + profit.toFixed(2) + ".", kind: "warning" };
+      return { msg: "Stop loss hit at " + profit.toFixed(2) + ".", kind: "warning", hit: "sl" };
     }
     if (l.tp != null && !isNaN(l.tp) && profit >= Math.abs(l.tp)) {
-      return { msg: "Take profit hit at +" + profit.toFixed(2) + ".", kind: "success" };
+      return { msg: "Take profit hit at +" + profit.toFixed(2) + ".", kind: "success", hit: "tp" };
     }
 
     var noLimits = (l.tp == null || isNaN(l.tp)) && (l.sl == null || isNaN(l.sl));
@@ -280,6 +282,15 @@
         stopping = false;
         if (ended) say(ended.msg, ended.kind);
         else if (!el("bot-status").textContent) say("Stopped.", "info");
+
+        /* The status line is for somebody watching. A target the user set is
+           worth interrupting for, because setting one is what you do INSTEAD
+           of watching. Nothing else raises it. */
+        if (ended && ended.hit && global.PopupNotifications) {
+          var card = { profit: totals.profit, trades: totals.trades };
+          if (ended.hit === "tp") global.PopupNotifications.showTakeProfit(card);
+          else global.PopupNotifications.showStopLoss(card);
+        }
       }
     }
   }
