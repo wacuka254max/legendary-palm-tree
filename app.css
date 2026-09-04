@@ -34,19 +34,47 @@
 .app-sub { margin: 0; color: var(--text-2); font-size: 0.9rem; }
 
 /* Two columns across the whole width: the work on the left, the prices on the
-   right at a width a list of sparklines actually needs. */
+   right at a width a list of sparklines actually needs.
+
+   The grid takes the height left over, rather than the footer taking it. Those
+   are the only two candidates on a page shorter than the screen, and giving it
+   to the footer is what left a band of empty ground between the last card and
+   the small print. Given to the grid, the prices column grows into it and the
+   page ends where the screen does.
+
+   Stretched rather than start-aligned for the same reason: a column that is
+   only as tall as its content cannot grow into anything. */
 .app-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 380px);
+  /* minmax(0, 1fr), not the default auto: an auto row is never smaller than
+     its contents, so on a short window the prices panel pushed the page into
+     scrolling instead of scrolling inside itself. This lets the row shrink,
+     and the panel handles its own overflow. */
+  grid-template-rows: minmax(0, 1fr);
   gap: clamp(14px, 1.8vw, 22px);
-  align-items: start;
-  /* Space left over goes above the footer, not below it. */
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
   margin-bottom: clamp(12px, 1.6vh, 18px);
 }
-.app-col { min-width: 0; }
+/* A column too, so the account panel below the tools can be told to take the
+   rest of it. Otherwise the tools and the account sat at the top and the
+   bottom third of this side of the screen was empty ground while the prices
+   beside it ran the full height. */
+.app-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
 @media (max-width: 1100px) {
-  .app-grid { grid-template-columns: minmax(0, 1fr); }
+  /* Stacked, there is no second column to balance against and nothing above
+     the fold to protect, so everything goes back to its natural height and
+     the page scrolls the way a phone expects. Two rows now, both auto — the
+     single-row track above would have squeezed the first and left the second
+     to fend for itself. */
+  .app-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; flex: none; }
+  /* Nothing to fill, so nothing stretches. The account panel's own reset is
+     down beside its rules — put here it would lose to them, being earlier in
+     the file at the same specificity. */
+  .app-col { display: block; }
 }
 
 /* ── The balance, top right ───────────────────────────────────────────── */
@@ -149,7 +177,15 @@
 
 /* ── Account panel ────────────────────────────────────────────────────── */
 
+/* Fills what the tools above it leave, and is a column itself so the accounts
+   can take the slack while the note and the transfer link stay put at the
+   foot of the card. A short portfolio then reads as a panel with room in it
+   rather than as a card that stopped early. */
 .acctp {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   margin-top: clamp(10px, 1.2vw, 14px);
   padding: clamp(14px, 1.5vw, 18px);
   background: var(--panel);
@@ -157,11 +193,24 @@
   border-radius: var(--r);
 }
 .acctp[hidden] { display: none; }
-.acctp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 11px; }
+.acctp-head { flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 11px; }
+/* The accounts take the slack, which is what holds the note and the transfer
+   link against the bottom of the card. A portfolio longer than the card is
+   tall grows the row and scrolls the page instead — the overflow here is a
+   guard against spilling out of the border, not the usual path. */
+.acctp-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
 .acctp-k { margin: 0 0 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
 .acctp-t { margin: 0; font-size: 0.98rem; font-weight: 650; letter-spacing: -0.02em; }
 .acctp-note { margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
 .acctp-note strong { color: var(--text-2); font-weight: 600; }
+
+/* Stacked, there is no column height to fill, so the card is as tall as what
+   is in it and nothing scrolls inside anything. Down here rather than up with
+   the grid's own reset: at the same specificity the rules above would win. */
+@media (max-width: 1100px) {
+  .acctp { display: block; flex: none; }
+  .acctp-body { overflow: visible; }
+}
 
 .grp + .grp { margin-top: 10px; }
 .grp-t {
@@ -214,6 +263,7 @@
 /* The note and the way out of it, on one line: two stacked blocks under the
    accounts cost a row the fold does not have. */
 .acctp-foot {
+  flex: none;   /* holds its place at the bottom of the card */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -237,14 +287,20 @@
 
 /* ── Prices ───────────────────────────────────────────────────────────── */
 
+/* A column itself, so the list below the heading can be told to take whatever
+   height the panel was given. */
 .markets {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;   /* so it can be shorter than its list and let it scroll */
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r);
   overflow: hidden;
 }
 .mk-head {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 9px;
@@ -268,15 +324,21 @@
   list-style: none;
   margin: 0;
   padding: 4px 8px 8px;
-  /* Ten markets is more than a laptop has room for beside the tools. The list
-     scrolls inside the panel so the page itself never has to. */
-  max-height: min(52vh, 460px);
+  /* Exactly the height the panel has, no more and no less. It used to be
+     capped at a flat 460px, which is a guess about the screen rather than a
+     measurement of it: on a laptop it was still too tall, and on a monitor the
+     list scrolled inside itself while a hundred and sixty pixels of the page
+     sat empty underneath. Now it is whatever is left after the heading, so ten
+     markets show without scrolling wherever there is room for ten, and it
+     scrolls where there is not. */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--line-hi) transparent;
 }
-@media (max-width: 1100px) { .mk-list { max-height: none; } }
+@media (max-width: 1100px) { .mk-list { flex: none; } }
 .mk {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 92px 62px;
