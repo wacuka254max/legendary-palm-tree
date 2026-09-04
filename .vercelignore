@@ -1,0 +1,3 @@
+# Kept out of the deployment: a maintenance script is not a page, and it
+# has no business being fetchable from the site it maintains.
+tools

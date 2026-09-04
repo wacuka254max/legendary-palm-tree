@@ -14,5 +14,7 @@ Disallow: /analysis.html
 Disallow: /analyss.html
 Disallow: /automatic-ai.html
 Disallow: /automatc-ai.html
+Disallow: /mt5.html
 Disallow: /sim/
 Disallow: /analysis/
+Disallow: /mt5/
