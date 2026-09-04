@@ -9,12 +9,10 @@
    Loaded after site.css, which holds the tokens, the buttons and the header.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* A column at least the height of the window, so the dotted ground covers the
-   screen on a short page. The footer is NOT pushed to the bottom of it: on a
-   tall monitor that opened a couple of hundred pixels of nothing between the
-   last card and the disclaimer, which reads as a page that failed to finish
-   loading rather than as room. It follows the content instead, and whatever
-   height is left over is simply ground below it. */
+/* A column the height of the window, so the footer sits at the bottom of the
+   screen rather than floating with eighty pixels of dead ground beneath it.
+   Short content pushes the space above the disclaimer, where it reads as room
+   rather than as an unfinished page. */
 .app { display: flex; flex-direction: column; min-height: 100svh; }
 /* The header is STICKY, not fixed, so it already takes its own space in the
    flow — the padding that used to be here was clearing a bar that needed no
@@ -42,8 +40,8 @@
   grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 380px);
   gap: clamp(14px, 1.8vw, 22px);
   align-items: start;
-  /* No margin of its own: the footer below owns the gap, so there is one
-     number to change rather than two that add up. */
+  /* Space left over goes above the footer, not below it. */
+  margin-bottom: clamp(12px, 1.6vh, 18px);
 }
 .app-col { min-width: 0; }
 
@@ -355,11 +353,9 @@
 /* The flash is in site.css: the landing page raises one too, and that is
    the only stylesheet it loads. */
 
-/* As small as a line of small print should be: it is a caution, not a
-   section. A fixed distance from whatever it follows, at every screen height
-   — not `margin-top: auto`, which hands the footer all the space the content
-   did not use. */
-.app-foot { margin-top: clamp(18px, 2.4vw, 28px); padding-top: 9px; border-top: 1px solid var(--line); }
+/* Pinned to the bottom by the auto margin, and as small as a line of small
+   print should be: it is a caution, not a section. */
+.app-foot { margin-top: auto; padding-top: 9px; border-top: 1px solid var(--line); }
 .disclaimer { margin: 0; font-size: 0.72rem; line-height: 1.5; color: var(--text-3); }
 
 /* No affordance on the door: a dotted underline would turn a private mode
