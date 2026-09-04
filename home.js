@@ -125,9 +125,8 @@
   function fillSheet() {
     if (!data) return;
     sheetBody.innerHTML = accountsHtml() +
-      '<p class="sheet-note">A bot can only trade the <strong>options</strong> account. ' +
-      "Money in a wallet or MT5 has to be moved across first, and an MT5 balance is " +
-      "not reported here at all.</p>";
+      '<p class="sheet-note">Balance missing? Transfer it to your <strong>options</strong> ' +
+      "account in your Deriv portfolio to see all of it here.</p>";
   }
 
   /* The panel carries its own note and buttons in the markup, so it only ever
