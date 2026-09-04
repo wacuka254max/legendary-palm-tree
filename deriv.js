@@ -98,6 +98,22 @@
   }
 
   /**
+   * Somebody who has just connected an account means to come back, and this is
+   * the one moment we know it. install.js reads the flag and opens the install
+   * offer by itself, so getting Uptick onto a phone stops depending on anybody
+   * noticing the button in the header.
+   *
+   * Only where there was no session already. The token refresh below saves a
+   * session too, and being asked to install every time one expired would be
+   * its own kind of rude.
+   */
+  function markFirstConnect() {
+    try {
+      if (!localStorage.getItem(SESSION_KEY)) localStorage.setItem("uptick_install_on_connect", "1");
+    } catch (e) { /* private mode — the header button still works */ }
+  }
+
+  /**
    * Is there a connection worth acting on?
    *
    * A session with a refresh token counts even once the access token has
@@ -185,6 +201,7 @@
       })
       .then(function (d) {
         if (!d || !d.access_token) throw new Error("no access token");
+        markFirstConnect();               // before the session is written
         saveSession({
           access_token: d.access_token,
           refresh_token: d.refresh_token || null,
