@@ -2,6 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": false,
   "trailingSlash": false,
+  "functions": {
+    "api/mt5/signals.js": { "maxDuration": 30 }
+  },
   "headers": [
     {
       "source": "/(.*)",
@@ -19,7 +22,7 @@
       ]
     },
     {
-      "source": "/(home|analysis|analyss|automatic-ai|automatc-ai).html",
+      "source": "/(home|analysis|analyss|automatic-ai|automatc-ai|mt5).html",
       "headers": [
         {
           "key": "Cache-Control",

@@ -133,17 +133,12 @@
   border-radius: 999px;
   white-space: nowrap;
 }
-.tag--off { color: var(--amber); border-color: var(--amber-edge); }
 
-/* Present, and plainly not ready. Dimmed rather than hidden, so it is clear
-   the tool exists and is coming. */
-.tool--off { opacity: 0.66; cursor: not-allowed; }
-.tool--off:hover { background: var(--panel); border-color: var(--line); }
 /* The MetaTrader mark is a wide wordmark, not a square glyph: the icon box
-   grows to fit it rather than squeezing it to 24x4. */
-.tool--off { grid-template-columns: auto minmax(0, 1fr); }
-.tool--off .tool-icon { grid-row: 1 / span 2; }
-.tool--off .tool-icon { width: auto; min-width: 38px; padding: 0 10px; }
+   grows to fit it rather than squeezing it to 24x4. The column stays `auto`
+   for that reason, and the arrow keeps its own. */
+.tool--logo { grid-template-columns: auto minmax(0, 1fr) auto; }
+.tool--logo .tool-icon { width: auto; min-width: 38px; padding: 0 10px; }
 .tool-logo { height: 16px; width: auto; max-width: 130px; object-fit: contain; }
 
 /* The MetaTrader wordmark ships white, which disappears on a light panel.

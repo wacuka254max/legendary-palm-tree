@@ -1,0 +1,435 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   UPTICK — MT5 automation.
+
+   The dotted field, the panels and the hairline borders all come from
+   site.css and app.css, so this page belongs to the site rather than
+   resembling it. Everything here is a token, which is why one set of rules
+   covers both grounds: dark is what the tokens are, light is the same page
+   with them swapped underneath it.
+
+   Violet is the accent, as everywhere else — it carries "running", "chosen"
+   and "buy". Mint is the target and red is the stop, because those are the
+   two numbers on a trading page that must never be mistaken for each other.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── The eyebrow ──────────────────────────────────────────────────────────
+   Where you are on the left, when the market was last read on the right. */
+
+.mt5-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.mt5-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  color: var(--text);
+}
+.mt5-crumb svg { color: var(--violet); }
+
+.mt5-eyebrow-r {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.mt5-stamp { font-size: 11.5px; color: var(--text-3); }
+.mt5-stamp[hidden] { display: none; }
+
+/* The refresh arrow turns while a scan is in flight — the only motion on the
+   page, and the only thing that says the button did anything. */
+.is-busy #refresh-icon { animation: mt5-spin 0.9s linear infinite; }
+@keyframes mt5-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .is-busy #refresh-icon { animation: none; opacity: 0.5; }
+}
+
+.mt5-intro { max-width: 640px; }
+
+.mt5-t {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 1.95rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.mt5-lede {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+
+.mt5-err {
+  margin: 18px 0 0;
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--danger);
+  background: var(--danger-tint);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-sm);
+}
+.mt5-err[hidden] { display: none; }
+
+/* ── The three steps of the page ──────────────────────────────────────────
+   Numbered, because the order matters: there is nothing to pick a risk
+   profile for until the file is installed. */
+
+.mt5-sec { margin-top: clamp(20px, 2.6vw, 30px); }
+
+.mt5-sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.mt5-n {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--violet);
+}
+
+.mt5-k {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.mt5-meta {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+.mt5-panel {
+  margin-top: 14px;
+  padding: clamp(14px, 1.6vw, 20px);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+/* ── 1 · install ────────────────────────────────────────────────────── */
+
+.mt5-get {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+.mt5-get-s { font-size: 12px; color: var(--text-3); }
+
+.mt5-steps {
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+.mt5-steps li {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+.mt5-steps b { color: var(--text); font-weight: 650; }
+
+.mt5-step-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  margin-top: 1px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--violet-hi);
+  background: var(--violet-tint);
+  border: 1px solid var(--violet-edge);
+}
+
+/* A path or a setting name, set apart from the sentence around it. */
+.mt5 code {
+  padding: 1.5px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+
+.mt5-note {
+  margin: 18px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-3);
+}
+.mt5-note--loose { margin-top: 10px; }
+
+/* ── 2 · the risk profiles ────────────────────────────────────────────────
+   Three cards, one chosen. The chosen one is ringed and tinted rather than
+   filled: it has to stay readable, and it sits beside two others that must
+   stay readable too. */
+
+.mt5-profiles {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.mt5-prof {
+  padding: 16px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.mt5-prof:hover { background: var(--panel-2); border-color: var(--line-hi); }
+
+.mt5-prof.is-on {
+  background: var(--violet-tint);
+  border-color: var(--violet);
+  box-shadow: inset 0 0 0 1px var(--violet);
+}
+
+.mt5-prof-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mt5-prof-h svg { flex: none; color: var(--text-3); }
+.mt5-prof.is-on .mt5-prof-h svg { color: var(--violet-hi); }
+.mt5-prof-t { font-size: 0.98rem; font-weight: 650; letter-spacing: -0.02em; }
+.mt5-prof-tick { margin-left: auto; color: var(--violet-hi); display: none; }
+.mt5-prof.is-on .mt5-prof-tick { display: block; }
+
+.mt5-prof-s {
+  margin: 7px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.mt5-prof-r {
+  margin-top: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ── 3 · the signals ────────────────────────────────────────────────── */
+
+.mt5-sigs {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.mt5-sig {
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.mt5-sig-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mt5-sig-h > svg { flex: none; color: var(--text-3); }
+.mt5-sig-n { font-size: 0.95rem; font-weight: 650; letter-spacing: -0.02em; }
+
+.mt5-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.mt5-side--buy {
+  color: var(--violet-hi);
+  background: var(--violet-tint);
+  border: 1px solid var(--violet-edge);
+}
+.mt5-side--sell {
+  color: var(--danger);
+  background: var(--danger-tint);
+  border: 1px solid var(--danger);
+}
+
+.mt5-sig-why {
+  margin: 7px 0 0;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+/* Entry, stop and target side by side — the three numbers that describe the
+   whole trade, and the only ones worth reading at a glance. */
+.mt5-legs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  text-align: center;
+}
+.mt5-leg {
+  padding: 8px 4px;
+  background: var(--panel-2);
+  border-radius: 9px;
+}
+.mt5-leg-k {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.mt5-leg-v {
+  margin-top: 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  word-break: break-all;
+}
+.mt5-leg--stop .mt5-leg-v   { color: var(--danger); }
+.mt5-leg--target .mt5-leg-v { color: var(--mint); }
+
+.mt5-sig-f {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 10.5px;
+  color: var(--text-3);
+}
+.mt5-conf {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+.mt5-bar {
+  display: block;
+  width: 62px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+.mt5-bar span { display: block; height: 100%; border-radius: 999px; background: var(--violet); }
+.mt5-bar--sell span { background: var(--danger); }
+
+/* Nothing firing is a normal state, not a failure — so it gets a calm panel
+   saying what the engine is doing, rather than an empty space. */
+.mt5-quiet {
+  display: grid;
+  place-items: center;
+  margin-top: 14px;
+  padding: 30px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-2);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.mt5-quiet-in { display: inline-flex; align-items: center; gap: 9px; }
+.mt5-quiet-in svg { color: var(--violet); animation: mt5-spin 0.9s linear infinite; }
+
+/* Every market that did NOT fire, and why. Folded away, because it answers a
+   question most people will not ask — but when the page is quiet it is the
+   only thing that proves the bot is awake. */
+.mt5-aside {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}
+.mt5-aside summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.mt5-aside summary::marker { color: var(--text-3); }
+.mt5-aside-l {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 20px;
+  margin-top: 10px;
+}
+.mt5-aside-r {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.mt5-aside-s { font-weight: 650; color: var(--text-2); white-space: nowrap; }
+.mt5-aside-w { text-align: right; }
+
+/* ── Wide ────────────────────────────────────────────────────────────────
+   Past this the page is wider than two cards have any use for, and a signal
+   card stretched to 800px is mostly empty. */
+
+@media (min-width: 1500px) {
+  .mt5-sigs,
+  .mt5-aside-l { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Narrow ──────────────────────────────────────────────────────────────
+   Two columns of trade legs on a phone would wrap each price onto three
+   lines, so the cards go single-file well before that happens. */
+
+@media (max-width: 860px) {
+  .mt5-sigs { grid-template-columns: 1fr; }
+  .mt5-aside-l { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .mt5-profiles { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .mt5-eyebrow-r { width: 100%; margin-left: 0; }
+  .mt5-stamp { margin-right: auto; }
+  .mt5-meta { width: 100%; margin-left: 0; }
+}

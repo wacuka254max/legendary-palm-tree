@@ -1,0 +1,4 @@
+# MQL5 source is edited in MetaEditor on Windows and downloaded straight from
+# this repo, so it ships exactly as authored — CRLF, not normalised to LF. A
+# file with Unix endings opens as one long line in Notepad.
+*.mq5 -text
