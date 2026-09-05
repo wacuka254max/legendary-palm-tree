@@ -391,7 +391,7 @@
     if (req.forget) { delete this.subs[req.forget]; return; }
 
     /* Two pages talk to this server and they ask for prices differently. The
-       analysis page wants a window of history it can measure; Automatic AI
+       analysis page wants a window of history it can measure; Uptick Auto Ai
        wants the stream only. Same feed underneath either way. */
     if (req.ticks_history) return this.history(req);
     if (req.ticks) return this.ticks(req);
@@ -639,7 +639,7 @@
   /** The open contract, before it settles: this is where the entry spot lives. */
   FakeSocket.prototype.watch = function (req) {
     /* Without a contract id this is the blanket subscription — "tell me about
-       everything on this account". Automatic AI opens one at connect and
+       everything on this account". Uptick Auto Ai opens one at connect and
        expects settlements to arrive down it. */
     if (!req.contract_id) { this.watchAll = true; return; }
 
@@ -780,7 +780,7 @@
      connection up?". Without them the comparison is against undefined, every
      check answers "not open", and a page that is perfectly connected spends
      its life reconnecting. session.js compares against the number 1 and never
-     noticed; the Automatic AI engine uses the constant and could not trade. */
+     noticed; the Uptick Auto Ai engine uses the constant and could not trade. */
   FakeSocket.CONNECTING = 0;
   FakeSocket.OPEN = 1;
   FakeSocket.CLOSING = 2;

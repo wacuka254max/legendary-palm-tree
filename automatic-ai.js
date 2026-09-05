@@ -1,5 +1,5 @@
 /**
- * EVIE — Automatic AI, wired to the connected Deriv account.
+ * UPTICK — Uptick Auto Ai, wired to the connected Deriv account.
  *
  * The engine in automatic-ai-engine.js does the trading. This file is only the
  * plumbing between it and the account the user connected on the landing page:
@@ -166,7 +166,7 @@
 
   selectEl.addEventListener("change", describeChoice);
 
-  /* Three clicks on the "A" of Automatic bring the account picker onto the
+  /* Three clicks on the "U" of Uptick bring the account picker onto the
      page, demo included; three more take it away again. Hidden otherwise, so
      this page runs the real account and only the real account — picking a demo
      by accident is a session of practice trades somebody believes are real,
@@ -311,7 +311,7 @@
           window.location.replace("/");
           return;
         }
-        ui.showStatus((e && e.message) || "Could not start Automatic AI.", "error");
+        ui.showStatus((e && e.message) || "Could not start Uptick Auto Ai.", "error");
       });
   });
 
