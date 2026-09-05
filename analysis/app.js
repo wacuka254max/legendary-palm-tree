@@ -359,6 +359,13 @@
 
   session.onMessage(function (d) {
     if (d.error) {
+      /* AlreadySubscribed is not a failure. A reconnect re-sends the balance
+         subscription, and if the old one outlived the socket Deriv answers
+         "You are already subscribed to balance for account …" — which is Deriv
+         confirming we have exactly what we asked for. Showing it as a red error
+         told people something had gone wrong when nothing had, and named their
+         account back at them while doing it. Swallowed, deliberately. */
+      if (d.error.code === "AlreadySubscribed") return;
       if (!trading) status(d.error.message || "Deriv refused that request.", "error");
       return;
     }
@@ -837,6 +844,10 @@
   if (key) {
     key.addEventListener("click", function (e) {
       if (e.detail < 3) return;               // the browser counts them for us
+      /* And only inside practice mode. Off, this is three clicks on a letter
+         and nothing else — no hidden control on the site answers a gesture
+         from somebody who has not opened the mode on this device. */
+      if (!window.EvieMode || !window.EvieMode.on()) return;
       if (inFlight) return;                   // not mid-trade
 
       if (!showDemo && !allAccounts.some(function (a) { return a.demo; })) {

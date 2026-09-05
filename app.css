@@ -432,22 +432,45 @@
 .disclaimer { margin: 0; font-size: 0.72rem; line-height: 1.5; color: var(--text-3); }
 
 /* No affordance on the door: a dotted underline would turn a private mode
-   into a thing every visitor pokes at. */
+   into a thing every visitor pokes at. `cursor: text` is what the rest of a
+   heading already shows, so the letter gives nothing away by looking
+   selectable. */
 .door { cursor: text; }
-.sim-card { display: inline-flex; gap: 8px; margin-left: 14px; vertical-align: middle; }
-.sim-card[hidden] { display: none; }
-.sim-card a {
-  display: grid;
-  gap: 1px;
-  padding: 7px 13px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: var(--panel);
+
+/* The field the first visit asks for. No placeholder, no label, no width worth
+   noticing — it borrows the page's own panel colours so that a person who has
+   opened it by accident sees a stray box rather than a prompt. */
+.door-key {
+  width: 6.5em;
+  margin-left: 10px;
+  padding: 4px 9px;
   border: 1px solid var(--line-hi);
-  border-radius: 10px;
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  vertical-align: middle;
 }
-.sim-card a:hover { border-color: var(--violet); }
-.sim-card a span { font-size: 0.68rem; font-weight: 500; color: var(--text-3); }
+.door-key:focus { outline: none; border-color: var(--violet); }
+.door-key[hidden] { display: none; }
+
+/* The whole of the announcement: one second on the word, then gone. It fades
+   in and out rather than switching, so a repeat press reads as a deliberate
+   pulse instead of a flicker. Anybody not watching the word misses it, which
+   is the intention. */
+@keyframes door-lit {
+  0%   { color: var(--text); }
+  22%  { color: var(--violet-hi); }
+  70%  { color: var(--violet-hi); }
+  100% { color: var(--text); }
+}
+.app-t.lit { animation: door-lit 1s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-t.lit { animation-duration: 1ms; color: var(--violet-hi); }
+}
 
 /* ── The theme button ─────────────────────────────────────────────────────
    One icon, whichever one you are not looking at: a moon while the page is

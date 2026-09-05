@@ -11,10 +11,19 @@ Allow: /$
 
 Disallow: /home.html
 Disallow: /analysis.html
-Disallow: /analyss.html
 Disallow: /automatic-ai.html
-Disallow: /automatc-ai.html
 Disallow: /mt5.html
-Disallow: /sim/
 Disallow: /analysis/
 Disallow: /mt5/
+
+# Three paths are deliberately NOT listed here, and their absence is the point.
+# robots.txt is world-readable, so naming a page you would rather nobody found
+# is an index of exactly what to go and look at. All three carry noindex in
+# their own head, and the two pages send anyone who has not opened the mode
+# straight back, which keeps them out of results without publishing the
+# addresses.
+#
+# Disallow would in fact be the weaker option: a crawler told not to fetch a
+# page never reads the noindex on it, so a URL someone links to can still
+# surface. Letting it fetch, redirect and read the tag is what actually removes
+# them.

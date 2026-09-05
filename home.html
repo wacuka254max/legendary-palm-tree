@@ -65,11 +65,16 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <span>Deriv account connected</span>
   </div>
 
-  <!-- The "o" is the door to the simulator: three clicks on it and the card
-       appears. Unmarked on purpose — it is a private practice mode, not a
-       feature the dashboard offers. -->
+  <!-- Three clicks on the "o" work the practice mode. It carries no affordance
+       on purpose, and the field that appears the first time says nothing about
+       itself — no placeholder, no label, no message when it is wrong. Anybody
+       who has not been told is looking at the word Home.
+
+       There are no separate practice links any more. Once the mode is on, the
+       ordinary Analysis and Automatic AI tools below simply open the practice
+       pages instead; nothing on the dashboard reads differently. -->
   <div class="app-head">
-    <h1 class="app-t">H<span class="door" id="door">o</span>me<span class="sim-card" id="sim-card" hidden><a href="/analyss.html">Analysis<span>Simulated</span></a><a href="/automatc-ai.html">Automatic AI<span>Simulated</span></a></span></h1>
+    <h1 class="app-t" id="app-t">H<span class="door" id="door">o</span>me<input class="door-key" id="door-key" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" hidden /></h1>
     <p class="app-sub">Pick a tool. Everything runs on the account in the corner.</p>
   </div>
 
@@ -192,6 +197,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <script src="/currency.js"></script>
 <script src="/deriv.js"></script>
 <script src="/markets.js"></script>
+<script src="/unlock.js"></script>
 <script src="/home.js"></script>
 <script src="/theme.js"></script>
 <script src="/install.js"></script>

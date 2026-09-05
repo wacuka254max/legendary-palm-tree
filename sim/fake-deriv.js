@@ -78,6 +78,22 @@
 
   var CFG_KEY = "evie_sim_config";
 
+  /* The same remembered settings the setup card writes and the home header
+     types into. The balance is kept here as it moves, so a session picks up
+     where the last one stopped instead of starting over every time the tab is
+     closed. localStorage, deliberately: the rest of a simulation is per-tab
+     and starts clean, but the balance is the running total and losing it on a
+     refresh would make every number on the screen meaningless. */
+  var SETUP_KEY = "evie_sim_setup";
+
+  function persistBalance() {
+    try {
+      var c = JSON.parse(localStorage.getItem(SETUP_KEY) || "null") || {};
+      c.balance = balance;
+      localStorage.setItem(SETUP_KEY, JSON.stringify(c));
+    } catch (e) {}
+  }
+
   function config() {
     var d = {
       balance: 1000,
@@ -93,38 +109,88 @@
     return d;
   }
 
+  /* Draw a whole number >= 0 whose average is `mean`, memoryless — an
+     exponential, so most draws sit near the mean and the occasional one runs
+     long. That "occasional one" is the whole reason the scheduler is not a
+     shuffled block: a block repeats its own shape every ten trades, and after
+     two runs you can feel where the losses are coming. */
+  function spread(mean) {
+    if (!(mean > 0)) return 0;
+    return Math.floor(-Math.log(1 - Math.random()) * mean);
+  }
+
   function Plan(cfg) {
     this.cfg = cfg;
     this.n = 0;          // trades placed so far
-    this.runLeft = 0;    // losses still owed by a consecutive run
+
+    /* Losses per ten becomes an average spacing. Capped at five, because the
+       one rule this mode must never break is two losses back to back — there
+       is a whole separate mode for that — and one guaranteed win between every
+       pair puts the ceiling at five in ten. */
+    var per10 = Math.max(0, Math.min(5, Math.round(cfg.count || 0)));
+    this.rate = per10;
+    var spacing = per10 > 0 ? 10 / per10 : 0;
+
+    /* Two is the floor: one win has to sit between any two losses. Whatever is
+       left of the average spacing is the part allowed to wander.
+
+       Never let that wander reach zero. At five in ten the arithmetic leaves
+       nothing over, and a gap of exactly two every time is not a random
+       schedule at all — it is lose, win, lose, win, and twenty thousand runs
+       produced twelve distinct sessions between them. A small floor buys back
+       the variety for a rate a little under the asked-for five, which is the
+       right way round: the point of this mode is that you cannot predict it. */
+    this.tail = Math.max(0.35, spacing - 2);
+
+    /* WHERE THE FIRST LOSS LANDS.
+       The old scheduler shuffled ten flags, so trade one lost about a third of
+       the time and a session could open on a drawdown nobody asked for. A
+       first loss should be possible early and usually not be: this takes the
+       longer of two draws, which makes the shortest gap the least likely
+       outcome instead of an even bet. Trade 2 can still lose — it is simply
+       the rare case rather than the common one — and trade 1 never does unless
+       it was asked for outright. */
+    if (cfg.firstLoss) {
+      /* Trade 1 is already spoken for, so both schedules start AFTER it rather
+         than on it — otherwise the forced loss would be followed straight away
+         by the scheduled one (two in a row in the mode that forbids them), and
+         a run of three would come out as four. */
+      this.nextAt = 1 + 2 + spread(this.tail);
+      this.runAt = 1;
+    } else {
+      var lead = this.tail + 1;    // +1 so there is spread even at the cap
+      this.nextAt = 2 + Math.max(spread(lead), spread(lead));
+      /* The run mode used to start on trade 2 every single time. Same idea:
+         some wins first, then the drawdown, somewhere different each run. */
+      this.runAt = 2 + Math.max(spread(2.5), spread(2.5));
+    }
+
+    this.runLeft = 0;    // losses still owed by a run
     this.runDone = false;
-    this.block = [];     // the shuffled ten that random mode deals from
+
+    /* The forced first loss IS the opening rung of the run, not an extra one
+       stacked in front of it: "3 in a row" with the first trade losing means
+       trades 1, 2 and 3, not four losses. */
+    if (cfg.firstLoss && cfg.mode === "consecutive") {
+      this.runDone = true;
+      this.runLeft = Math.max(0, (cfg.count || 0) - 1);
+    }
   }
 
   Plan.prototype.loses = function () {
     var cfg = this.cfg;
-    var first = this.n === 0;
     this.n++;
+    var t = this.n;      // 1-based: t === 1 is the very first trade
 
-    if (first && cfg.firstLoss) {
-      // The forced first loss IS the start of the run, not an extra one.
-      if (cfg.mode === "consecutive") {
-        this.runLeft = Math.max(0, cfg.count - 1);
-        this.runDone = true;
-      }
-      return true;
-    }
+    /* Asked for outright, and it outranks everything below. */
+    if (t === 1 && cfg.firstLoss) return true;
 
-    /* None means none. The Automatic AI simulation still shows a recovery, but
-       it starts one rather than losing into it — see sim/ai-drills.js. */
     if (cfg.mode === "none") return false;
 
     if (cfg.mode === "consecutive") {
       if (this.runLeft > 0) { this.runLeft--; return true; }
-      if (this.runDone) return false;          // the drawdown has been and gone
-      /* Without a forced first loss the run starts on the second trade, so
-         there is a win to lose from — which is the case worth watching. */
-      if (this.n >= 2 && cfg.count > 0) {
+      if (this.runDone || cfg.count <= 0) return false;
+      if (t >= this.runAt) {
         this.runDone = true;
         this.runLeft = Math.max(0, cfg.count - 1);
         return true;
@@ -132,18 +198,13 @@
       return false;
     }
 
-    /* Random: n losses in every ten, shuffled, so the count is exact over a
-       block rather than merely likely. */
-    if (!this.block.length) {
-      var k = Math.max(0, Math.min(10, Math.round(cfg.count)));
-      var i;
-      for (i = 0; i < 10; i++) this.block.push(i < k);
-      for (i = this.block.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var t = this.block[i]; this.block[i] = this.block[j]; this.block[j] = t;
-      }
-    }
-    return this.block.shift();
+    /* Random: scheduled one loss at a time rather than dealt from a block, so
+       the gap between any two is at least two trades and never the same shape
+       twice. */
+    if (this.rate <= 0) return false;
+    if (t < this.nextAt) return false;
+    this.nextAt = t + 2 + spread(this.tail);
+    return true;
   };
 
   /* ── prices ──────────────────────────────────────────────────────────── */
@@ -247,18 +308,18 @@
 
 
 
-  function money(n) {
-    return global.EvieCurrency
-      ? global.EvieCurrency.amount(n, currency)
-      : Number(n || 0).toFixed(2);
-  }
-
   /* Deriv rounds money at the CURRENCY's precision, and so does this. Two
      places is right for the fiat and stablecoin accounts and ruinous for the
      crypto ones: a BTC balance of 0.005 rounded to two is 0.00, so the
      account emptied itself on the first trade and every payout came back as
      nothing. Named round2 still because that is what it is on a dollar
      account, which is nearly all of them. */
+  function money(n) {
+    return global.EvieCurrency
+      ? global.EvieCurrency.amount(n, currency)
+      : Number(n || 0).toFixed(2);
+  }
+
   function round2(n) {
     var d = global.EvieCurrency ? global.EvieCurrency.digits(currency) : 2;
     var f = Math.pow(10, d);
@@ -626,6 +687,14 @@
     var profit = round2(returned - c.price);
     balance = round2(balance + returned);
 
+    /* Written at settlement and nowhere else. The stake comes off the balance
+       at purchase, but a contract still in flight when the tab reloads is a
+       contract that never finished — persisting there would bank the stake
+       and never the payout, so a refresh mid-trade would quietly cost money
+       for a trade nobody saw the end of. Settling is the moment the number is
+       actually true. */
+    persistBalance();
+
     /* Announced down the per-contract subscription if one was opened, and down
        the blanket one if that is what the page is using. A real Deriv sends it
        on both; the page is responsible for counting it once. */
@@ -655,7 +724,12 @@
 
   /* ── standing in for deriv.js ────────────────────────────────────────── */
 
-  var ACCOUNT = "SIM000001";
+  /* Shaped like an ordinary Deriv options id, because it is shown on screen
+     beside the balance. "SIM000001" announced what the page was to anybody who
+     glanced at the account line, which defeats the point of a mode that is
+     supposed to look like every other day. The value is never compared against
+     anything — it is a label. */
+  var ACCOUNT = "CR7401882";
 
   function boot() {
     var cfg = config();

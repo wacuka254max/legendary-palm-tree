@@ -86,7 +86,12 @@ select.fld-i { appearance: none; cursor: pointer; }
 
 /* The one line that says whose money this is. */
 .risk { margin: 14px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-2); }
-.risk--real { color: var(--danger); }
+/* The real-account line reads as reassurance, not alarm: it is confirming the
+   trades are the genuine article on the account the trader chose. Red made a
+   correct, expected state look like something had gone wrong — and it is the
+   state most people are deliberately in. Mint is what the rest of the app uses
+   for "this is working". */
+.risk--real { color: var(--mint); }
 
 .status { margin: 8px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-2); }
 .status--success { color: var(--mint); }

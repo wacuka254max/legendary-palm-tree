@@ -58,12 +58,50 @@
 
   /* ── the one number on the page ─────────────────────────────────────────── */
 
+  /* ── the practice balance ───────────────────────────────────────────────
+     Shared with the setup card, deliberately: it reads the same remembered
+     figure this writes, and the simulation itself writes its running total
+     back to it as trades settle. One number, three places that touch it, so
+     none of them can fall out of step. localStorage, so it survives a refresh
+     and a closed tab the way the mode itself does. */
+
+  var SETUP_KEY = "evie_sim_setup";
+
+  function practiceBalance() {
+    try {
+      var c = JSON.parse(localStorage.getItem(SETUP_KEY) || "null");
+      var v = c && c.balance != null ? Number(c.balance) : null;
+      /* Zero is a real balance — the one a session that ran out leaves behind
+         — so it is shown rather than quietly replaced with the default. */
+      if (v != null && isFinite(v) && v >= 0) return v;
+    } catch (e) {}
+    return 1000;
+  }
+
+  function savePracticeBalance(v) {
+    try {
+      var c = JSON.parse(localStorage.getItem(SETUP_KEY) || "null") || {};
+      c.balance = v;
+      localStorage.setItem(SETUP_KEY, JSON.stringify(c));
+    } catch (e) {}
+  }
+
   function paint() {
+    if (Mode && Mode.on()) {
+      amountEl.textContent = money(practiceBalance(), "USD");
+      fillPanel();
+      return;
+    }
     amountEl.textContent = data && data.real ? money(data.real.amount, data.real.currency) : "—";
     fillPanel();
   }
 
   function fail(message) {
+    /* In practice mode the figure up there is not Deriv's to report on, so a
+       failed portfolio call must not blank it — the balance shown is the one
+       being typed and simulated with. */
+    if (Mode && Mode.on()) return;
+
     /* A dash, not the word "Unavailable". The header is where a balance goes,
        and a sentence sitting in it reads as a broken number rather than as an
        explanation — the explanation belongs in the panel, which has room for
@@ -178,26 +216,129 @@
     });
   });
 
-  /* ── the simulator's door ───────────────────────────────────────────────
+  /* ── the door ───────────────────────────────────────────────────────────
      Three clicks on the "o" of Home. `detail` counts the clicks in a run for
      us, so this is the browser's own idea of a triple click rather than a
      hand-rolled timer that would disagree with it.
 
-     Once open it stays open for the visit: someone who has found it should not
-     have to find it again on the way back from the simulation. */
+     What the three clicks do depends on what this device already knows:
+
+       never been let in  → the bare field appears. The right phrase lets the
+                            device in and switches the mode on in one go.
+       let in, mode off   → straight on. Nobody types the phrase twice.
+       let in, mode on    → off again.
+
+     Either way the only thing the screen says is a one-second flash on the
+     word, and on a phone a one-second buzz. The state itself is remembered for
+     good — a refresh, a closed tab or a closed browser all leave it exactly as
+     it was, and these same three clicks are the only way out. */
 
   var door = $("door");
-  var simCard = $("sim-card");
-  if (door && simCard) {
-    var DOOR_KEY = "evie_sim_door";
-    try { if (sessionStorage.getItem(DOOR_KEY) === "1") simCard.hidden = false; } catch (e) {}
+  var doorKey = $("door-key");
+  var title = $("app-t");
+  var Mode = window.EvieMode;
 
+  function applyMode() {
+    /* The tools do double duty rather than a second pair appearing beside
+       them. Only the destination moves — same label, same icon, same styling,
+       nothing added and nothing removed, so the dashboard reads identically
+       whichever way round it is. */
+    if (!Mode) return;
+    var live = Mode.on();
+    var a = document.querySelector('a.tool[href="/analysis.html"], a.tool[href="/analyss.html"]');
+    var b = document.querySelector('a.tool[href="/automatic-ai.html"], a.tool[href="/automatc-ai.html"]');
+    if (a) a.setAttribute("href", live ? "/analyss.html" : "/analysis.html");
+    if (b) b.setAttribute("href", live ? "/automatc-ai.html" : "/automatic-ai.html");
+
+    /* The number top right becomes typeable, and nothing about it moves —
+       contenteditable rather than an input, so it keeps the same font, weight,
+       colour and position and the header does not reflow the moment the mode
+       comes on. Off again and it is a plain read-only figure showing the real
+       balance. */
+    if (!amountEl) return;
+    amountEl.contentEditable = live ? "true" : "false";
+    amountEl.spellcheck = false;
+    if (!live) amountEl.removeAttribute("contenteditable");
+    paint();
+  }
+
+  function hideKey() {
+    if (!doorKey) return;
+    doorKey.value = "";
+    doorKey.hidden = true;
+  }
+
+  if (door && Mode) {
     door.addEventListener("click", function (e) {
       if (e.detail < 3) return;
-      simCard.hidden = false;
-      try { sessionStorage.setItem(DOOR_KEY, "1"); } catch (x) {}
+
+      if (!Mode.known()) {
+        if (!doorKey) return;
+        doorKey.hidden = false;
+        doorKey.focus();
+        return;
+      }
+
+      Mode.set(!Mode.on());
+      applyMode();
+      Mode.signal(title);
     });
   }
+
+  if (doorKey && Mode) {
+    doorKey.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") return hideKey();
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+
+      /* Wrong phrase: clear the box and say nothing. No message, no shake, no
+         attempt counter — the field must not confirm it is even a field worth
+         guessing at. */
+      if (!Mode.attempt(doorKey.value)) { doorKey.value = ""; return; }
+
+      hideKey();
+      applyMode();
+      Mode.signal(title);
+      noteAccounts();
+    });
+
+    /* Clicking away puts it back. Anybody who opened it by accident never
+       learns there was anything to open. */
+    doorKey.addEventListener("blur", hideKey);
+  }
+
+  /* Enter commits, Escape abandons. Both blur, and the blur is what saves —
+     so clicking away commits too, which is what people expect of a figure they
+     have just typed over. */
+  if (amountEl) {
+    amountEl.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); amountEl.blur(); }
+      else if (e.key === "Escape") { e.preventDefault(); paint(); amountEl.blur(); }
+    });
+
+    amountEl.addEventListener("blur", function () {
+      if (!Mode || !Mode.on()) return;
+      /* Strip whatever the formatter put in — the currency word, the thousands
+         separators — and keep the number. A value that parses to nothing, or to
+         less than a dollar, is not a balance worth starting from, so the old one
+         simply stays. */
+      var raw = String(amountEl.textContent || "").replace(/[^0-9.]/g, "");
+      var v = Number(raw);
+      if (!isFinite(v) || v < 1) return paint();
+      savePracticeBalance(Math.round(v * 100) / 100);
+      paint();
+    });
+  }
+
+  /* Which Deriv accounts were connected when this device was opened. Recorded
+     rather than used: there is no server, so this is a note about who, not a
+     second way in. */
+  function noteAccounts() {
+    if (!Mode || !data || !data.accounts) return;
+    Mode.note(data.accounts.map(function (a) { return a.id; }));
+  }
+
+  applyMode();
 
 
   /* ── reading it ─────────────────────────────────────────────────────────── */

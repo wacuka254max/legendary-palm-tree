@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Analysis simulation | Uptick</title>
+<title>Analysis | Uptick</title>
 <meta name="robots" content="noindex,nofollow" />
 <meta name="theme-color" content="#f7f7fb" />
 <link rel="icon" href="/favicon.ico" sizes="48x48" />
@@ -15,6 +15,18 @@
    first. Light is the default; dark is the option. */
 (function(){try{var t=localStorage.getItem("uptick_theme");
 document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){}})();
+</script>
+<script>
+/* The gate, before anything else on the page runs.
+   Reached without the mode on — a bookmark, a guessed URL, a back button
+   after switching it off — and this is simply not a page. It replaces rather
+   than assigns, so Back does not bounce between the two. Inline and first
+   because a redirect that waits on a downloaded script is a redirect that
+   flashes the page it was meant to prevent. */
+(function(){try{
+  if(localStorage.getItem("evie_ui_k")==="1"&&localStorage.getItem("evie_ui_m")==="1")return;
+}catch(e){}
+location.replace("/home.html");})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -31,7 +43,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
      Shown before the page runs. Nothing behind it has started: no socket, no
      ticks, no bot — so the balance and the run of losses are set before the
      first trade rather than being applied to one already in flight. -->
-<div class="setup" id="setup">
+<div class="setup" id="setup" hidden>
   <div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setup-t">
     <div class="setup-head">
       <div>
@@ -42,7 +54,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <p class="setup-k">Practice, with no money and no Deriv</p>
         <h1 class="setup-t" id="setup-t">Set up the simulation</h1>
       </div>
-      <a class="btn" href="/home.html">Home</a>
+      <button class="btn" id="sim-close" type="button">Close</button>
     </div>
 
     <div class="setup-body">
