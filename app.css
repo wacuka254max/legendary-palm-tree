@@ -31,7 +31,6 @@
   margin-bottom: clamp(10px, 1.3vw, 14px);
 }
 .app-t { margin: 0; font-size: clamp(1.35rem, 2.2vw, 1.7rem); font-weight: 700; letter-spacing: -0.03em; }
-.app-sub { margin: 0; color: var(--text-2); font-size: 0.9rem; }
 
 /* Two columns across the whole width: the work on the left, the prices on the
    right at a width a list of sparklines actually needs.
