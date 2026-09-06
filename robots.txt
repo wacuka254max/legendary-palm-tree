@@ -1,10 +1,13 @@
 # Uptick
 #
-# The front door is meant to be found. Everything behind the broker connection
-# is somebody's own dashboard and is marked noindex in its own head.
+# Nothing here is meant to be found yet. This site has no domain of its own,
+# and it is a near-mirror of Evie Trader, which does — indexed together on
+# identical wording they would be duplicate content competing with each other.
+# So the front door carries noindex,follow and everything behind the broker
+# connection carries noindex,nofollow.
 #
-# No sitemap line yet: this site has no domain of its own. Add one here, and a
-# canonical to each page, the moment it does.
+# The day a real domain points here: flip index.html back to index,follow, add
+# a Sitemap line below, and give each page a canonical.
 
 User-agent: *
 Allow: /

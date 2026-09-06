@@ -6,7 +6,20 @@
 <title>Uptick | Fully Automated AI Trading Bots</title>
 <meta name="description" content="Uptick runs fully automated AI trading bots on a broker account you already own. Set a target and a limit, and let it trade. Free, no subscription, no deposits, no code." />
 <meta name="theme-color" content="#07070a" />
-<meta name="robots" content="index,follow,max-image-preview:large" />
+<!-- noindex until Uptick has a domain of its own.
+
+     This site is a near-mirror of Evie Trader, and Evie has the real domain.
+     Indexed together on identical wording they are duplicate content competing
+     with each other, and the one that would lose is the one still fighting to
+     get into Bing. A vercel.app subdomain was never going to rank on these
+     terms anyway, so there is nothing being given up here.
+
+     `follow` is deliberate: the page stays out of results, but crawlers still
+     walk its links, so nothing downstream is orphaned.
+
+     Flip this back to index,follow the day a real domain points here, and add
+     the sitemap line and canonicals that robots.txt already asks for. -->
+  <meta name="robots" content="noindex,follow" />
 
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Uptick" />
