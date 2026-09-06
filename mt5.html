@@ -68,7 +68,10 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
   </div>
 
   <div class="mt5-intro">
-    <h1 class="mt5-t">Deriv MT5 — full automation</h1>
+    <!-- The "e" of Deriv is the way into the terminal: two clicks and it
+         opens. Unmarked, like every other door on the site, and inert unless
+         the mode is already on. -->
+    <h1 class="mt5-t">D<span class="door" id="term-door">e</span>riv MT5 — full automation</h1>
     <p class="mt5-lede">
       One Expert Advisor that trades forex and Volatility Indices automatically on your
       own MetaTrader 5 terminal. Install it once on a single chart and it handles the rest.
@@ -142,6 +145,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 
 </main>
 
+<script src="/unlock.js"></script>
 <script src="/mt5/mt5.js"></script>
 <script src="/theme.js"></script>
 </body>

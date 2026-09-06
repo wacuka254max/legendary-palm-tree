@@ -1,0 +1,542 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   UPTICK — the terminal.
+
+   Built from screenshots of the app rather than from memory, which is what the
+   first attempt was and why it was wrong. The things that actually define the
+   screen, in the order they matter:
+
+     · Trade is three DOTTED-LEADER rows — Balance, Equity, Free margin — not
+       a headline figure with a stat grid under it.
+     · The tab bar is Quotes · Charts · [balance pill] · History · Messages.
+       The middle tab has no word under it; it carries the account balance in a
+       grey pill, and only the icon turns blue when it is active.
+     · A quote is written 1.16 13 ², with the last two significant digits large
+       and the final one raised. That typography is the single most recognisable
+       thing about the app.
+     · The ground is pure black, not a dark grey, and the chrome sits on it with
+       no borders except hairline dividers.
+
+   Light mode mirrors it on white. Both are driven by the site's own
+   data-theme attribute, so the terminal follows whatever the visitor chose.
+
+   Icons are drawn here, our own strokes. No MetaQuotes mark appears anywhere.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.tm, .tm * { box-sizing: border-box; }
+
+.tm {
+  --bg:      #000000;
+  --raise:   #0e0e0e;   /* the drawer and the sheets */
+  --line:    #2a2a2a;
+  --ink:     #ffffff;
+  --ink-2:   #9a9a9a;   /* labels, times, the L/H pair */
+  --ink-3:   #6a6a6a;   /* the leader dots */
+  --blue:    #0a84ff;
+  --red:     #ff453a;
+  --teal:    #26a69a;   /* rising candles */
+  --pill:    #2c2c2e;
+
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 15px/1.3 Roboto, -apple-system, "Segoe UI", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+.tm[hidden] { display: none; }
+
+:root[data-theme="light"] .tm {
+  --bg: #ffffff;
+  --raise: #ffffff;
+  --line: #e2e2e2;
+  --ink: #000000;
+  --ink-2: #767676;
+  --ink-3: #b8b8b8;
+  --blue: #0a6ed1;
+  --red: #d92d20;
+  --pill: #ececec;
+}
+
+.tm .num { font-variant-numeric: tabular-nums; }
+
+.tm-shell {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* On a desktop the app stays phone-shaped rather than stretching a tab bar
+   across a monitor. */
+@media (min-width: 620px) {
+  .tm { display: grid; place-items: center; background: #2a2a2a; }
+  .tm-shell {
+    position: relative;
+    inset: auto;
+    width: 400px;
+    height: min(880px, 96vh);
+    border-radius: 12px;
+    box-shadow: 0 20px 64px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* ── the top bar ─────────────────────────────────────────────────────────
+   Hamburger, title, then whatever that screen's actions are. History puts a
+   grey second line under its title, so the title block is two lines tall and
+   the bar sizes to it. */
+
+.tm-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 6px;
+  min-height: 52px;
+  background: var(--bg);
+}
+.tm-ico {
+  display: grid;
+  place-items: center;
+  width: 44px; height: 44px;
+  flex: 0 0 44px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.tm-ico:active { opacity: 0.55; }
+.tm-h { flex: 1; min-width: 0; padding-left: 8px; }
+.tm-h b { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.tm-h span { display: block; font-size: 15px; color: var(--ink-2); }
+.tm-h span:empty { display: none; }
+/* The actions are a row. .tm-ico is a grid box, which is block-level, so
+   without this each screen's icons stack down the right-hand edge. */
+#tm-actions { display: flex; align-items: center; }
+/* Charts drops the title and spreads its controls across the whole bar. */
+.tm-bar--chart .tm-h { display: none; }
+.tm-bar--chart #tm-actions { flex: 1; justify-content: space-around; }
+.tm-tf { width: auto; flex: 0 0 auto; padding: 0 8px; font-size: 17px; font-weight: 500; }
+
+/* ── the body ────────────────────────────────────────────────────────────── */
+
+.tm-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.tm-pane { display: none; }
+.tm-pane.on { display: block; }
+
+/* ── dotted leader rows ──────────────────────────────────────────────────
+   Balance ......... 100 000.00. The dots are a repeating radial gradient on a
+   flexible middle element, so they fill exactly the gap that is left however
+   long the label and the figure are. */
+
+.tm-lead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 16px;
+}
+.tm-lead dt { font-size: 17px; font-weight: 700; white-space: nowrap; }
+.tm-lead i {
+  flex: 1;
+  height: 4px;
+  transform: translateY(-3px);
+  background-image: radial-gradient(circle, var(--ink-3) 1.1px, transparent 1.2px);
+  background-size: 8px 4px;
+  background-repeat: repeat-x;
+}
+.tm-lead dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tm-rule { height: 1px; margin: 6px 0 0; background: var(--line); }
+
+/* ── Quotes ──────────────────────────────────────────────────────────────
+   Three lines on the left — change, symbol, time and spread — against the two
+   prices on the right with the day's low and high beneath them. */
+
+.tm-q {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  padding: 9px 16px 10px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.tm-q:active { background: var(--pill); }
+.tm-q-chg { grid-column: 1; font-size: 13px; color: var(--ink-2); }
+.tm-q-chg b { font-weight: 400; }
+.tm-q-name { grid-column: 1; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+.tm-q-meta { grid-column: 1; font-size: 13px; color: var(--ink-2); }
+.tm-q-meta i { font-style: normal; margin: 0 4px 0 7px; letter-spacing: -0.1em; }
+
+.tm-q-px { grid-column: 2; grid-row: 1 / span 2; align-self: center; display: flex; gap: 14px; }
+.tm-q-lh { grid-column: 2; grid-row: 3; display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); }
+.tm-q-lh span { flex: 1; text-align: left; }
+
+/* The signature: 1.16 **13** ². The middle pair is the size of the row, the
+   head is a size down, and the final digit is raised and small. */
+.px { font-size: 17px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.px b { font-size: 26px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+.px sup { font-size: 14px; font-weight: 700; color: var(--ink); vertical-align: super; line-height: 0; }
+.up { color: var(--blue); }
+.down { color: var(--red); }
+
+/* ── Trade: the position rows under the three figures ───────────────────── */
+
+.tm-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.tm-row:active { background: var(--pill); }
+.tm-row-h { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.tm-row-h b { font-size: 17px; font-weight: 700; }
+.tm-row-h span { font-size: 14px; }
+.tm-row-sub { font-size: 13.5px; color: var(--ink-2); }
+.tm-row-v { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-size: 17px; font-weight: 700; text-align: right; }
+
+.tm-empty { padding: 40px 24px; text-align: center; color: var(--ink-2); font-size: 15px; }
+
+/* ── History: the three segments ─────────────────────────────────────────── */
+
+.tm-seg { display: grid; grid-template-columns: repeat(3, 1fr); }
+.tm-seg button {
+  padding: 13px 4px 11px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.tm-seg button.on { color: var(--ink); border-bottom-color: var(--blue); }
+
+/* A history line: name on the left, the stamp and the figure stacked right. */
+.tm-hrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 12px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.tm-hrow b { font-size: 17px; font-weight: 500; }
+.tm-hrow .t { grid-column: 2; font-size: 13px; color: var(--ink-2); text-align: right; }
+.tm-hrow .v { grid-column: 2; font-size: 16px; font-weight: 500; text-align: right; }
+.tm-hrow .s { grid-column: 1; font-size: 13.5px; color: var(--ink-2); }
+
+/* ── Messages ────────────────────────────────────────────────────────────── */
+
+#tm-pane-messages.on { display: flex; flex-direction: column; height: 100%; }
+.tm-msg { flex: 1; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 40px 24px 24px; }
+.tm-msg svg { color: #3a3a3c; }
+:root[data-theme="light"] .tm-msg svg { color: #d4d4d4; }
+.tm-msg p { margin: 0; font-size: 16px; color: var(--ink-2); }
+.tm-auth { display: flex; gap: 12px; padding: 16px; margin-top: auto; }
+.tm-auth button {
+  flex: 1;
+  padding: 15px 8px;
+  border: 0;
+  border-radius: 26px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.tm-auth .reg { flex: 1.6; background: var(--blue); color: #fff; }
+.tm-auth .sig { background: var(--pill); color: var(--ink); }
+
+/* ── Charts ──────────────────────────────────────────────────────────────── */
+
+.tm-chart { position: relative; height: 100%; }
+/* The plot only. As a descendant rule this also matched the little caret
+   drawn inside the overlay and stretched it to the full width. */
+.tm-chart > svg { display: block; width: 100%; height: auto; }
+.tm-chart-tag {
+  position: absolute;
+  top: 8px; left: 12px;
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: nowrap;   /* the symbol, its caret and the timeframe are one line */
+  pointer-events: none;
+}
+.tm-chart-tag b { display: block; color: var(--blue); font-weight: 500; }
+.tm-chart-tag b .c { margin: 0 5px; color: var(--ink-2); vertical-align: middle; }
+/* The timeframe is white; only the symbol is blue. */
+.tm-chart-tag b .tf { color: var(--ink); }
+/* Direct children only. As a descendant rule this also caught the caret span
+   inside the symbol line, which turned it into a block and broke "EURUSD ▾ M5"
+   across three lines. */
+.tm-chart-tag > span { display: block; color: var(--ink); }
+
+/* ── the tab bar ─────────────────────────────────────────────────────────
+   Five columns. The middle one is the balance and carries no word. */
+
+.tm-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tm-tab {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 8px 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.tm-tab.on { color: var(--blue); }
+.tm-tab svg { display: block; }
+.tm-bal {
+  padding: 2px 11px;
+  border-radius: 11px;
+  background: var(--pill);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* ── the drawer ──────────────────────────────────────────────────────────
+   Slides in from the left over about seven eighths of the width, so a strip
+   of the screen behind it stays visible — which is how you know it is a
+   drawer and not a screen. */
+
+.tm-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.55);
+}
+.tm-scrim[hidden] { display: none; }
+
+.tm-drawer {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 89%;
+  max-width: 348px;
+  /* The same ground as the page, not a lifted panel — in the app the drawer
+     is distinguished by the strip of screen left beside it, nothing else. */
+  background: var(--bg);
+  overflow-y: auto;
+  animation: tm-in 0.17s ease-out;
+}
+@keyframes tm-in { from { transform: translateX(-16px); opacity: 0.5; } }
+
+.tm-acct { position: relative; padding: 13px 16px 0; overflow: hidden; }
+/* Below the ribbon rather than under it. */
+#tm-add { margin-top: 20px; }
+.tm-acct-r { display: flex; align-items: flex-start; gap: 15px; }
+/* Its own box rather than a flex item that can be squeezed: the balls fill the
+   square, and `flex-shrink` at 0 keeps a long account name from crushing it. */
+.tm-avatar { flex: 0 0 44px; width: 44px; height: 44px; display: block; }
+.tm-acct-t { flex: 1; min-width: 0; padding-top: 2px; }
+.tm-acct-t b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.tm-acct-t span {
+  display: block;
+  font-size: 15px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tm-manage {
+  display: block;
+  padding: 12px 0 14px 60px;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font: inherit;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+/* The corner ribbon. Rotated through the corner rather than drawn as a
+   triangle, so the word sits on it the way it does in the app. */
+.tm-demo {
+  position: absolute;
+  top: 12px; right: -32px;
+  width: 108px;
+  padding: 2px 0;
+  transform: rotate(45deg);
+  background: #35a600;
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+}
+
+.tm-menu { padding: 4px 0 20px; border-top: 1px solid var(--line); }
+.tm-item {
+  display: flex;
+  align-items: center;
+  gap: 27px;
+  width: 100%;
+  padding: 11px 20px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.tm-item:active { background: var(--pill); }
+.tm-item svg { flex: 0 0 22px; width: 22px; height: 22px; color: var(--ink); }
+.tm-item .grow { flex: 1; }
+.tm-badge {
+  min-width: 24px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: var(--red);
+  color: #fff;
+  font-size: 13px;
+  text-align: center;
+}
+.tm-ads {
+  padding: 2px 10px;
+  border: 1px solid var(--blue);
+  border-radius: 12px;
+  color: var(--blue);
+  font-size: 12.5px;
+}
+
+/* ── sheets: the order ticket and the position menu ──────────────────────── */
+
+.tm-sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.55);
+}
+.tm-sheet[hidden] { display: none; }
+.tm-card { background: var(--raise); max-height: 94%; overflow-y: auto; }
+.tm-card--full { height: 100%; max-height: 100%; }
+
+.tm-fld {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.tm-fld label { font-size: 16px; color: var(--ink-2); }
+.tm-fld select,
+.tm-fld input {
+  flex: 1;
+  min-width: 0;
+  max-width: 56%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tm-fld select { text-align: left; }
+.tm-fld input:focus, .tm-fld select:focus { outline: none; border-color: var(--blue); }
+
+.tm-step { display: flex; align-items: center; }
+.tm-step button {
+  width: 42px; height: 40px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+.tm-step input { width: 92px; max-width: none; border-radius: 0; border-left: 0; border-right: 0; text-align: center; }
+.tm-step button:first-child { border-radius: 5px 0 0 5px; }
+.tm-step button:last-child { border-radius: 0 5px 5px 0; }
+
+.tm-pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+.tm-pair span { display: block; font-size: 12px; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.07em; }
+.tm-pair .sell .px b, .tm-pair .sell .px sup { color: var(--red); }
+.tm-pair .buy .px b, .tm-pair .buy .px sup { color: var(--blue); }
+.tm-pair .sp { font-size: 13px; color: var(--ink-2); }
+
+.tm-go { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px 18px; }
+.tm-go button {
+  padding: 15px 8px;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.tm-go .sell { background: var(--red); }
+.tm-go .buy { background: var(--blue); }
+
+.tm-list { padding: 4px 0 12px; }
+.tm-list button {
+  display: block;
+  width: 100%;
+  padding: 15px 20px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  text-align: left;
+  cursor: pointer;
+}
+.tm-list button:active { background: var(--pill); }
+.tm-list .danger { color: var(--red); }
+.tm-head { padding: 15px 20px 8px; font-size: 14px; color: var(--ink-2); border-bottom: 1px solid var(--line); }
+
+/* ── the toast ───────────────────────────────────────────────────────────── */
+
+.tm-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  z-index: 40;
+  transform: translate(-50%, 6px);
+  max-width: calc(100% - 32px);
+  padding: 11px 18px;
+  border-radius: 22px;
+  background: rgba(60, 60, 60, 0.96);
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.tm-toast.on { opacity: 1; transform: translate(-50%, 0); }

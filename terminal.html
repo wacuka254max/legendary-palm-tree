@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>Trade | Uptick</title>
+<meta name="robots" content="noindex,nofollow" />
+<meta name="theme-color" content="#000000" />
+<link rel="icon" href="/favicon.ico" sizes="48x48" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any" />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<script>
+/* Applied before paint: a saved dark choice must not flash a light page first.
+   Light is the default when nothing has been chosen. */
+(function(){try{var t=localStorage.getItem("uptick_theme");
+document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){}})();
+</script>
+<script>
+/* The gate, before anything else on the page runs.
+   Reached without the mode on — a bookmark, a guessed URL, a back button after
+   switching it off — and this is simply not a page. It replaces rather than
+   assigns, so Back does not bounce between the two. Inline and first because a
+   redirect that waits on a downloaded script is a redirect that flashes the
+   page it was meant to prevent. */
+(function(){try{
+  if(localStorage.getItem("evie_ui_k")==="1"&&localStorage.getItem("evie_ui_m")==="1")return;
+}catch(e){}
+location.replace("/home.html");})();
+</script>
+<link rel="stylesheet" href="/terminal/terminal.css" />
+</head>
+<body>
+
+<div class="tm" id="tm">
+ <div class="tm-shell">
+
+  <!-- ── the top bar ───────────────────────────────────────────────────────
+       One bar for every screen; the actions on the right are swapped per
+       screen, because History's three differ from Trade's two. -->
+  <header class="tm-bar">
+    <button class="tm-ico" id="tm-burger" type="button" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="tm-h">
+      <b id="tm-title">Trade</b>
+      <span id="tm-sub"></span>
+    </div>
+    <div id="tm-actions"></div>
+  </header>
+
+  <div class="tm-body">
+
+    <!-- ── Trade ──────────────────────────────────────────────────────────
+         Three dotted-leader figures, a rule, then the positions. Margin and
+         level are not shown while nothing is open, which is what the app
+         does — they appear once there is margin in use. -->
+    <section class="tm-pane on" id="tm-pane-trade">
+      <dl id="tm-figures"></dl>
+      <div class="tm-rule"></div>
+      <div id="tm-pos"></div>
+    </section>
+
+    <!-- ── Quotes ─────────────────────────────────────────────────────────── -->
+    <section class="tm-pane" id="tm-pane-quotes">
+      <div id="tm-quotes"></div>
+    </section>
+
+    <!-- ── Charts ─────────────────────────────────────────────────────────── -->
+    <section class="tm-pane" id="tm-pane-charts">
+      <div class="tm-chart" id="tm-chart"></div>
+    </section>
+
+    <!-- ── History ────────────────────────────────────────────────────────── -->
+    <section class="tm-pane" id="tm-pane-history">
+      <div class="tm-seg">
+        <button type="button" class="on" data-seg="positions">Positions</button>
+        <button type="button" data-seg="orders">Orders</button>
+        <button type="button" data-seg="deals">Deals</button>
+      </div>
+      <dl id="tm-hfigures"></dl>
+      <div class="tm-rule"></div>
+      <div id="tm-hist"></div>
+    </section>
+
+    <!-- ── Messages ───────────────────────────────────────────────────────── -->
+    <section class="tm-pane" id="tm-pane-messages">
+      <div class="tm-msg">
+        <svg viewBox="0 0 24 24" width="132" height="132" fill="currentColor"><path d="M12 3C6.9 3 2.8 6.4 2.8 10.6c0 2.4 1.3 4.5 3.4 5.9v3.4l3.2-1.8c.8.2 1.7.3 2.6.3 5.1 0 9.2-3.4 9.2-7.8S17.1 3 12 3z"/><circle cx="8.2" cy="10.6" r="1.15" fill="#000" fill-opacity="0.85"/><circle cx="12" cy="10.6" r="1.15" fill="#000" fill-opacity="0.85"/><circle cx="15.8" cy="10.6" r="1.15" fill="#000" fill-opacity="0.85"/></svg>
+        <p>No messages</p>
+      </div>
+      <div class="tm-auth">
+        <button class="reg" type="button">REGISTER</button>
+        <button class="sig" type="button">SIGN IN</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ── the tab bar ─────────────────────────────────────────────────────
+       The middle tab carries the balance in a pill and has no word under it.
+       Only its icon turns blue when it is the screen you are on. -->
+  <nav class="tm-tabs">
+    <button class="tm-tab" type="button" data-tab="quotes">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20V5M4 8l3-3 3 3M17 4v15M14 16l3 3 3-3"/></svg>
+      Quotes
+    </button>
+    <button class="tm-tab" type="button" data-tab="charts">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="4" height="9" rx="1"/><path d="M7 4v4M7 17v3"/><rect x="15" y="6" width="4" height="9" rx="1"/><path d="M17 3v3M17 15v5"/></svg>
+      Charts
+    </button>
+    <button class="tm-tab" type="button" data-tab="trade">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5l5.5-5.5 3.5 3.5 7-7.5"/><circle cx="8.5" cy="11" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="7" r="1.9" fill="currentColor" stroke="none"/></svg>
+      <span class="tm-bal" id="tm-bal">0</span>
+    </button>
+    <button class="tm-tab" type="button" data-tab="history">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.4-5.9"/><path d="M3.2 4.2v3.6h3.6"/><path d="M12 7.5V12l3 1.8"/></svg>
+      History
+    </button>
+    <button class="tm-tab" type="button" data-tab="messages">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5h12v8H7l-4 3z"/><path d="M9 4h12v8h-2v3l-3-3"/></svg>
+      Messages
+    </button>
+  </nav>
+
+  <!-- ── the drawer ────────────────────────────────────────────────────── -->
+  <div class="tm-scrim" id="tm-scrim" hidden>
+    <aside class="tm-drawer">
+      <div class="tm-acct">
+        <span class="tm-demo">Demo</span>
+        <div class="tm-acct-r">
+          <svg class="tm-avatar" viewBox="0 0 48 48" aria-hidden="true">
+            <circle cx="17" cy="15" r="13" fill="#5aa02c"/>
+            <circle cx="33" cy="19" r="13" fill="#3f8ad8"/>
+            <circle cx="21" cy="32" r="13" fill="#f0b323"/>
+            <circle cx="21" cy="32" r="9.5" fill="#fff"/>
+            <text x="21" y="37.5" text-anchor="middle" font-size="14" font-weight="700" fill="#f08a23" font-family="Roboto, Arial, sans-serif">5</text>
+          </svg>
+          <div class="tm-acct-t">
+            <b id="tm-who">Uptick</b>
+            <span>10012550576 &ndash; Deriv-Server</span>
+          </div>
+          <button class="tm-ico" id="tm-add" type="button" aria-label="Add account">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 11v6M9 14h6"/></svg>
+          </button>
+        </div>
+        <button class="tm-manage" id="tm-manage" type="button">Manage accounts</button>
+      </div>
+
+      <nav class="tm-menu">
+        <button class="tm-item" type="button" data-go="trade">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5l5.5-5.5 3.5 3.5 7-7.5"/><circle cx="8.5" cy="11" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="7" r="1.8" fill="currentColor" stroke="none"/></svg>
+          <span class="grow">Trade</span>
+        </button>
+        <button class="tm-item" type="button">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h5M8 13h8M8 16h8"/></svg>
+          <span class="grow">News</span>
+        </button>
+        <button class="tm-item" type="button" data-go="messages">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5L12 13l8.5-6.5"/></svg>
+          <span class="grow">Mailbox</span>
+          <span class="tm-badge">8</span>
+        </button>
+        <button class="tm-item" type="button">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9.5" r="1.4"/><circle cx="9" cy="14.5" r="1.4"/><path d="M13 9.5h4M13 14.5h4"/></svg>
+          <span class="grow">Journal</span>
+        </button>
+        <button class="tm-item" type="button" id="tm-settings">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 14.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.11a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.11a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.11a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.11a1.7 1.7 0 0 0-1.49 1.03z"/></svg>
+          <span class="grow">Settings</span>
+        </button>
+        <button class="tm-item" type="button">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/></svg>
+          <span>Economic calendar</span>
+          <span class="tm-ads">Ads</span>
+          <span class="grow"></span>
+        </button>
+        <button class="tm-item" type="button">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><circle cx="16.5" cy="9" r="2"/><path d="M4.5 19v-3a4 4 0 0 1 8 0v3M14.5 19v-2.5a3.2 3.2 0 0 1 5-2.6"/></svg>
+          <span class="grow">Traders Community</span>
+        </button>
+        <button class="tm-item" type="button">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4L3 11l7 3 3 7z"/><path d="M21 4l-11 10"/></svg>
+          <span class="grow">MQL5 Algo Trading</span>
+        </button>
+        <button class="tm-item" type="button">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.2 2.9c-.6.2-.8.7-.8 1.3v.4"/><circle cx="12" cy="16.8" r="0.9" fill="currentColor" stroke="none"/></svg>
+          <span class="grow">User guide</span>
+        </button>
+        <button class="tm-item" type="button" id="tm-about">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.8" r="0.9" fill="currentColor" stroke="none"/></svg>
+          <span class="grow">About</span>
+        </button>
+      </nav>
+    </aside>
+  </div>
+
+  <!-- ── the order ticket ────────────────────────────────────────────────── -->
+  <div class="tm-sheet" id="tm-order" hidden>
+    <div class="tm-card tm-card--full">
+      <header class="tm-bar">
+        <button class="tm-ico" type="button" data-close="tm-order" aria-label="Back">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <div class="tm-h"><b>New Order</b><span>Market Execution</span></div>
+      </header>
+
+      <div class="tm-fld">
+        <label for="tm-osym">Symbol</label>
+        <select id="tm-osym"></select>
+      </div>
+
+      <div class="tm-pair">
+        <div class="sell"><span>Sell</span><div id="tm-obid"></div></div>
+        <div class="sp num" id="tm-ospread">0</div>
+        <div class="buy"><span>Buy</span><div id="tm-oask"></div></div>
+      </div>
+
+      <div class="tm-fld">
+        <label for="tm-ovol">Volume</label>
+        <div class="tm-step">
+          <button type="button" id="tm-vminus" aria-label="Less">&minus;</button>
+          <input id="tm-ovol" type="text" inputmode="decimal" value="0.10" />
+          <button type="button" id="tm-vplus" aria-label="More">&plus;</button>
+        </div>
+      </div>
+      <div class="tm-fld">
+        <label for="tm-osl">Stop Loss</label>
+        <input id="tm-osl" type="text" inputmode="decimal" placeholder="not set" />
+      </div>
+      <div class="tm-fld">
+        <label for="tm-otp">Take Profit</label>
+        <input id="tm-otp" type="text" inputmode="decimal" placeholder="not set" />
+      </div>
+
+      <div class="tm-go">
+        <button class="sell" type="button" id="tm-sell">Sell by Market</button>
+        <button class="buy" type="button" id="tm-buy">Buy by Market</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tm-sheet" id="tm-posmenu" hidden>
+    <div class="tm-card">
+      <p class="tm-head" id="tm-menu-h"></p>
+      <div class="tm-fld">
+        <label for="tm-msl">Stop Loss</label>
+        <input id="tm-msl" type="text" inputmode="decimal" placeholder="not set" />
+      </div>
+      <div class="tm-fld">
+        <label for="tm-mtp">Take Profit</label>
+        <input id="tm-mtp" type="text" inputmode="decimal" placeholder="not set" />
+      </div>
+      <div class="tm-list">
+        <button type="button" id="tm-save">Modify Position</button>
+        <button type="button" class="danger" id="tm-close">Close Position</button>
+        <button type="button" data-close="tm-posmenu">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tm-sheet" id="tm-accts" hidden>
+    <div class="tm-card">
+      <p class="tm-head">10012550576 &ndash; Deriv-Server</p>
+      <div class="tm-list">
+        <button type="button" id="tm-deposit">Deposit</button>
+        <button type="button" id="tm-reset">Reset account</button>
+        <button type="button" id="tm-exit">Exit</button>
+        <button type="button" data-close="tm-accts">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tm-toast" id="tm-toast"></div>
+
+ </div>
+</div>
+
+<script src="/terminal/engine.js"></script>
+<script src="/terminal/terminal.js"></script>
+<script src="/theme.js"></script>
+</body>
+</html>
