@@ -215,10 +215,18 @@
     var s = T.symbol(chartSym);
     if (!bars.length || !s) return;
 
-    /* The plot is a bordered box with the price scale OUTSIDE it on the right
-       and the times underneath — not a bare grid bleeding to the edges. */
-    var W = 360, H = 470;
-    var boxL = 3, boxT = 3, boxR = 296, boxB = 432;
+    /* Measured, not assumed. A fixed viewBox scaled to the width leaves the
+       chart the wrong height for the screen — short on a tall phone, clipped
+       on a short one. Taking the box the pane actually has and using it as the
+       viewBox means one SVG unit is one CSS pixel: nothing is stretched and
+       the plot ends exactly where the tab bar starts. */
+    var host = $("tm-chart");
+    var W = host.clientWidth || 360;
+    var H = host.clientHeight || 470;
+    if (W < 40 || H < 40) return;
+
+    var AXIS = 60, TIMES = 22;
+    var boxL = 3, boxT = 3, boxR = W - AXIS, boxB = H - TIMES;
     var boxW = boxR - boxL, boxH = boxB - boxT;
 
     var lo = Infinity, hi = -Infinity;
@@ -230,7 +238,7 @@
     var y = function (v) { return boxT + boxH - (v - lo) / span * boxH; };
 
     var grid = "";
-    var ROWS = 12;
+    var ROWS = Math.max(6, Math.min(20, Math.round(boxH / 46)));
     for (var g = 0; g <= ROWS; g++) {
       var gy = boxT + (boxH / ROWS) * g;
       grid += '<line x1="' + boxL + '" y1="' + gy + '" x2="' + boxR + '" y2="' + gy +
@@ -241,7 +249,8 @@
     }
     /* Vertical rules every ten bars, with the time under each. */
     var times = "";
-    for (var v = 0; v < bars.length; v += 15) {
+    var everyN = Math.max(8, Math.round(bars.length / Math.max(2, Math.floor(boxW / 92))));
+    for (var v = 0; v < bars.length; v += everyN) {
       var vx = boxL + v * step;
       grid += '<line x1="' + vx + '" y1="' + boxT + '" x2="' + vx + '" y2="' + boxB +
         '" stroke="currentColor" stroke-opacity="0.14" stroke-dasharray="1.5 4"/>';

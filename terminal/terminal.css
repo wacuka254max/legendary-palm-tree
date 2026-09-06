@@ -161,21 +161,34 @@
 .tm-q {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2px 12px;
-  padding: 9px 16px 10px;
+  gap: 1px 14px;
+  /* ~72px a row, which is what fits eight symbols on a phone between the bar
+     and the tabs. It was 81, and the eighth fell off the bottom. */
+  padding: 7px 16px 8px;
   border-bottom: 1px solid var(--line);
   cursor: pointer;
 }
 .tm-q:active { background: var(--pill); }
 .tm-q-chg { grid-column: 1; font-size: 13px; color: var(--ink-2); }
 .tm-q-chg b { font-weight: 400; }
-.tm-q-name { grid-column: 1; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+.tm-q-name { grid-column: 1; font-size: 21px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; }
 .tm-q-meta { grid-column: 1; font-size: 13px; color: var(--ink-2); }
 .tm-q-meta i { font-style: normal; margin: 0 4px 0 7px; letter-spacing: -0.1em; }
 
-.tm-q-px { grid-column: 2; grid-row: 1 / span 2; align-self: center; display: flex; gap: 14px; }
-.tm-q-lh { grid-column: 2; grid-row: 3; display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); }
-.tm-q-lh span { flex: 1; text-align: left; }
+/* Bid over L, ask over H, in two columns that line up exactly.
+   Both are `1fr 1fr` inside the SAME parent grid column, so the column takes
+   the wider of the two and each half is identical in both rows — which is what
+   makes 85.55 and 1.16132 end on the same edge instead of drifting apart. */
+.tm-q-px,
+.tm-q-lh {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  justify-items: end;
+}
+.tm-q-px { grid-row: 1 / span 2; align-self: center; }
+.tm-q-lh { grid-row: 3; font-size: 13px; color: var(--ink-2); }
 
 /* The signature: 1.16 **13** ². The middle pair is the size of the row, the
    head is a size down, and the final digit is raised and small. */
@@ -259,10 +272,13 @@
 
 /* ── Charts ──────────────────────────────────────────────────────────────── */
 
-.tm-chart { position: relative; height: 100%; }
+/* The plot takes the height that is left, so the chart reaches the tab bar
+   instead of stopping short with a band of black under the time axis. */
+#tm-pane-charts.on { display: flex; flex-direction: column; height: 100%; }
+.tm-chart { position: relative; flex: 1; min-height: 0; }
 /* The plot only. As a descendant rule this also matched the little caret
    drawn inside the overlay and stretched it to the full width. */
-.tm-chart > svg { display: block; width: 100%; height: auto; }
+.tm-chart > svg { display: block; width: 100%; height: 100%; }
 .tm-chart-tag {
   position: absolute;
   top: 8px; left: 12px;
