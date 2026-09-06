@@ -1,29 +1,26 @@
 # Uptick
 #
 # The front door is meant to be found. Everything behind the broker connection
-# is somebody's own dashboard and is marked noindex in its own head as well.
+# is somebody's own dashboard and is marked noindex in its own head.
 #
 # No sitemap line yet: this site has no domain of its own. Add one here, and a
 # canonical to each page, the moment it does.
 
 User-agent: *
-Allow: /$
+Allow: /
 
-Disallow: /home.html
-Disallow: /analysis.html
-Disallow: /automatic-ai.html
-Disallow: /mt5.html
-Disallow: /analysis/
-Disallow: /mt5/
-
-# Three paths are deliberately NOT listed here, and their absence is the point.
-# robots.txt is world-readable, so naming a page you would rather nobody found
-# is an index of exactly what to go and look at. All three carry noindex in
-# their own head, and the two pages send anyone who has not opened the mode
-# straight back, which keeps them out of results without publishing the
-# addresses.
+# Nothing is disallowed, and that is deliberate.
 #
-# Disallow would in fact be the weaker option: a crawler told not to fetch a
-# page never reads the noindex on it, so a URL someone links to can still
-# surface. Letting it fetch, redirect and read the tag is what actually removes
-# them.
+# Every page behind the broker connection carries noindex,nofollow in its own
+# head. That is the stronger protection, not the weaker one: a crawler told not
+# to fetch a page never reads the noindex on it, so a URL somebody links to can
+# still surface with no way to remove it. Letting the crawler fetch and read
+# the tag is what actually keeps the page out.
+#
+# robots.txt is world-readable, so naming a page you would rather nobody found
+# is an index of exactly what to go and look at. Listing home.html told anyone
+# curious precisely where to start.
+#
+# /analysis/ and /mt5/ hold the JavaScript and CSS the pages render with.
+# Blocking them stopped Google and Bing seeing the site as a visitor does,
+# which cost more than it ever protected.
