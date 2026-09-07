@@ -46,7 +46,7 @@
     { name: "Step Index",           price: 9214.7,   digits: 1, spread: 10,  size: 1,      vol: 2.170e-05 },
     { name: "EURUSD",               price: 1.08642,  digits: 5, spread: 8,   size: 100000, vol: 1.473e-05 },
     { name: "GBPUSD",               price: 1.26418,  digits: 5, spread: 11,  size: 100000, vol: 1.740e-05 },
-    { name: "USDJPY",               price: 151.284,  digits: 3, spread: 9,   size: 100000, vol: 1.190e-05 },
+    { name: "USDJPY",               price: 151.284,  digits: 3, spread: 9,   size: 100000, usdBase: true, vol: 1.190e-05 },
     { name: "XAUUSD",               price: 2331.46,  digits: 2, spread: 25,  size: 100,    vol: 2.145e-05 }
   ];
 
@@ -60,6 +60,8 @@
          from one price with a fixed spread they could only ever move together,
          and the app plainly shows one side ticking while the other stands. */
       base: s.spread, spread: s.spread, price: s.price, prev: s.price,
+      /* USD is the BASE of this pair, not the quote — it matters twice below. */
+      usdBase: !!s.usdBase,
       /* The last value each side actually printed, and which way it went.
          1 up, -1 down, 0 unmoved — read straight into the row's colour. */
       prevBid: 0, prevAsk: 0, bidDir: 0, askDir: 0,
@@ -286,13 +288,31 @@
     if (!s) return 0;
     var now = p.type === "buy" ? bid(s) : ask(s);
     var diff = p.type === "buy" ? now - p.open : p.open - now;
-    return Math.round(diff * p.volume * s.size * 100) / 100;
+    var v = diff * p.volume * s.size;
+    /* USDJPY is quoted in yen, so a move of it earns YEN, and the account is
+       in dollars. Without this a 1.5-pip move on one lot showed as $1,500
+       instead of $10 — the yen figure printed straight onto a dollar balance.
+       Everything else here is quoted in dollars already. */
+    if (s.usdBase) v /= now;
+    return Math.round(v * 100) / 100;
+  }
+
+  /* Margin is the position's size in its BASE currency, converted to the
+     account's. For EURUSD the base is euros and the rate does that; for USDJPY
+     the base is already dollars, so the rate must not be applied.
+
+     One function, because there were two: open() carried its own copy of this
+     formula to decide whether an order could be afforded, and it did not learn
+     the USDJPY case when marginOf did. The order was then refused for want of
+     margin it would never actually have used. */
+  function marginFor(s, volume, price) {
+    return (s.usdBase ? volume * s.size : volume * s.size * price) / LEVERAGE;
   }
 
   function marginOf(p) {
     var s = book[p.symbol];
     if (!s) return 0;
-    return (p.volume * s.size * p.open) / LEVERAGE;
+    return marginFor(s, p.volume, p.open);
   }
 
   function summary() {
@@ -323,7 +343,7 @@
     if (!(volume >= 0.01)) return "Invalid volume";
 
     var price = type === "buy" ? ask(s) : bid(s);
-    var need = (volume * s.size * price) / LEVERAGE;
+    var need = marginFor(s, volume, price);
     /* The real terminal's wording, and the real rule: free margin, not
        balance, is what has to cover it. */
     if (need > summary().free) return "No money";

@@ -112,6 +112,13 @@
 .tm-h b { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
 .tm-h span { display: block; font-size: 15px; color: var(--ink-2); }
 .tm-h span:empty { display: none; }
+/* On Trade with something open the hierarchy inverts: the screen name drops to
+   a label and the floating figure takes the size, which is how the app shows an
+   account that is currently exposed. */
+.tm-bar--pl .tm-h b { font-size: 15px; font-weight: 500; }
+.tm-bar--pl .tm-h span { font-size: 19px; font-weight: 700; }
+.tm-h span.up { color: var(--blue); }
+.tm-h span.down { color: var(--red); }
 /* The actions are a row. .tm-ico is a grid box, which is block-level, so
    without this each screen's icons stack down the right-hand edge. */
 #tm-actions { display: flex; align-items: center; }
@@ -211,6 +218,19 @@
 .tm-q-px .px.down sup { color: var(--red); }
 
 /* ── Trade: the position rows under the three figures ───────────────────── */
+
+/* The band over the open positions: the app's own grey strip, with the
+   overflow dots sitting at the right end of it. */
+.tm-poshead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px 8px;
+  background: var(--pill);
+  color: var(--ink-2);
+  font-size: 15px;
+}
+.tm-poshead i { font-style: normal; font-size: 19px; line-height: 0.6; letter-spacing: 0.05em; }
 
 .tm-row {
   display: grid;
@@ -341,6 +361,11 @@
   font-size: 12.5px;
   font-weight: 500;
 }
+/* Once something is open the pill stops being the balance and becomes the
+   floating figure, tinted to match its sign — the one place on the tab bar
+   that tells you how the account is doing without opening it. */
+.tm-bal.up { background: rgba(10, 132, 255, 0.20); color: var(--blue); }
+.tm-bal.down { background: rgba(255, 69, 58, 0.20); color: var(--red); }
 
 /* ── the drawer ──────────────────────────────────────────────────────────
    Slides in from the left over about seven eighths of the width, so a strip

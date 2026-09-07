@@ -94,6 +94,19 @@
   }
 
   /** One dotted-leader line. */
+  /**
+   * A price as it appears in a LINE of text — the open-to-current pair on a
+   * position, the low and high under a quote. Thousands are grouped with a
+   * space: the app writes 848 568.89, not 848568.89.
+   *
+   * The large typography above a quote is deliberately NOT grouped. 4430.16 is
+   * set solid there, and running this over it would wrongly split the head.
+   */
+  function px(v, digits) {
+    var t = Number(v).toFixed(digits).split(".");
+    return t[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ") + (t[1] ? "." + t[1] : "");
+  }
+
   function lead(label, value, klass) {
     return '<div class="tm-lead"><dt>' + esc(label) + "</dt><i></i>" +
       '<dd class="num ' + (klass || "") + '">' + value + "</dd></div>";
@@ -155,31 +168,41 @@
 
   function drawTrade() {
     var s = T.summary();
+    /* Balance, Equity, Margin, Free margin, Margin Level — in that order,
+       which is the app's. Free margin used to sit third, above Margin, and the
+       level was labelled "Level" with the per-cent hung on the value; the app
+       names the row "Margin Level (%)" and leaves the number bare. */
     var rows = lead("Balance:", money(s.balance)) +
-               lead("Equity:", money(s.equity)) +
-               lead("Free margin:", money(s.free));
-    /* Margin and Level appear only once there is margin in use — an untouched
-       account shows three lines in the app, not five. */
+               lead("Equity:", money(s.equity));
     if (s.margin > 0) {
       rows += lead("Margin:", money(s.margin)) +
-              lead("Level:", money(s.level) + "%");
+              lead("Free margin:", money(s.free)) +
+              lead("Margin Level (%):", money(s.level));
+    } else {
+      /* Nothing open: three lines, no margin and no level. A level with no
+         margin behind it is a division by zero wearing a percentage sign. */
+      rows += lead("Free margin:", money(s.free));
     }
     $("tm-figures").innerHTML = rows;
 
     var ps = T.positions();
+    $("tm-poshead").hidden = !ps.length;
     if (!ps.length) { $("tm-pos").innerHTML = ""; return; }
 
     $("tm-pos").innerHTML = ps.map(function (p) {
       var sym = T.symbol(p.symbol);
       var now = p.type === "buy" ? T.bid(sym) : T.ask(sym);
       var profit = T.profitOf(p);
+      /* "Volatility 25 (1s) Index, sell 1.00" — the comma belongs to the
+         symbol, and the direction and size carry the colour. The figure on the
+         right is plain: a gain is not written with a leading plus. */
       return '<div class="tm-row" data-ticket="' + p.ticket + '">' +
-        '<div class="tm-row-h"><b>' + esc(p.symbol) + "</b>" +
+        '<div class="tm-row-h"><b>' + esc(p.symbol) + ",</b>" +
           '<span class="' + (p.type === "buy" ? "up" : "down") + '">' +
           p.type + " " + p.volume.toFixed(2) + "</span></div>" +
-        '<div class="tm-row-sub num">' + Number(p.open).toFixed(sym.digits) +
-          " &rarr; " + Number(now).toFixed(sym.digits) + "</div>" +
-        '<div class="tm-row-v num ' + cls(profit) + '">' + signed(profit) + "</div>" +
+        '<div class="tm-row-sub num">' + px(p.open, sym.digits) +
+          " &rarr; " + px(now, sym.digits) + "</div>" +
+        '<div class="tm-row-v num ' + cls(profit) + '">' + money(profit) + "</div>" +
       "</div>";
     }).join("");
   }
@@ -198,8 +221,8 @@
           '<i>&#8866;</i>' + q.spread + "</div>" +
         '<div class="tm-q-px">' + priceHtml(q.bid, q.digits, q.bidDir) +
           priceHtml(q.ask, q.digits, q.askDir) + "</div>" +
-        '<div class="tm-q-lh num"><span>L: ' + Number(q.low).toFixed(q.digits) +
-          "</span><span>H: " + Number(q.high).toFixed(q.digits) + "</span></div>" +
+        '<div class="tm-q-lh num"><span>L: ' + px(q.low, q.digits) +
+          "</span><span>H: " + px(q.high, q.digits) + "</span></div>" +
       "</div>";
     }).join("");
   }
@@ -410,7 +433,23 @@
   }
 
   function draw() {
-    $("tm-bal").textContent = short(T.summary().balance);
+    /* The middle tab shows the account balance until something is open, and
+       the floating profit from then on — coloured, on a tinted pill. The bar
+       does the same above it: the screen name shrinks and the figure takes
+       over, which is what makes an open account read at a glance. */
+    var sm = T.summary();
+    var live = T.positions().length > 0;
+    var pill = $("tm-bal");
+    pill.textContent = live ? money(sm.floating) : short(sm.balance);
+    pill.className = "tm-bal" + (live ? " " + cls(sm.floating) : "");
+    if (tab === "trade") {
+      $("tm-sub").textContent = live ? money(sm.floating) + " USD" : "";
+      $("tm-sub").className = live ? cls(sm.floating) : "";
+      document.querySelector(".tm-bar").classList.toggle("tm-bar--pl", live);
+    } else {
+      $("tm-sub").className = "";
+      document.querySelector(".tm-bar").classList.remove("tm-bar--pl");
+    }
     if (tab === "trade") drawTrade();
     else if (tab === "quotes") drawQuotes();
     else if (tab === "charts") drawChart();
