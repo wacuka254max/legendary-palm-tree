@@ -27,7 +27,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var tab = "trade";
   var seg = "positions";
-  var chartSym = "EURUSD";
+  var chartSym = "";   // set from the first instrument the feed delivers
   var menuFor = null;
 
   /* ── formatting ─────────────────────────────────────────────────────────
@@ -512,6 +512,7 @@
       var row = e.target.closest(".tm-q");
       if (!row) return;
       chartSym = row.getAttribute("data-sym");
+      if (global.EvieFeed) global.EvieFeed.chart(chartSym);
       go("charts");
     });
 
@@ -574,7 +575,23 @@
     $("tm-exit").addEventListener("click", function () { global.location.href = "/mt5.html"; });
 
     go("trade");
-    setInterval(function () { T.step(); draw(); }, 700);
+    /* Redrawing, not stepping. There is no tape to advance any more: prices
+       arrive from Deriv and the engine applies them as they land, so this only
+       repaints what is already true. */
+    setInterval(draw, 700);
+
+    if (global.EvieFeed) {
+      global.EvieFeed.start(function () {
+        /* The chart follows whatever the feed actually carries. Naming a
+           default instrument here would be naming one that may not exist on
+           this socket, and the chart would then have nothing to draw. */
+        if (!T.symbol(chartSym)) {
+          var first = T.symbols()[0];
+          if (first) { chartSym = first.name; global.EvieFeed.chart(chartSym); }
+        }
+        draw();
+      });
+    }
   }
 
   if (document.readyState === "loading") {

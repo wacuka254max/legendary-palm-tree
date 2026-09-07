@@ -280,7 +280,10 @@ location.replace("/home.html");})();
  </div>
 </div>
 
+<!-- The feed talks to Deriv's public market socket directly: no token, no
+     account, nothing to authenticate against. deriv.js is not wanted here. -->
 <script src="/terminal/engine.js"></script>
+<script src="/terminal/feed.js"></script>
 <script src="/terminal/terminal.js"></script>
 <script src="/theme.js"></script>
 </body>

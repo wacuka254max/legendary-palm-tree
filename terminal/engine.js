@@ -35,80 +35,21 @@
      decimals a price carries, and how much one lot is worth. Volatility
      indices are one-contract-per-lot; the currency pairs use the standard
      100,000 units. Spreads are in points, as a broker quotes them. */
-  var SYMBOLS = [
-    { name: "Volatility 10 Index",  price: 6420.15,  digits: 2, spread: 30,  size: 1,      vol: 9.346e-06 },
-    { name: "Volatility 25 Index",  price: 2851.44,  digits: 3, spread: 40,  size: 1,      vol: 2.806e-06 },
-    { name: "Volatility 50 Index",  price: 248.9312, digits: 4, spread: 50,  size: 1,      vol: 4.017e-06 },
-    { name: "Volatility 75 Index",  price: 118743.6, digits: 2, spread: 120, size: 1,      vol: 2.021e-06 },
-    { name: "Volatility 100 Index", price: 1621.88,  digits: 2, spread: 80,  size: 1,      vol: 9.865e-05 },
-    { name: "Boom 1000 Index",      price: 12084.55, digits: 3, spread: 90,  size: 1,      vol: 1.490e-06 },
-    { name: "Crash 1000 Index",     price: 8455.21,  digits: 3, spread: 90,  size: 1,      vol: 2.129e-06 },
-    { name: "Step Index",           price: 9214.7,   digits: 1, spread: 10,  size: 1,      vol: 2.170e-05 },
-    { name: "EURUSD",               price: 1.08642,  digits: 5, spread: 8,   size: 100000, vol: 1.473e-05 },
-    { name: "GBPUSD",               price: 1.26418,  digits: 5, spread: 11,  size: 100000, vol: 1.740e-05 },
-    { name: "USDJPY",               price: 151.284,  digits: 3, spread: 9,   size: 100000, usdBase: true, vol: 1.190e-05 },
-    { name: "XAUUSD",               price: 2331.46,  digits: 2, spread: 25,  size: 100,    vol: 2.145e-05 }
-  ];
+  /* ── the instruments ────────────────────────────────────────────────────
+     Nothing here is invented. The list, both sides of every price, the spread
+     between them and the day's range all arrive from Deriv's public market
+     feed — see feed.js. This file holds them and prices positions against them.
+
+     There was a seeded table of twelve made-up instruments here, walked by a
+     random number generator, with the spread modelled because the older API
+     gave only a single quote. The public feed gives a real bid and a real ask
+     on every tick, so all of that is gone: there is nothing left to model.
+
+     Contract size is the one assumption remaining, and it has to be. A lot is
+     an MT5 notion and Deriv's API has no field for it, so it is assigned by
+     instrument in feed.js and marked there as the assumption it is. */
 
   var book = {};
-  SYMBOLS.forEach(function (s) {
-    book[s.name] = {
-      name: s.name, digits: s.digits, size: s.size, vol: s.vol,
-      /* `base` is the spread this instrument sits at; `spread` is what it is
-         quoting right now, which floats around that base tick by tick. That
-         float is the whole reason bid and ask can colour differently: derived
-         from one price with a fixed spread they could only ever move together,
-         and the app plainly shows one side ticking while the other stands. */
-      base: s.spread, spread: s.spread, price: s.price, prev: s.price,
-      /* USD is the BASE of this pair, not the quote — it matters twice below. */
-      usdBase: !!s.usdBase,
-      /* The last value each side actually printed, and which way it went.
-         1 up, -1 down, 0 unmoved — read straight into the row's colour. */
-      prevBid: 0, prevAsk: 0, bidDir: 0, askDir: 0,
-      bidPx: Number((s.price - s.spread * Math.pow(10, -s.digits) / 2).toFixed(s.digits)),
-      askPx: Number((s.price + s.spread * Math.pow(10, -s.digits) / 2).toFixed(s.digits)),
-      /* What the Quotes row needs beside the pair: where the session opened,
-         how far it has been either way since, and when the last tick landed.
-
-         These are seeded as a session ALREADY under way rather than one
-         starting at this instant. Opened at the current price they gave every
-         row "+0.00%" with a low and a high a hair apart — the walk simply does
-         not travel far enough in a sitting to build a day's range, and it
-         should not have to. A quote screen is opened onto a market that has
-         been trading since before anyone looked at it. */
-      open24: 0, low: 0, high: 0, time: Date.now(),
-      bars: []
-    };
-
-    /* Up to about 1.7% either side of where it stands, with a low and high
-       bracketing both ends and a little beyond, the way a real session's
-       extremes sit outside its open and its last price. */
-    var b = book[s.name];
-    var chg = (Math.random() - 0.5) * 0.035;
-    var span = s.price * (0.012 + Math.random() * 0.03);
-    b.open24 = s.price / (1 + chg);
-    b.low = Math.min(s.price, b.open24) - Math.random() * span * 0.6;
-    b.high = Math.max(s.price, b.open24) + Math.random() * span * 0.6;
-  });
-
-  /* ── candles ─────────────────────────────────────────────────────────────
-     Seeded backwards from the current price so a chart opened for the first
-     time is not an empty box waiting for sixty ticks to go by. Each bar walks
-     the price the same way a tick does, then the series is reversed — which
-     leaves the last bar sitting exactly on the live price. */
-  function seedBars(s, n) {
-    var out = [];
-    var c = s.price;
-    for (var i = 0; i < n; i++) {
-      var o = c * (1 + (Math.random() - 0.5) * s.vol * 9);
-      var hi = Math.max(o, c) * (1 + Math.random() * s.vol * 5);
-      var lo = Math.min(o, c) * (1 - Math.random() * s.vol * 5);
-      out.push({ o: o, h: hi, l: lo, c: c, t: Date.now() - i * 300000 });
-      c = o;
-    }
-    return out.reverse();
-  }
-  Object.keys(book).forEach(function (n) { book[n].bars = seedBars(book[n], 60); });
 
   function point(sym) { return Math.pow(10, -sym.digits); }
   function round(sym, v) { return Number(v.toFixed(sym.digits)); }
@@ -158,120 +99,54 @@
     }
     s.positions = s.positions || [];
     s.deals = s.deals || [];
-    /* Prices resume where they stopped. A terminal reopened after lunch does
-       not find every instrument back at its opening price. */
-    if (s.prices) {
-      Object.keys(s.prices).forEach(function (n) {
-        if (book[n]) book[n].price = book[n].prev = s.prices[n];
-      });
-    }
-    /* The session travels with the prices. Left behind, a reopened terminal
-       showed the day's range collapsed back onto the seed while the price had
-       moved on — a low above the last traded price, which is not a range. */
-    if (s.session) {
-      Object.keys(s.session).forEach(function (n) {
-        var v = s.session[n];
-        if (!book[n] || !v) return;
-        book[n].open24 = v.o; book[n].low = v.l; book[n].high = v.h;
-      });
-    }
+    /* Prices are no longer carried across a reload, and must not be: they
+       come from the market now, and a saved price is a stale one. Only the
+       account travels — the balance, the open positions and the deals. */
     return s;
   }
 
   function save() {
-    state.prices = {};
-    state.session = {};
-    Object.keys(book).forEach(function (n) {
-      state.prices[n] = book[n].price;
-      state.session[n] = { o: book[n].open24, l: book[n].low, h: book[n].high };
-    });
+    /* Written by an earlier version that cached the tape. Left in place they
+       would be reloaded forever, so they are cleared on the first save. */
+    if (state.prices || state.session) { delete state.prices; delete state.session; }
     try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
   }
 
   state = load();
 
   /* ── prices ─────────────────────────────────────────────────────────────
-     A random walk with a gaussian-ish step, per instrument, at its own
-     volatility. Not a model of anything — just a tape that moves the way a
-     tape moves, so a position's profit changes while you watch it.
+     A tick is applied exactly as the market sent it. Both sides are compared
+     against what THIS side last printed, which is what colours a quote: blue
+     up, red down, and neither when it did not move. They disagree constantly
+     because a real bid and a real ask are quoted separately. */
 
-     The step used to be far too big: EURUSD moved 13 points every 0.7s, which
-     is over a hundred pips a minute, and — more visibly — nearly twice its own
-     spread on every tick. A mid that jumps further than the spread drags bid
-     and ask along together every time, and the measured correlation between
-     the two sides was 0.95: they could not disagree, so the Quotes column sat
-     in one colour. A real tick is a fraction of the spread, which is exactly
-     why the app's own screen shows the two sides flickering apart. */
+  function tick(name, b, a, q) {
+    var s = book[name];
+    if (!s) return;
+    if (!isFinite(b) || !isFinite(a) || b <= 0 || a <= 0) return;
 
-  var barTicks = 0;
+    s.prevBid = s.bidPx;
+    s.prevAsk = s.askPx;
+    s.bidPx = b;
+    s.askPx = a;
+    s.prev = s.price;
+    s.price = isFinite(q) && q > 0 ? q : (b + a) / 2;
 
-  function step() {
-    Object.keys(book).forEach(function (n) {
-      var s = book[n];
-      var g = (Math.random() + Math.random() + Math.random() - 1.5) * 2;
+    s.bidDir = b > s.prevBid ? 1 : b < s.prevBid ? -1 : 0;
+    s.askDir = a > s.prevAsk ? 1 : a < s.prevAsk ? -1 : 0;
+    /* The figure beside the clock is the real distance between the two prices
+       on the row, in this instrument's points. */
+    s.spread = Math.max(0, Math.round((a - b) / point(s)));
+    s.time = Date.now();
 
-      /* Both sides as they stand, before anything moves. Comparing ROUNDED
-         prints rather than raw prices is the point: a move too small to change
-         the digits on screen has not moved on screen either, and that is what
-         leaves a price sitting grey while its partner ticks. */
-      s.prevBid = bid(s);
-      s.prevAsk = ask(s);
+    if (s.price > s.high) s.high = s.price;
+    if (s.price < s.low) s.low = s.price;
 
-      s.prev = s.price;
-      s.price = Math.max(point(s), s.price * (1 + g * s.vol));
-
-      /* The spread breathes — most ticks, not every one. A broker's quote does
-         this, and it is what lets the two sides diverge: a widening spread can
-         carry the ask up while the bid falls. Never below a point. */
-      if (Math.random() < 0.7) {
-        s.spread = Math.max(1, Math.round(s.base * (0.7 + Math.random() * 0.6)));
-      }
-
-      /* The mid has moved and the spread has breathed; now each side is quoted
-         around that mid with its own independent jitter. This is what makes the
-         column behave: the two are no longer the same number twice, so one can
-         print unchanged while the other ticks, and they disagree as often as
-         they agree. Never crossed — an ask below its bid is not a market. */
-      var pt = point(s), half = s.spread * pt / 2;
-      /* Each side is quoted its OWN distance out from the mid, drawn fresh.
-         Jittering the two prices symmetrically was the obvious way to do this
-         and it was wrong: the draws crossed often, and clamping the ask back
-         above the bid tied the two together again — which is why widening the
-         jitter kept hitting a ceiling instead of decorrelating them. Pushing
-         each side outward from the mid cannot cross at all, so both stay free. */
-      /* Mean 1.0 so the spread averages exactly what the instrument quotes —
-         an earlier draw averaged 1.25 and quietly widened every spread by a
-         quarter, which is a real cost to every trade, not a cosmetic one. The
-         floor keeps a market that always has a spread worth crossing. */
-      var out = function () { return half * (0.25 + Math.random() * 1.5); };
-      s.bidPx = round(s, s.price - out());
-      s.askPx = round(s, s.price + out());
-
-      var nb = bid(s), na = ask(s);
-      s.bidDir = nb > s.prevBid ? 1 : nb < s.prevBid ? -1 : 0;
-      s.askDir = na > s.prevAsk ? 1 : na < s.prevAsk ? -1 : 0;
-
-      s.time = Date.now();
-      if (s.price > s.high) s.high = s.price;
-      if (s.price < s.low) s.low = s.price;
-
-      /* The last bar tracks the live price; a new one starts every so often,
-         which is what makes the chart advance rather than only wobble. */
-      var bar = s.bars[s.bars.length - 1];
-      if (bar) {
-        bar.c = s.price;
-        if (s.price > bar.h) bar.h = s.price;
-        if (s.price < bar.l) bar.l = s.price;
-      }
-    });
-
-    if (++barTicks >= 12) {
-      barTicks = 0;
-      Object.keys(book).forEach(function (n) {
-        var s = book[n];
-        s.bars.push({ o: s.price, h: s.price, l: s.price, c: s.price, t: Date.now() });
-        if (s.bars.length > 90) s.bars.shift();
-      });
+    var bar = s.bars[s.bars.length - 1];
+    if (bar) {
+      bar.c = s.price;
+      if (s.price > bar.h) bar.h = s.price;
+      if (s.price < bar.l) bar.l = s.price;
     }
 
     sweep();
@@ -446,6 +321,66 @@
     };
   }
 
+  /* ── what the feed hands in ─────────────────────────────────────────── */
+
+  function makeSymbol(d) {
+    return {
+      name: d.name, digits: d.digits, size: d.size, usdBase: !!d.usdBase,
+      price: d.quote, prev: d.quote,
+      bidPx: d.bid, askPx: d.ask,
+      prevBid: d.bid, prevAsk: d.ask, bidDir: 0, askDir: 0,
+      spread: Math.max(0, Math.round((d.ask - d.bid) * Math.pow(10, d.digits))),
+      /* Replaced by the real day candle the moment it lands; until then the
+         row simply reads no change rather than inventing one. */
+      open24: d.quote, low: d.quote, high: d.quote,
+      time: Date.now(), bars: []
+    };
+  }
+
+  /**
+   * Adopt the instruments the feed is carrying.
+   *
+   * Any symbol holding an open position is KEPT whatever the feed says. A
+   * position whose instrument vanished would price at zero and silently wipe
+   * its own profit, and closing it would write that zero into the balance — so
+   * the book only ever grows to meet the feed, never drops something the
+   * account is standing in.
+   */
+  function applySymbols(defs) {
+    if (!defs || !defs.length) return;
+    var held = {};
+    state.positions.forEach(function (p) { held[p.symbol] = true; });
+
+    var next = {};
+    defs.forEach(function (d) {
+      if (!d || !d.name || !isFinite(d.bid) || !isFinite(d.ask)) return;
+      next[d.name] = book[d.name] || makeSymbol(d);
+    });
+    Object.keys(book).forEach(function (n) {
+      if (held[n] && !next[n]) next[n] = book[n];
+    });
+    if (!Object.keys(next).length) return;
+    book = next;
+  }
+
+  /** The day's open, low and high, from Deriv's own daily candle. */
+  function setSession(name, o, l, h) {
+    var s = book[name];
+    if (!s || !isFinite(o) || o <= 0) return;
+    s.open24 = o;
+    s.low = isFinite(l) && l > 0 ? Math.min(l, s.price) : s.low;
+    s.high = isFinite(h) && h > 0 ? Math.max(h, s.price) : s.high;
+  }
+
+  /** Candles straight from the feed, oldest first. */
+  function setBars(name, bars) {
+    var s = book[name];
+    if (!s || !bars || !bars.length) return;
+    s.bars = bars.slice(-90).map(function (b) {
+      return { o: +b.o, h: +b.h, l: +b.l, c: +b.c, t: +b.t };
+    });
+  }
+
   global.EvieTerminal = {
     symbols: function () { return Object.keys(book).map(function (n) { return book[n]; }); },
     quote: function (n) { return quote(book[n]); },
@@ -453,7 +388,8 @@
     bars: function (n) { return (book[n] || { bars: [] }).bars; },
     symbol: function (n) { return book[n]; },
     bid: bid, ask: ask, point: point, round: round,
-    step: step,
+    tick: tick, setBars: setBars, setSession: setSession,
+    applySymbols: applySymbols,
     summary: summary,
     positions: function () { return state.positions; },
     deals: function () { return state.deals; },

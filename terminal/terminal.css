@@ -230,6 +230,10 @@
   color: var(--ink-2);
   font-size: 15px;
 }
+/* `display: flex` above outranks the page reset's [hidden] rule — same
+   specificity, later in the file — so the band stayed on screen over an empty
+   list. It has to opt out by name. */
+.tm-poshead[hidden] { display: none; }
 .tm-poshead i { font-style: normal; font-size: 19px; line-height: 0.6; letter-spacing: 0.05em; }
 
 .tm-row {
