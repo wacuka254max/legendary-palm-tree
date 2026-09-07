@@ -345,7 +345,20 @@
   scrollbar-width: thin;
   scrollbar-color: var(--line-hi) transparent;
 }
-@media (max-width: 1100px) { .mk-list { flex: none; } }
+/* An ordinary block again, and this is not cosmetic.
+
+   Stacked, the rail stands at its full height and has nothing to scroll inside
+   itself — but `overflow-y: auto` still made it a scroll container, and
+   `overscroll-behavior: contain` on a scroll container stops the gesture
+   reaching the page. So a swipe that began anywhere on the card scrolled
+   neither the card, which had nowhere to go, nor the page. On a phone the card
+   is most of the screen, which is why the page seemed to lock near the footer.
+   Both properties belong to the wide layout, where the list really does scroll
+   within a fixed panel, so they are returned to their initial values here
+   rather than removed above — the same thing .acctp-body does. */
+@media (max-width: 1100px) {
+  .mk-list { flex: none; overflow: visible; overscroll-behavior: auto; }
+}
 .mk {
   display: grid;
   /* Name takes the slack; the sparkline and the figure keep fixed widths so
