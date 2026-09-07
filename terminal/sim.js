@@ -332,6 +332,9 @@
     run: function (cfg) {
       var Tm0 = T();
       if (Tm0 && Tm0.setLeverage) Tm0.setLeverage(cfg.leverage || 400);
+      /* Set before the run, so the positions it leaves open are charged their
+         commission on the way in exactly as a hand-placed order would be. */
+      if (Tm0 && Tm0.setCommission) Tm0.setCommission(cfg.commission || 0);
       var out = build(cfg);
       if (out.error) return out;
       var Tm = T();

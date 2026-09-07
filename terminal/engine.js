@@ -38,6 +38,15 @@
      binds. */
   var accountLeverage = LEVERAGE;
 
+  /* Commission, per lot, charged when a position OPENS.
+     That is when a broker takes it and when the balance shows it: open eight
+     lots at six dollars and the balance is forty-eight lighter before the trade
+     has done anything at all. Equity then moves with the floating profit, and
+     only closing moves the balance again. It was being folded into a closed
+     trade's result instead, so an account holding nothing but open positions
+     showed its whole deposit and none of what it had already paid. */
+  var accountCommission = 0;
+
   /* The instruments, with the two numbers that decide everything: how many
      decimals a price carries, and how much one lot is worth. Volatility
      indices are one-contract-per-lot; the currency pairs use the standard
@@ -274,6 +283,10 @@
        balance, is what has to cover it. */
     if (need > summary().free) return "No money";
 
+    /* Taken after the margin check, because margin is what decides whether the
+       order is allowed and commission is what it costs once it is. */
+    var comm = Math.round(volume * accountCommission * 100) / 100;
+
     var p = {
       ticket: ++state.ticket,
       symbol: symbolName,
@@ -282,9 +295,11 @@
       open: price,
       sl: sl ? Number(sl) : 0,
       tp: tp ? Number(tp) : 0,
+      commission: comm,
       time: Date.now()
     };
     state.positions.push(p);
+    if (comm) state.balance = Math.round((state.balance - comm) * 100) / 100;
     save();
     return p;
   }
@@ -339,6 +354,9 @@
     state.deals.unshift({
       ticket: p.ticket, symbol: p.symbol, type: p.type, volume: p.volume,
       open: p.open, close: out, profit: profit,
+      /* Recorded, not charged again: it came out of the balance when the
+         position opened. This is what the history's Commission line totals. */
+      commission: p.commission || 0,
       reason: why || "",
       openTime: p.time, closeTime: Date.now()
     });
@@ -568,6 +586,11 @@
     open: open, close: close, modify: modify,
     deposit: deposit, setBalance: setBalance,
     leverage: function () { return accountLeverage; },
+    commission: function () { return accountCommission; },
+    setCommission: function (n) {
+      n = Number(n);
+      accountCommission = isFinite(n) && n > 0 ? n : 0;
+    },
     setLeverage: function (n) {
       n = Number(n);
       if (isFinite(n) && n > 0) accountLeverage = Math.round(n);

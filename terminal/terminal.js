@@ -872,8 +872,10 @@
     /* The account's leverage is part of the account, so it is restored before
        anything is priced — margin on a saved position must not be worked out at
        a default the account is not on. */
-    if (global.EvieSim && T.setLeverage) {
-      T.setLeverage(global.EvieSim.settings().leverage || 400);
+    if (global.EvieSim) {
+      var acct = global.EvieSim.settings();
+      if (T.setLeverage) T.setLeverage(acct.leverage || 400);
+      if (T.setCommission) T.setCommission(acct.commission || 0);
     }
 
     if (global.EvieFeed) {
