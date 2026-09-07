@@ -22,7 +22,7 @@
       ]
     },
     {
-      "source": "/(home|analysis|analyss|automatic-ai|automatc-ai|mt5|terminal).html",
+      "source": "/(home|analysis|analyss|automatic-ai|automatc-ai|mt5).html",
       "headers": [
         {
           "key": "Cache-Control",
