@@ -54,8 +54,11 @@
    * characters at reading size, the next two large, the final one raised.
    * 1.16132 → 1.16 · 13 · 2.
    */
-  function priceHtml(v, digits) {
+  function priceHtml(v, digits, dir) {
     var s = Number(v).toFixed(digits);
+    /* Blue up, red down, and the neutral grey-over-white pair when this side
+       did not move. Each price carries its own, because each moves on its own. */
+    var k = dir > 0 ? " up" : dir < 0 ? " down" : "";
     /* The raised digit is the FRACTIONAL pip, so it only exists where the
        instrument quotes one — three decimals or more. On a two-decimal index
        there is no fractional pip, and taking the last three characters anyway
@@ -64,11 +67,11 @@
        raised, which is how the app prints them. */
     /* One decimal or none leaves nothing sensible to split — the last two
        characters would straddle the point — so the whole figure is set large. */
-    if (digits < 2) return '<span class="px"><b>' + s + "</b></span>";
+    if (digits < 2) return '<span class="px' + k + '"><b>' + s + "</b></span>";
     if (digits < 3) {
-      return '<span class="px">' + s.slice(0, -2) + "<b>" + s.slice(-2) + "</b></span>";
+      return '<span class="px' + k + '">' + s.slice(0, -2) + "<b>" + s.slice(-2) + "</b></span>";
     }
-    return '<span class="px">' + s.slice(0, -3) +
+    return '<span class="px' + k + '">' + s.slice(0, -3) +
       "<b>" + s.slice(-3, -1) + "</b><sup>" + s.slice(-1) + "</sup></span>";
   }
 
@@ -193,7 +196,8 @@
         '<div class="tm-q-name">' + esc(q.name) + "</div>" +
         '<div class="tm-q-meta num">' + clock(q.time) +
           '<i>&#8866;</i>' + q.spread + "</div>" +
-        '<div class="tm-q-px">' + priceHtml(q.bid, q.digits) + priceHtml(q.ask, q.digits) + "</div>" +
+        '<div class="tm-q-px">' + priceHtml(q.bid, q.digits, q.bidDir) +
+          priceHtml(q.ask, q.digits, q.askDir) + "</div>" +
         '<div class="tm-q-lh num"><span>L: ' + Number(q.low).toFixed(q.digits) +
           "</span><span>H: " + Number(q.high).toFixed(q.digits) + "</span></div>" +
       "</div>";

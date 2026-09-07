@@ -198,6 +198,18 @@
 .up { color: var(--blue); }
 .down { color: var(--red); }
 
+/* A quote is coloured by the direction of its OWN last tick, head, body and
+   raised digit together — which is why the whole token takes the colour rather
+   than just the large pair. Left unmoved it keeps the neutral pair above, grey
+   head over white digits, and that is the third state the app shows: on any
+   row where only one side ticked, its partner is sitting exactly like this. */
+.tm-q-px .px.up,
+.tm-q-px .px.up b,
+.tm-q-px .px.up sup { color: var(--blue); }
+.tm-q-px .px.down,
+.tm-q-px .px.down b,
+.tm-q-px .px.down sup { color: var(--red); }
+
 /* ── Trade: the position rows under the three figures ───────────────────── */
 
 .tm-row {
