@@ -230,12 +230,46 @@
   /* ── Charts ────────────────────────────────────────────────────────────── */
 
   /* The line under the symbol in the app's own overlay. */
-  var DESC = {
-    "EURUSD": "Euro vs US Dollar",
-    "GBPUSD": "Great Britain Pound vs US Dollar",
-    "USDJPY": "US Dollar vs Japanese Yen",
-    "XAUUSD": "Gold vs US Dollar"
+  /* The line under the symbol.
+
+     Deriv does not publish one. `active_symbols` has ten fields and a
+     description is not among them, even asking for the full set — so this is
+     derived from the instrument's own name rather than fetched. It is a label,
+     not a number: nothing here feeds a price or a position. */
+  var CUR = {
+    EUR: "Euro", USD: "US Dollar", GBP: "Great Britain Pound", JPY: "Japanese Yen",
+    AUD: "Australian Dollar", NZD: "New Zealand Dollar", CAD: "Canadian Dollar",
+    CHF: "Swiss Franc", NOK: "Norwegian Krone", SEK: "Swedish Krona",
+    PLN: "Polish Zloty", MXN: "Mexican Peso", ZAR: "South African Rand",
+    XAU: "Gold", XAG: "Silver", XPT: "Platinum", XPD: "Palladium",
+    BTC: "Bitcoin", ETH: "Ethereum", LTC: "Litecoin", BCH: "Bitcoin Cash",
+    XRP: "Ripple", BNB: "Binance Coin", SOL: "Solana", ADA: "Cardano"
   };
+
+  function describe(name) {
+    var m = /^Volatility (\d+) \((\d+)s\) Index$/.exec(name);
+    if (m) {
+      return "Constant Volatility of " + m[1] + "% with a tick every " +
+        m[2] + " second" + (m[2] === "1" ? "" : "s");
+    }
+    m = /^Volatility (\d+) Index$/.exec(name);
+    if (m) return "Constant Volatility of " + m[1] + "% with a tick every 2 seconds";
+    m = /^Jump (\d+) Index$/.exec(name);
+    if (m) return "Average 1 jump every 20 minutes with constant volatility of " + m[1] + "%";
+    m = /^(Boom|Crash) (\d+) Index$/.exec(name);
+    if (m) return "Average 1 " + m[1].toLowerCase() + " every " + m[2] + " ticks";
+    if (/^Step Index/.test(name)) return "Equal probability of up and down steps";
+    m = /^([A-Z]{3})([A-Z]{3})$/.exec(name);
+    if (m && CUR[m[1]] && CUR[m[2]]) return CUR[m[1]] + " vs " + CUR[m[2]];
+    return name;
+  }
+
+  /* Seconds left on the candle currently forming, as the app counts it down. */
+  function candleLeft() {
+    var left = 300 - Math.floor(Date.now() / 1000) % 300;
+    return String(Math.floor(left / 60)).padStart(2, "0") + ":" +
+      String(left % 60).padStart(2, "0");
+  }
 
   function drawChart() {
     var bars = T.bars(chartSym);
@@ -304,22 +338,30 @@
 
     /* Ask in red and bid in teal, each carrying its price in a filled tag that
        sits over the scale. */
-    function level(v, col) {
+    /* The bid's tag is the taller of the two: it carries the time left on the
+       candle under the price, which is where the app puts that clock. */
+    function level(v, col, countdown) {
       var ly = y(v);
+      var h = countdown ? 34 : 19;
       return '<line x1="' + boxL + '" y1="' + ly + '" x2="' + boxR + '" y2="' + ly +
           '" stroke="' + col + '" stroke-width="1"/>' +
         '<rect x="' + boxR + '" y="' + (ly - 9.5) + '" width="' + (W - boxR) +
-          '" height="19" fill="' + col + '"/>' +
+          '" height="' + h + '" fill="' + col + '"/>' +
         '<text x="' + (boxR + 5) + '" y="' + (ly + 4.5) +
-          '" font-size="11.5" fill="#fff">' + v.toFixed(s.digits) + "</text>";
+          '" font-size="11.5" fill="#fff">' + v.toFixed(s.digits) + "</text>" +
+        (countdown ? '<text x="' + (boxR + 5) + '" y="' + (ly + 19) +
+          '" font-size="11.5" fill="#fff">' + countdown + "</text>" : "");
     }
 
     $("tm-chart").innerHTML =
       '<svg viewBox="0 0 ' + W + " " + H + '">' +
         grid + times + candles +
-        level(T.ask(s), "#e2483c") + level(T.bid(s), "#26a69a") +
+        level(T.ask(s), "#e2483c") + level(T.bid(s), "#26a69a", candleLeft()) +
         '<rect x="' + boxL + '" y="' + boxT + '" width="' + boxW + '" height="' + boxH +
           '" fill="none" stroke="currentColor" stroke-opacity="0.45"/>' +
+        /* The app's own overflow dots, just inside the bottom right corner. */
+        '<text x="' + (boxR - 6) + '" y="' + (boxB + 15) + '" text-anchor="end"' +
+          ' font-size="15" fill="currentColor" fill-opacity="0.85">&#8226;&#8226;&#8226;</text>' +
       "</svg>" +
       '<div class="tm-chart-tag">' +
         /* The caret is drawn, not typed: the glyph is missing from enough
@@ -328,8 +370,7 @@
           '<svg class="c" viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">' +
           '<path d="M1 3.5h8L5 8z" fill="currentColor"/></svg>' +
           '<span class="tf">M5</span></b>' +
-        "<span>" + esc(DESC[chartSym] || chartSym) + "</span>" +
-        "<span>Market closed</span>" +
+        "<span>" + esc(describe(chartSym)) + "</span>" +
       "</div>";
   }
 
@@ -342,31 +383,43 @@
 
     var profit = 0; trades.forEach(function (d) { profit += d.profit; });
     var dep = 0; deposits.forEach(function (d) { dep += d.profit; });
+    /* The bottom line is what this period came to — profit plus deposits plus
+       swap and commission — not the account's current balance. Showing the
+       balance there made the column stop adding up: four figures and a total
+       that had nothing to do with them. */
+    var net = Math.round((profit + dep) * 100) / 100;
 
     $("tm-hfigures").innerHTML =
-      lead("Profit:", signed(Math.round(profit * 100) / 100), profit ? cls(profit) : "up") +
+      lead("Profit:", money(profit), cls(profit)) +
       lead("Deposit", money(dep)) +
       lead("Swap:", money(0)) +
       lead("Commission:", money(0)) +
-      lead("Balance:", money(T.summary().balance));
+      lead("Balance:", money(net), cls(net));
 
-    var list = seg === "orders" ? [] : (seg === "deals" ? ds : ds);
+    var list = seg === "orders" ? [] : ds;
     if (!list.length) { $("tm-hist").innerHTML = ""; return; }
 
     $("tm-hist").innerHTML = list.map(function (d) {
       if (d.type === "balance") {
-        return '<div class="tm-hrow"><b>Balance</b>' +
+        return '<div class="tm-hrow">' +
+          '<div class="h"><b>Balance</b></div>' +
           '<div class="t num">' + stamp(d.closeTime) + "</div>" +
           '<div class="v num up">' + money(d.profit) + "</div>" +
         "</div>";
       }
       var sym = T.symbol(d.symbol) || { digits: 2 };
+      /* Line one is the instrument and the order, with the stamp opposite it;
+         line two is the two prices with the result opposite them. The direction
+         and size used to sit on line two beside the prices, which is not where
+         the app puts them. */
       return '<div class="tm-hrow">' +
-        "<b>" + esc(d.symbol) + "</b>" +
+        '<div class="h"><b>' + esc(d.symbol) + ',</b> ' +
+          '<span class="' + (d.type === "buy" ? "up" : "down") + '">' +
+          d.type + " " + d.volume.toFixed(2) + "</span></div>" +
         '<div class="t num">' + stamp(d.closeTime) + "</div>" +
-        '<div class="s num">' + d.type + " " + d.volume.toFixed(2) + "  " +
-          Number(d.open).toFixed(sym.digits) + " &rarr; " + Number(d.close).toFixed(sym.digits) + "</div>" +
-        '<div class="v num ' + cls(d.profit) + '">' + signed(d.profit) + "</div>" +
+        '<div class="s num">' + px(d.open, sym.digits) +
+          " &rarr; " + px(d.close, sym.digits) + "</div>" +
+        '<div class="v num ' + cls(d.profit) + '">' + money(d.profit) + "</div>" +
       "</div>";
     }).join("");
   }

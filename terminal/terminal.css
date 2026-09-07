@@ -258,6 +258,8 @@
 .tm-seg { display: grid; grid-template-columns: repeat(3, 1fr); }
 .tm-seg button {
   padding: 13px 4px 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -279,10 +281,15 @@
   padding: 11px 16px;
   border-bottom: 1px solid var(--line);
 }
-.tm-hrow b { font-size: 17px; font-weight: 500; }
-.tm-hrow .t { grid-column: 2; font-size: 13px; color: var(--ink-2); text-align: right; }
-.tm-hrow .v { grid-column: 2; font-size: 16px; font-weight: 500; text-align: right; }
-.tm-hrow .s { grid-column: 1; font-size: 13.5px; color: var(--ink-2); }
+.tm-hrow b { font-size: 17px; font-weight: 700; }
+/* Two rows, two columns: the order and its stamp, then the prices and the
+   result. Every cell is placed, because leaving them to flow put the stamp and
+   the figure in the wrong halves of the row. */
+.tm-hrow .h { grid-column: 1; grid-row: 1; font-size: 17px; }
+.tm-hrow .h span { font-size: 15px; }
+.tm-hrow .t { grid-column: 2; grid-row: 1; font-size: 13px; color: var(--ink-2); text-align: right; }
+.tm-hrow .s { grid-column: 1; grid-row: 2; font-size: 13.5px; color: var(--ink-2); }
+.tm-hrow .v { grid-column: 2; grid-row: 2; font-size: 16px; font-weight: 700; text-align: right; }
 
 /* ── Messages ────────────────────────────────────────────────────────────── */
 
