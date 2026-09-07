@@ -263,6 +263,24 @@
   load();
   tick();
 
+  /* ── the terminal's door ─────────────────────────────────────────────────
+     Three clicks on the "e" of Deriv. `detail` counts them for us, so this is
+     the browser's own idea of a triple click rather than a hand-rolled timer
+     that would disagree with it — and it is the same count that selects the
+     line, so a stray double click does nothing at all.
+
+     Inert unless the mode is already on: off, this is three clicks on a letter
+     and nothing else, the same as every other hidden control on the site. */
+
+  var termDoor = document.getElementById("term-door");
+  if (termDoor) {
+    termDoor.addEventListener("click", function (e) {
+      if (e.detail < 3) return;
+      if (!global.EvieMode || !global.EvieMode.on()) return;
+      global.location.href = "/terminal.html";
+    });
+  }
+
   global.UptickMt5 = { load: load, profile: function () { return profile; } };
 
 })(window);
