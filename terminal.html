@@ -43,6 +43,7 @@ location.replace("/home.html");})();
 <div class="tm" id="tm">
  <div class="tm-shell">
 
+
   <!-- ── the top bar ───────────────────────────────────────────────────────
        One bar for every screen; the actions on the right are swapped per
        screen, because History's three differ from Trade's two. -->
@@ -351,6 +352,35 @@ location.replace("/home.html");})();
       <div class="tm-fld">
         <label for="tm-sim-days">Spread over (days)</label>
         <input id="tm-sim-days" type="text" inputmode="numeric" />
+      </div>
+
+      <!-- Optional. Left at zero the open positions are sized off the risk
+           percentage as before; give it a range and the run aims the TOTAL
+           floating profit somewhere inside it instead. Losers still appear
+           among them either way. -->
+      <div class="tm-fld">
+        <label for="tm-sim-plmin">Open P/L from</label>
+        <input id="tm-sim-plmin" type="text" inputmode="decimal" placeholder="0 = automatic" />
+      </div>
+      <div class="tm-fld">
+        <label for="tm-sim-plmax">Open P/L to</label>
+        <input id="tm-sim-plmax" type="text" inputmode="decimal" placeholder="0 = automatic" />
+      </div>
+
+      <div class="tm-fld">
+        <label>Auto-trade</label>
+        <div class="tm-seg tm-seg--in">
+          <button type="button" data-scalp="off">Off</button>
+          <button type="button" data-scalp="on">Scalper</button>
+        </div>
+      </div>
+      <div class="tm-fld">
+        <label for="tm-sim-scalpmax">Scalper max positions</label>
+        <input id="tm-sim-scalpmax" type="text" inputmode="numeric" />
+      </div>
+      <div class="tm-fld">
+        <label for="tm-sim-scalpwin">Scalper win rate %</label>
+        <input id="tm-sim-scalpwin" type="text" inputmode="decimal" />
       </div>
 
       <p class="tm-note" id="tm-sim-note"></p>

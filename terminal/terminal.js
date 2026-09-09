@@ -186,33 +186,113 @@
     $("tm-figures").innerHTML = rows;
 
     var ps = T.positions();
-    $("tm-poshead").hidden = !ps.length;
-    if (!ps.length) { $("tm-pos").innerHTML = ""; return; }
+    $("tm-poshead").hidden = !ps.length && !$("tm-pos").querySelector(".tm-row--out");
+    paintPositions(ps);
+  }
 
-    $("tm-pos").innerHTML = ps.map(function (p) {
-      /* The instrument may not be in the book yet. The book fills from the
-         socket and a saved position outlives a reload, so on boot the position
-         exists and its price does not. Reading a side off it threw — and since
-         the first draw happens during boot, the whole terminal died with it:
-         bind() never reached the line that starts the feed, so there were no
-         quotes, no chart and no way to recover short of clearing storage.
-         A position now waits for its price instead of taking the screen down. */
-      var sym = T.symbol(p.symbol);
-      var digits = sym ? sym.digits : 2;
-      var now = sym ? (p.type === "buy" ? T.bid(sym) : T.ask(sym)) : null;
-      var profit = T.profitOf(p);
-      /* "Volatility 25 (1s) Index, sell 1.00" — the comma belongs to the
-         symbol, and the direction and size carry the colour. The figure on the
-         right is plain: a gain is not written with a leading plus. */
-      return '<div class="tm-row" data-ticket="' + p.ticket + '">' +
-        '<div class="tm-row-h"><b>' + esc(p.symbol) + ",</b>" +
-          '<span class="' + (p.type === "buy" ? "up" : "down") + '">' +
-          p.type + " " + (sym ? volText(sym, p.volume) : p.volume) + "</span></div>" +
-        '<div class="tm-row-sub num">' + px(p.open, digits) + " &rarr; " +
-          (now === null ? "&mdash;" : px(now, digits)) + "</div>" +
-        '<div class="tm-row-v num ' + cls(profit) + '">' + money(profit) + "</div>" +
-      "</div>";
-    }).join("");
+  /**
+   * The open positions, patched in place rather than rewritten.
+   *
+   * Every row used to be thrown away and rebuilt on each paint. Three things
+   * followed from that and all of them were wrong: a row could never animate,
+   * because the element a transition would run on stopped existing between
+   * frames; the whole list flickered on every tick; and the price and profit
+   * could only be refreshed as often as the whole list could be rebuilt, which
+   * is why the figures crawled.
+   *
+   * Now a row is created once, updated in place while it lives, and given a
+   * moment to leave when its position closes — which is what the real terminal
+   * does, and it is the difference between a book that ticks and a book that
+   * redraws.
+   */
+  function rowHtml(p) {
+    var sym = T.symbol(p.symbol);
+    return '<div class="tm-row-h"><b>' + esc(p.symbol) + ",</b>" +
+        '<span class="' + (p.type === "buy" ? "up" : "down") + '">' +
+        p.type + " " + (sym ? volText(sym, p.volume) : p.volume) + "</span></div>" +
+      '<div class="tm-row-sub num"></div>' +
+      '<div class="tm-row-v num"></div>';
+  }
+
+  function paintRow(el, p) {
+    /* The instrument may not be in the book yet. The book fills from the socket
+       and a saved position outlives a reload, so on boot the position exists
+       and its price does not. Reading a side off it threw — and since the first
+       draw happens during boot, the whole terminal died with it. A position
+       waits for its price instead of taking the screen down. */
+    var sym = T.symbol(p.symbol);
+    var digits = sym ? sym.digits : 2;
+    var now = sym ? (p.type === "buy" ? T.bid(sym) : T.ask(sym)) : null;
+    var profit = T.profitOf(p);
+
+    var sub = el.querySelector(".tm-row-sub");
+    var val = el.querySelector(".tm-row-v");
+    var line = px(p.open, digits) + " &rarr; " + (now === null ? "&mdash;" : px(now, digits));
+    if (sub.innerHTML !== line) sub.innerHTML = line;
+
+    var txt = money(profit);
+    if (val.textContent !== txt) val.textContent = txt;
+    var want = cls(profit);
+    if (val.getAttribute("data-c") !== want) {
+      val.className = "tm-row-v num " + want;
+      val.setAttribute("data-c", want);
+    }
+  }
+
+  function paintPositions(ps) {
+    var host = $("tm-pos");
+    var seen = {};
+
+    ps.forEach(function (p, i) {
+      seen[p.ticket] = true;
+      var el = host.querySelector('[data-ticket="' + p.ticket + '"]');
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "tm-row tm-row--in";
+        el.setAttribute("data-ticket", p.ticket);
+        el.innerHTML = rowHtml(p);
+        host.appendChild(el);
+        /* Next frame, so the browser has laid the row out at its starting
+           state before the class that transitions away from it is removed. */
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { el.classList.remove("tm-row--in"); });
+        });
+      }
+      paintRow(el, p);
+    });
+
+    [].slice.call(host.children).forEach(function (el) {
+      var t = Number(el.getAttribute("data-ticket"));
+      if (seen[t] || el.classList.contains("tm-row--out")) return;
+      /* Closed. Let it go rather than vanish, then take it out for good. */
+      el.classList.add("tm-row--out");
+      setTimeout(function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+        if (!T.positions().length) $("tm-poshead").hidden = true;
+      }, 220);
+    });
+
+    /* Order is only touched when it is actually wrong, and this runs AFTER the
+       leavers are marked.
+    
+       Reordering on every paint moved nodes that were already where they
+       belonged, and moving a node restarts the transition running on it. Worse,
+       the check ran before the closed rows were marked, so a just-closed ticket
+       still counted as present, the orders never matched, and every paint after
+       a close shuffled the entire list: fourteen removals for seven closes,
+       each one a flicker. The engine appends new positions, so the order is
+       almost always right already. */
+    var want = ps.map(function (p) { return String(p.ticket); });
+    var live = [].slice.call(host.children).filter(function (el) {
+      return !el.classList.contains("tm-row--out");
+    });
+    var have = live.map(function (el) { return el.getAttribute("data-ticket"); });
+    if (have.join(",") !== want.join(",")) {
+      ps.forEach(function (p) {
+        var el = host.querySelector('[data-ticket="' + p.ticket + '"]');
+        if (el) host.appendChild(el);
+      });
+    }
   }
 
   /* ── Quotes ────────────────────────────────────────────────────────────── */
@@ -563,8 +643,15 @@
     $("tm-sim-lev").value = c.leverage;
     $("tm-sim-comm").value = c.commission;
     $("tm-sim-days").value = c.days;
+    $("tm-sim-plmin").value = c.plMin || 0;
+    $("tm-sim-plmax").value = c.plMax || 0;
+    $("tm-sim-scalpmax").value = c.scalpMax;
+    $("tm-sim-scalpwin").value = c.scalpWin;
     document.querySelectorAll("[data-risk]").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-risk") === c.riskMode);
+    });
+    document.querySelectorAll("[data-scalp]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-scalp") === (c.scalp === "on" ? "on" : "off"));
     });
     simNote();
   }
@@ -599,6 +686,16 @@
     $("tm-sim-sub").textContent = sym.name;
   }
 
+  /* The auto-trader is started and stopped in exactly one place, so the switch
+     in settings and the state on reload can never disagree. Its redraw is the
+     screen's own, which is why closing a position appears the instant it
+     happens rather than on the next tick of the feed. */
+  function applyScalper(c) {
+    if (!global.EvieSim || !global.EvieSim.autoStart) return;
+    if (c && c.scalp === "on") global.EvieSim.autoStart(c, function () { draw(); drawBar(); });
+    else global.EvieSim.autoStop();
+  }
+
   function readSim() {
     var c = simCfg() || {};
     c.market = $("tm-sim-market").value;
@@ -610,8 +707,14 @@
     c.leverage = Math.max(1, Math.round(Number($("tm-sim-lev").value) || 400));
     c.riskPct = Number($("tm-sim-risk").value) || 1;
     c.days = Math.max(1, Math.round(Number($("tm-sim-days").value) || 1));
+    c.plMin = Math.max(0, Number($("tm-sim-plmin").value) || 0);
+    c.plMax = Math.max(0, Number($("tm-sim-plmax").value) || 0);
+    c.scalpMax = Math.max(1, Math.round(Number($("tm-sim-scalpmax").value) || 4));
+    c.scalpWin = Math.max(0, Math.min(100, Number($("tm-sim-scalpwin").value) || 0));
     var on = document.querySelector("[data-risk].on");
     c.riskMode = on ? on.getAttribute("data-risk") : "each";
+    var sc = document.querySelector("[data-scalp].on");
+    c.scalp = sc && sc.getAttribute("data-scalp") === "on" ? "on" : "off";
     return c;
   }
 
@@ -775,14 +878,30 @@
         b.classList.add("on");
       });
     });
+    document.querySelectorAll("[data-scalp]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        document.querySelectorAll("[data-scalp]").forEach(function (x) { x.classList.remove("on"); });
+        b.classList.add("on");
+      });
+    });
     $("tm-sim-run").addEventListener("click", function () {
       var c = readSim();
       var r = global.EvieSim.run(c);
       if (r.error) { toast(r.error); return; }
       $("tm-sim-balance").value = r.balance;
+      applyScalper(c);
       closeSheet("tm-sim");
       go(r.open ? "trade" : "history");
-      toast(r.count + " closed · " + r.open + " open · " + money(r.balance));
+      /* Say when the account could not carry what was asked for, and when the
+         P/L wanted implies an entry far from where the market is. Both are
+         facts about the request, and quietly swallowing either would leave a
+         screen that looks right and is not. */
+      var extra = "";
+      if (r.asked && r.open < r.asked) extra += " · only " + r.open + " of " + r.asked + " fit the margin";
+      if (r.met === false) extra += " · P/L range not reachable on this balance";
+      if (r.strain > 0.15) extra += " · entries " + Math.round(r.strain * 100) + "% from the market";
+      toast(r.count + " closed · " + r.open + " open · " + money(r.balance) +
+            (c.scalp === "on" ? " · scalper on" : "") + extra);
     });
     $("tm-sim-clear").addEventListener("click", function () {
       var c = readSim();
@@ -876,6 +995,9 @@
       var acct = global.EvieSim.settings();
       if (T.setLeverage) T.setLeverage(acct.leverage || 400);
       if (T.setCommission) T.setCommission(acct.commission || 0);
+      /* Left switched on, it is still on after a reload — a setting that
+         quietly forgets itself is worse than one that was never offered. */
+      applyScalper(acct);
     }
 
     if (global.EvieFeed) {
@@ -900,7 +1022,23 @@
       });
     }
 
-    setInterval(draw, 700);
+    /* The Trade screen is repainted far more often than the rest.
+    
+       700ms was the whole terminal's refresh, and it showed: a scalp can open,
+       run and close inside two of those frames, so the P/L crawled and a
+       position could appear and vanish having barely been drawn. Trade is now
+       cheap enough to run at 120ms because its rows are patched in place and
+       only changed cells are touched.
+    
+       The other screens are not cheap — Quotes rebuilds twenty rows with their
+       sparklines, the chart redraws entirely — so they keep the old cadence.
+       Running those eight times as often would have bought a smooth P/L with a
+       stuttering everything-else. */
+    var beat = 0;
+    setInterval(function () {
+      beat++;
+      if (tab === "trade" || beat % 6 === 0) draw();
+    }, 120);
     go("trade");
   }
 

@@ -504,6 +504,30 @@
    * is a finished history, and leaving a live position priced against it would
    * mix a simulated balance with a real floating one.
    */
+  /**
+   * Move a position's entry so it shows a given profit against the live price.
+   *
+   * Used when a run is dealt and again when the P/L bracket is reconciled
+   * afterwards. Returns how far the implied entry sits from the price now, as a
+   * fraction — the caller wants that, because an entry a long way from the
+   * market is one the market may never have traded at.
+   */
+  function setProfit(p, profit) {
+    var s = book[p.symbol];
+    if (!s) return 0;
+    var out = p.type === "buy" ? bid(s) : ask(s);
+    var per = p.volume * s.size;
+    if (!(per > 0) || !(out > 0)) return 0;
+
+    var diff = profit / per;
+    if (s.usdBase) diff = diff * out;
+    var entry = p.type === "buy" ? out - diff : out + diff;
+    if (!(entry > 0)) return Infinity;      // no entry could show that figure
+
+    p.open = round(s, entry);
+    return Math.abs(p.open - out) / out;
+  }
+
   function applyRun(deposit, balance, deals, opens) {
     state.positions = [];
     state.balance = Math.round(Number(balance) * 100) / 100;
@@ -529,17 +553,7 @@
          showing NOW against the price it would close at now — so the position
          is consistent with the tape rather than decorated on top of it, and
          from here the engine prices it like any other. */
-      var s2 = book[o.symbol];
-      if (s2 && o.profit != null) {
-        var out = o.type === "buy" ? bid(s2) : ask(s2);
-        var per = p.volume * s2.size;
-        if (per > 0) {
-          var diff = o.profit / per;
-          if (s2.usdBase) diff = diff * out;
-          var entry = o.type === "buy" ? out - diff : out + diff;
-          if (entry > 0) p.open = round(s2, entry);
-        }
-      }
+      if (o.profit != null) setProfit(p, o.profit);
       if (o.time) p.time = o.time;
     });
     save();
@@ -579,6 +593,7 @@
     tick: tick, setBars: setBars, setSession: setSession,
     applySymbols: applySymbols, setOpen: setOpen, setDigits: setDigits,
     applyRun: applyRun,
+    setProfit: setProfit,
     summary: summary,
     positions: function () { return state.positions; },
     deals: function () { return state.deals; },

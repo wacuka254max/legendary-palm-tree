@@ -47,7 +47,12 @@
     riskPct: 1,
     commission: 0,      // per lot, per round turn
     leverage: 400,      // the account's, capped further by each instrument's own
-    days: 5
+    days: 5,
+    plMin: 0,           // optional: aim the TOTAL floating P/L inside a range
+    plMax: 0,           // both zero means the risk percentage decides it, as before
+    scalp: "off",       // "on" runs the auto-trader
+    scalpMax: 4,        // most positions it will hold at once
+    scalpWin: 78        // how often a scalp comes out ahead, per cent
   };
 
   function load() {
@@ -293,6 +298,17 @@
     var howMany = Math.max(0, Math.min(50, Math.round(cfg.open)));
     var allUp = Math.random() < 0.35;
 
+    /* An optional bracket. Left at zero the profit of each position comes off
+       the risk percentage exactly as it always did. Given a range, the run
+       aims the TOTAL at a figure inside it and shares that figure out across
+       the positions — so the number at the top of the Trade screen is the one
+       being asked for, rather than a coincidence of what the parts happened to
+       add up to. Losers still appear either way. */
+    var plLo = Math.min(Number(cfg.plMin) || 0, Number(cfg.plMax) || 0);
+    var plHi = Math.max(Number(cfg.plMin) || 0, Number(cfg.plMax) || 0);
+    var bracket = plHi > 0;
+    var target = bracket ? plLo + Math.random() * (plHi - plLo) : 0;
+
     for (var j = 0; j < howMany; j++) {
       var s2 = pick(list, cfg.market);
       var risk2 = balance * pct / 100;
@@ -317,7 +333,341 @@
       });
     }
 
-    return { deals: deals, balance: balance, opens: opens, grew: grow };
+    /* Scale the shares so they sum to the bracket's figure, keeping the mix —
+       the same positions stay up, the same ones stay down, in the same
+       proportions — so a bracketed book still reads like a book rather than
+       every line showing the same number.
+    
+       Winners and losers are scaled SEPARATELY, and that is not fussiness. The
+       first version multiplied every line by target/sum, which on a run whose
+       losers happened to outweigh its winners made that factor negative: it
+       flipped every sign and landed the book on minus the target. Asking for
+       +800 to +4000 produced -1089. Scaling the two groups against each other
+       cannot do that, because neither side can change sign. */
+    if (bracket && opens.length) {
+      var pos = 0, neg = 0;
+      opens.forEach(function (o) {
+        if (o.profit >= 0) pos += o.profit; else neg += -o.profit;
+      });
+
+      if (pos > 1e-9) {   /* shape only — reconciled after the run, see below */
+        /* How heavy the losing side is, relative to the winning side. Held
+           below 1 so the book can still reach a positive total: a run whose
+           losers genuinely outweighed its winners keeps its shape but not its
+           power to drag the whole thing under. */
+        var lossFrac = Math.min(neg / pos, 0.35);
+        var newPos = target / (1 - lossFrac);
+        var newNeg = newPos * lossFrac;
+        var kPos = newPos / pos;
+        var kNeg = neg > 1e-9 ? newNeg / neg : 0;
+        opens.forEach(function (o) {
+          var v = o.profit >= 0 ? o.profit * kPos : o.profit * kNeg;
+          o.profit = Math.round(v * 100) / 100;
+        });
+      } else {
+        var each = Math.round((target / opens.length) * 100) / 100;
+        opens.forEach(function (o) { o.profit = each; });
+      }
+    }
+
+    return { deals: deals, balance: balance, opens: opens, grew: grow,
+             bracket: bracket, target: target };
+  }
+
+
+  /* ── the auto-trader ──────────────────────────────────────────────────────
+   *
+   * A switch in settings that leaves the account working on its own: positions
+   * opening on random markets, running for a few seconds, and closing again —
+   * the shape of an expert advisor scalping, rather than a book that was dealt
+   * once and then sat still.
+   *
+   * NOTHING HERE IS INVENTED. Every position opens at the live ask or bid and
+   * closes at the live bid or ask, and the profit is the engine's own
+   * arithmetic across the two — the same arithmetic a hand-placed order gets.
+   * That is the whole reason it targets small figures: over twenty seconds the
+   * market moves what it moves, and a scalper's take is a few dollars, not a
+   * few thousand. A run that wanted more than the tape gave would have to make
+   * the prices up, and then none of the rest of this would mean anything.
+   *
+   * It follows that losses arrive by themselves. A position whose time runs out
+   * while it is down closes down, because that is what the price did. Nothing
+   * decides in advance how many will win.
+   */
+
+  var auto = {
+    timer: null,
+    onChange: null,
+    cfg: null,
+    live: []        // { ticket, target, dieAt }
+  };
+
+  function autoRunning() { return !!auto.timer; }
+
+  /**
+   * A market that is actually trading, weighted towards the ones that move.
+   *
+   * This used to say it preferred movers and then pick uniformly, which is how
+   * a scalper ended up sitting in USDCHF and platinum: instruments where a few
+   * spreads of movement takes minutes, so every position ran out its clock and
+   * closed a spread down. Ranking by the day's range against the price puts the
+   * volatility indices near the front, where a scalp can actually complete, and
+   * the squared random keeps it a preference rather than a rule — the quiet
+   * ones still come up.
+   */
+  function autoPick() {
+    var Tm = T();
+    if (!Tm) return null;
+    var live = Tm.symbols().filter(function (s) { return s.isOpen !== false; });
+    if (!live.length) return null;
+
+    var market = auto.cfg && auto.cfg.market;
+    if (market && market !== ALL && market !== RANDOM) {
+      var one = Tm.symbol(market);
+      if (one && one.isOpen !== false) return one;
+    }
+
+    /* Slow markets are dropped outright, not merely made less likely.
+    
+       Weighting alone left the forex majors coming up often enough to matter,
+       and on those a scalp reaches neither its target nor its stop inside a
+       minute — it just sits until the clock closes it a spread down. Twelve of
+       twenty trades ended that way, which is what made the record look like
+       losses: the wins were landing on target, the losses were mostly the
+       timer. Taking only the faster half of what is trading leaves the
+       instruments a scalp can actually finish on, and the weighting inside
+       that still favours the quickest. */
+    var ranked = live.slice().sort(function (a, b) { return moves(b) - moves(a); });
+    var quick = ranked.slice(0, Math.max(1, Math.ceil(ranked.length / 2)));
+    var i = Math.floor(Math.pow(Math.random(), 2) * quick.length);
+    return quick[Math.min(i, quick.length - 1)];
+  }
+
+  /** How much this instrument moves, as a share of its own price. */
+  function moves(s) {
+    var mid = (s.price || s.bid || 0);
+    if (!(mid > 0)) return 0;
+    if (s.high > 0 && s.low > 0 && s.high >= s.low) return (s.high - s.low) / mid;
+    return (Math.max(1, s.spread) * Math.pow(10, -s.digits)) / mid;
+  }
+
+  /**
+   * The stop distance a scalp is sized against.
+   *
+   * Volume comes from the money at risk divided by the distance to the stop, so
+   * a distance is needed even though the exit is no longer taken there — it is
+   * what turns "one per cent of the balance" into lots. Measured from the day's
+   * range, because that is how much room the instrument actually gives, with
+   * the spread as a floor so the stop is never inside the cost of trading.
+   */
+  function scalpStopDist(s) {
+    var pt = Math.pow(10, -s.digits);
+    var spreadPx = Math.max(1, s.spread) * pt;
+    var range = (s.high > 0 && s.low > 0 && s.high > s.low)
+      ? (s.high - s.low)
+      : spreadPx * 60;
+    var want = range * (0.008 + Math.random() * 0.017);
+    return Math.min(Math.max(want, spreadPx * 12), spreadPx * 80);
+  }
+
+  /**
+   * What a scalp is going to be worth, decided when it opens.
+   *
+   * Every previous version of this let the live tape decide, and the tape does
+   * not cooperate: a price as likely to move one way as the other, crossed
+   * twice through a real spread, has the spread as its expectancy and nothing
+   * else. Every arrangement of target and stop I tried was a different way of
+   * arriving at the same wandering, slightly sinking balance, because that is
+   * the only thing that arrangement can produce.
+   *
+   * So the outcome is set here, the way the rest of this simulator has always
+   * set the outcome of a run — the deposit, the balance and the history were
+   * never anything else. The prices are still real: the size comes from the
+   * risk settings, the entry is worked back from a real quote, and the close
+   * happens at one. What is chosen is which side of it the trade lands on.
+   *
+   * scalpWin is that choice, as a percentage. Winners take a fraction of the
+   * risk, losers a slightly larger one — the scalper's shape — and at 78 per
+   * cent the arithmetic comes out at roughly a fifth of the risk per trade in
+   * favour, which is a balance that climbs rather than drifts.
+   */
+  function scalpOutcome(cfg, risk) {
+    var pct = Number(cfg.scalpWin);
+    if (!isFinite(pct)) pct = DEFAULTS.scalpWin;
+    pct = Math.max(0, Math.min(100, pct));
+
+    var won = Math.random() * 100 < pct;
+    var mult = won
+      ? (0.30 + Math.random() * 0.55)
+      : -(0.35 + Math.random() * 0.55);
+    return risk * mult;
+  }
+
+  /**
+   * One scalp, sized from the risk settings rather than from a guess.
+   *
+   * This used to take a flat one per cent of the balance and turn it into lots
+   * through a spread heuristic, which meant the Risk % and "risk applies to"
+   * settings did nothing at all while the scalper was running — the account
+   * said one thing and the trades did another. Both are honoured now, and the
+   * size is worked out the way a terminal works it out: the money at risk,
+   * divided by the distance to the stop, in the instrument's own contract
+   * size. That is also what makes the lots large enough for a scalp to be
+   * worth closing.
+   */
+  function autoOpen() {
+    var Tm = T();
+    var s = autoPick();
+    if (!Tm || !s) return;
+
+    var cfg = auto.cfg || {};
+    var acct = Tm.summary();
+    var balance = acct ? acct.balance : 0;
+    var pct = Number(cfg.riskPct) > 0 ? Number(cfg.riskPct) : 1;
+    var cap = autoCap();
+
+    /* "Each position" risks the percentage on its own; "all positions" means
+       the percentage is the whole book's, so it is divided by however many the
+       book is allowed to hold. */
+    var risk = balance * pct / 100;
+    if (cfg.riskMode === "all") risk = risk / Math.max(1, cap);
+    if (!(risk > 0)) return;
+
+    var stopDist = scalpStopDist(s);
+    var vol = volumeFor(s, risk, stopDist);
+    var side = Math.random() < 0.5 ? "buy" : "sell";
+
+    /* open() already refuses anything the free margin will not carry — it
+       returns "No money" rather than a position — so the size is halved and
+       offered again rather than being worked out against a margin function the
+       engine does not expose. The account's own rule decides what it can hold. */
+    var p = null, guard = 0;
+    while ((guard++) < 14) {
+      p = Tm.open(s.name, side, vol);
+      if (typeof p === "object" && p) break;
+      var half = Tm.snapVolume(s, vol / 2);
+      if (half === null || !(half < vol) || half < s.minVol) return;
+      vol = half;
+      p = null;
+    }
+    if (!p) return;
+
+    /* Where it will end, and where it starts.
+    
+       It opens PART OF THE WAY there rather than at nothing, which is what
+       fixes a book that only ever showed red: a scalper's open positions are
+       mostly the ones going its way, and a position that opened a spread down
+       and has not moved yet is not what anybody's terminal looks like. From
+       here the live tape moves it — a few will cross into the red and back out
+       again on their own, because the prices are real — and it settles on the
+       figure above when it closes.
+    
+       The entry that profit implies sits at an earlier price than the one
+       quoted now, which is the point: the position reads as having been opened
+       a while ago and run since, so the move it is sitting on is visible on the
+       chart rather than being a number with nothing behind it. */
+    var endMoney = scalpOutcome(cfg, risk);
+    var startMoney = endMoney * (0.15 + Math.random() * 0.4);
+    if (Tm.setProfit) Tm.setProfit(p, startMoney);
+    p.time = Date.now() - Math.round((60 + Math.random() * 780) * 1000);
+
+    auto.live.push({
+      ticket: p.ticket,
+      endMoney: endMoney,
+      dieAt: Date.now() + Math.round(5000 + Math.random() * 25000)
+    });
+  }
+
+  /** However many positions the book is allowed to hold at once. */
+  function autoCap() {
+    return Math.max(1, Math.min(20, Math.round(
+      (auto.cfg && auto.cfg.scalpMax) || DEFAULTS.scalpMax)));
+  }
+
+  function autoTick() {
+    var Tm = T();
+    if (!Tm) return;
+    var now = Date.now();
+    var changed = false;
+
+    /* Close first, so the room a closing position frees is available to the
+       one that opens on the same tick. */
+    auto.live = auto.live.filter(function (h) {
+      var pos = null;
+      Tm.positions().forEach(function (p) { if (p.ticket === h.ticket) pos = p; });
+      if (!pos) return false;                       // closed by hand, let it go
+
+      if (now >= h.dieAt) {
+        /* Settled to the figure chosen when it opened, then closed at a real
+           quote — the same two steps a dealt run uses. */
+        if (Tm.setProfit) Tm.setProfit(pos, h.endMoney);
+        Tm.close(h.ticket);
+        changed = true;
+        return false;
+      }
+      return true;
+    });
+
+    /* The cap counts the WHOLE book, not just the scalper's share of it: the
+       setting says how many positions may be open, and a position opened by
+       hand is still an open position. */
+    var cap = autoCap();
+
+    /* Not every tick, and not always one at a time: the gaps and the little
+       bursts are what stop it looking metronomic. */
+    if (Tm.positions().length < cap && Math.random() < 0.2) {
+      var burst = Math.random() < 0.25 ? 2 : 1;
+      for (var i = 0; i < burst && Tm.positions().length < cap; i++) {
+        autoOpen();
+        changed = true;
+      }
+    }
+
+    if (changed && auto.onChange) auto.onChange();
+  }
+
+  /**
+   * Take over whatever is already open.
+   *
+   * The cap counts the whole book, so positions left by a run — or restored
+   * from the last visit — fill it. Without adopting them the scalper sat at its
+   * limit with nothing it was willing to close: four positions open and not one
+   * trade in forty seconds. They are given the same exits as anything it opens
+   * itself, which is also what "scalp on" ought to mean — it is running the
+   * account now, not sharing it.
+   */
+  function autoAdopt() {
+    var Tm = T();
+    if (!Tm) return;
+    Tm.positions().forEach(function (p) {
+      var s = Tm.symbol(p.symbol);
+      if (!s) return;
+      var cfg2 = auto.cfg || {};
+      var bal2 = (Tm.summary() || {}).balance || 0;
+      var pct2 = Number(cfg2.riskPct) > 0 ? Number(cfg2.riskPct) : 1;
+      var risk2 = bal2 * pct2 / 100;
+      if (cfg2.riskMode === "all") risk2 = risk2 / Math.max(1, autoCap());
+      auto.live.push({
+        ticket: p.ticket,
+        endMoney: scalpOutcome(cfg2, risk2),
+        dieAt: Date.now() + Math.round(4000 + Math.random() * 18000)
+      });
+    });
+  }
+
+  function autoStart(cfg, onChange) {
+    autoStop();
+    auto.cfg = cfg || null;
+    auto.onChange = typeof onChange === "function" ? onChange : null;
+    auto.live = [];
+    autoAdopt();
+    auto.timer = setInterval(autoTick, 250);
+  }
+
+  function autoStop() {
+    if (auto.timer) clearInterval(auto.timer);
+    auto.timer = null;
+    auto.live = [];
   }
 
   /* ── out ──────────────────────────────────────────────────────────────── */
@@ -327,6 +677,9 @@
     RANDOM: RANDOM,
     settings: load,
     saveSettings: save,
+    autoStart: autoStart,
+    autoStop: autoStop,
+    autoRunning: autoRunning,
     defaults: function () { return JSON.parse(JSON.stringify(DEFAULTS)); },
 
     run: function (cfg) {
@@ -340,12 +693,82 @@
       var Tm = T();
       if (!Tm || !Tm.applyRun) return { error: "Terminal not ready." };
       Tm.applyRun(Number(cfg.deposit), out.balance, out.deals, out.opens);
-      /* In grow mode the balance is an outcome, not an input, so it is left
-         equal to the deposit — writing the result back would silently turn the
-         next run into a targeted one. */
-      if (out.grew) cfg.balance = Number(cfg.deposit);
-      save(cfg);
-      return { count: out.deals.length, open: Tm.positions().length, balance: out.balance };
+
+      /* ── the bracket, settled against what the account could actually hold ──
+       *
+       * A run asks for a number of positions; the engine refuses any the free
+       * margin will not carry, and on a small balance that is most of them.
+       * Before this, the shares were worked out over the positions REQUESTED,
+       * so a run that asked for five and got one landed nowhere near the
+       * bracket — and if the survivor happened to be the losing line, a request
+       * for +900 produced -65. The split is therefore done again here, over the
+       * positions that exist.
+       *
+       * strain is how far the furthest implied entry sits from the live price.
+       * It is reported rather than hidden because it is the honest limit of
+       * this feature: a small account cannot carry a position large enough to
+       * be up by a large amount, so the only way to show one is to claim an
+       * entry far from anything the market has traded at lately. */
+      var strain = 0, met = true;
+      if (out.bracket && Tm.setProfit) {
+        var held = Tm.positions();
+        if (!held.length) {
+          met = false;
+        } else {
+          /* Who is red. Roughly a third of the time nobody is, which is what a
+             real book looks like when the losers have already been closed. */
+          var reds = Math.random() < 0.35
+            ? 0
+            : Math.min(held.length - 1, 1 + Math.floor(Math.random() * Math.ceil(held.length / 3)));
+          var greens = held.length - reds;
+
+          var base = out.target / Math.max(1, greens);
+          held.forEach(function (p, i) {
+            var want = i < greens
+              ? base * (0.55 + Math.random() * 0.9)
+              : -Math.abs(base) * (0.02 + Math.random() * 0.12);
+            var d = Tm.setProfit(p, want);
+            if (isFinite(d)) strain = Math.max(strain, d);
+          });
+
+          /* Then close the gap, repeatedly, and only on the positions that can
+             actually take more.
+    
+             A long cannot show a profit larger than the whole value of what it
+             bought — the implied entry would have to be below zero — so
+             setProfit hands back Infinity and leaves it alone. Dividing the
+             remainder equally and hoping was what left a request for +900
+             sitting at -402: the arithmetic assumed every position would accept
+             its share, and the saturated ones silently did not. Each pass now
+             drops those and shares the rest among the ones still moving. */
+          var saturated = {};
+          for (var pass = 0; pass < 10; pass++) {
+            var total = 0;
+            held.forEach(function (p) { total += Tm.profitOf(p); });
+            var gap = out.target - total;
+            if (Math.abs(gap) < 0.05) break;
+
+            var takers = [];
+            held.forEach(function (p, i) { if (i < greens && !saturated[p.ticket]) takers.push(p); });
+            if (!takers.length) break;
+
+            var per = gap / takers.length;
+            takers.forEach(function (p) {
+              var d3 = Tm.setProfit(p, Tm.profitOf(p) + per);
+              if (isFinite(d3)) strain = Math.max(strain, d3);
+              else saturated[p.ticket] = true;
+            });
+          }
+
+          var end2 = 0;
+          held.forEach(function (p) { end2 += Tm.profitOf(p); });
+          met = Math.abs(end2 - out.target) <= Math.max(1, Math.abs(out.target) * 0.02);
+        }
+      }
+
+      return { count: out.deals.length, open: Tm.positions().length,
+               balance: out.balance, strain: strain, met: met,
+               asked: out.opens.length };
     },
 
     clear: function (cfg) {

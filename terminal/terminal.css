@@ -129,7 +129,19 @@
 
 /* ── the body ────────────────────────────────────────────────────────────── */
 
-.tm-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* scrollbar-gutter keeps the space a scrollbar would occupy reserved whether
+   or not one is showing. Without it, a book that grows past the fold makes a
+   scrollbar appear and every column shifts left by its width; the next close
+   shrinks the list, the scrollbar goes, and everything shifts back. On a
+   scalper opening and closing every few seconds that is a constant twitch, and
+   it is the scrollbar flashing in and out at the bottom of the screen. */
+.tm-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
 .tm-pane { display: none; }
 .tm-pane.on { display: block; }
 
@@ -693,3 +705,44 @@
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 .tm-toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+
+/* ── a position arriving and leaving ────────────────────────────────────────
+   The real terminal does not blink a row into existence. A fill slides down
+   into the book and a close fades out of it, and both are quick enough to read
+   as the platform reacting rather than as an animation being played at you.
+   The transition lives on the row, which is only possible because the list is
+   patched in place — a row that is rebuilt every frame has nothing to
+   transition from. */
+.tm-row {
+  max-height: 140px;
+  overflow: hidden;
+  transition: opacity 160ms ease, transform 160ms ease,
+              max-height 200ms ease, padding-top 200ms ease,
+              padding-bottom 200ms ease;
+}
+.tm-row--in {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* A closing row collapses its own height and fades, and moves nowhere
+   sideways. It used to slide out with translateX(10px), which pushed it past
+   the right edge of the list and made a horizontal scrollbar flash into
+   existence for the length of the animation, every single time a trade closed.
+   Collapsing the height is also what the real terminal does: the rows below
+   come up to meet the gap rather than jumping into it. */
+.tm-row--out {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-bottom-color: transparent;
+  pointer-events: none;
+}
+
+/* Somebody who would rather not be moved at is not moved at. */
+@media (prefers-reduced-motion: reduce) {
+  .tm-row { transition: none; }
+  .tm-row--in, .tm-row--out { opacity: 1; transform: none; }
+}
