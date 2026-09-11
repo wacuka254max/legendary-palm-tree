@@ -84,6 +84,10 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+  /* The same ink as the Real balance in the portfolio below it. It is the
+     same money, in both modes, and two colours for one figure read as two
+     figures. */
+  color: var(--real);
 }
 
 .badge {
