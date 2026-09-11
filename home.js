@@ -155,6 +155,23 @@
     var reals = data.accounts.filter(function (a) { return !a.demo; });
     var demos = data.accounts.filter(function (a) { return a.demo; });
 
+    /* In practice mode the figure in the header is the practice balance, not
+       Deriv's — so the Real · Options row below it has to say the same thing,
+       or the page contradicts itself two inches apart. The row keeps its own
+       login id; only the amount is the one being practised with. Demo is left
+       as Deriv reports it, because nothing on this page pretends about demo. */
+    if (Mode && Mode.on()) {
+      var swapped = false;
+      reals = reals.map(function (a) {
+        if (swapped || !/options/i.test(a.kind)) return a;
+        swapped = true;
+        return { kind: a.kind, id: a.id, demo: a.demo, balance: practiceBalance(), currency: "USD" };
+      });
+      if (!swapped) {
+        reals = [{ kind: "Options", id: "Practice", demo: false, balance: practiceBalance(), currency: "USD" }].concat(reals);
+      }
+    }
+
     return (data.nickname ? '<p class="sheet-who">' + esc(data.nickname) + "</p>" : "") +
       group("Real", reals, "No real accounts on this login.") +
       group("Demo", demos, "No demo account on this login.");
