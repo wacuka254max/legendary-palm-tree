@@ -133,7 +133,7 @@
 
   /* ── the detail sheet ───────────────────────────────────────────────────── */
 
-  function group(title, rows, emptyText) {
+  function group(title, rows, emptyText, mod) {
     var body = rows.length
       ? rows.map(function (a) {
           return '<li class="acct">' +
@@ -144,7 +144,7 @@
         }).join("")
       : '<li class="acct acct--none">' + esc(emptyText) + "</li>";
 
-    return '<section class="grp"><h3 class="grp-t">' + esc(title) + "</h3>" +
+    return '<section class="grp' + (mod ? " grp--" + mod : "") + '"><h3 class="grp-t">' + esc(title) + "</h3>" +
            '<ul class="accts">' + body + "</ul></section>";
   }
 
@@ -173,7 +173,7 @@
     }
 
     return (data.nickname ? '<p class="sheet-who">' + esc(data.nickname) + "</p>" : "") +
-      group("Real", reals, "No real accounts on this login.") +
+      group("Real", reals, "No real accounts on this login.", "real") +
       group("Demo", demos, "No demo account on this login.");
   }
 

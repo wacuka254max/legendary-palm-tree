@@ -603,6 +603,9 @@ a { color: inherit; text-decoration: none; }
   --up:     var(--mint);
   --down:   var(--danger);
   --even:   #38bdf8;
+  /* The Real group in the portfolio — the money that is actually money. */
+  --real:      #38bdf8;
+  --real-tint: rgba(56, 189, 248, 0.14);
   --odd:    #f472b6;
   --over:   var(--amber);
   --under:  #2dd4bf;
@@ -616,6 +619,8 @@ a { color: inherit; text-decoration: none; }
   --ring:      rgba(0, 0, 0, 0.45);
 
   --even:   #0284c7;
+  --real:      #0284c7;
+  --real-tint: rgba(2, 132, 199, 0.10);
   --odd:    #db2777;
   --under:  #0d9488;
   --differ: #64748b;

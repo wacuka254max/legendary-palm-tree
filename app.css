@@ -220,6 +220,21 @@
   text-transform: uppercase;
   color: var(--text-3);
 }
+
+/* The Real group carries the account's own colour: a coloured pill on the
+   title and the balance in the same ink, so the row that is actual money is
+   the one the eye lands on. Demo stays quiet. Same in practice mode — the
+   figure changes, the emphasis does not. */
+.grp--real .grp-t {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--real-tint); color: var(--real);
+}
+.grp--real .grp-t::before {
+  content: ""; width: 6px; height: 6px; border-radius: 999px;
+  background: var(--real); box-shadow: 0 0 0 3px var(--real-tint);
+}
+.grp--real .acct-bal { color: var(--real); font-weight: 750; }
 .accts { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
 .acct {
   display: grid;
