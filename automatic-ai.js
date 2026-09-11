@@ -19,6 +19,14 @@
 
 (function () {
   "use strict";
+  /* The language layer's t() when it is on the page, English otherwise; and a
+     {name} filler for the strings built with numbers in them. */
+  var T = function (s, vars) {
+    var out = (typeof window !== "undefined" && typeof window.t === "function") ? window.t(s) : s;
+    if (vars) for (var k in vars) out = out.split("{" + k + "}").join(String(vars[k]));
+    return out;
+  };
+
 
   var D = window.EvieDeriv;
   if (!D || !D.requireConnection()) return;
@@ -278,11 +286,11 @@
     var cur = (account && account.currency) || "USD";
     var floor = window.EvieCurrency ? window.EvieCurrency.min(cur) : 0.35;
     if (floor != null && config.initialStake < floor) {
-      return ui.showStatus("Deriv's minimum stake is " + floor + " " + cur + ".", "error");
+      return ui.showStatus(T("Deriv's minimum stake is {min}.", { min: floor + " " + cur }), "error");
     }
 
     startBtn.disabled = true;
-    ui.showStatus("Opening a trading session on " + account.id + "…", "info");
+    ui.showStatus(T("Opening a trading session on {account}…", { account: account.id }), "info");
 
     D.tradeSocket(account.id)
       .then(function (url) {

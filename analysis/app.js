@@ -19,6 +19,14 @@
 
 (function () {
   "use strict";
+  /* The language layer's t() when it is on the page, English otherwise; and a
+     {name} filler for the strings built with numbers in them. */
+  var T = function (s, vars) {
+    var out = (typeof window !== "undefined" && typeof window.t === "function") ? window.t(s) : s;
+    if (vars) for (var k in vars) out = out.split("{" + k + "}").join(String(vars[k]));
+    return out;
+  };
+
 
   var D = window.EvieDeriv;
   if (!D || !D.requireConnection()) return;
@@ -439,7 +447,7 @@
     if (isNaN(stake) || (floor != null && stake < floor)) {
       return status(floor == null
         ? "Enter a stake."
-        : "Deriv's minimum stake is " + floor + " " + currencyOf() + ".", "error");
+        : T("Deriv's minimum stake is {min}.", { min: floor + " " + currencyOf() }), "error");
     }
 
     /* One trade per click. The ladder lives here rather than inside the
@@ -652,9 +660,9 @@
     var el = $("next-stake");
     if (!settings.martingale) { el.textContent = ""; return; }
     var recovering = nextStake > settings.stake + 1e-9;
-    el.textContent = "Next stake " + (window.EvieCurrency
+    el.textContent = T("Next stake {stake}", { stake: (window.EvieCurrency
       ? window.EvieCurrency.bare(nextStake, currencyOf())
-      : nextStake.toFixed(2)) + (recovering ? " — recovering" : "");
+      : nextStake.toFixed(2)) }) + (recovering ? " — " + T("recovering") : "");
     el.className = "next-stake" + (recovering ? " is-recovering" : "");
   }
 
@@ -722,10 +730,10 @@
     nextStake = settings.stake;
     showNextStake();
     status(settings.martingale
-      ? "Martingale on — a loss multiplies the next stake by " + settings.multiplier + "."
-      : "Martingale off — the stake stays at " + (window.EvieCurrency
+      ? T("Martingale on — a loss multiplies the next stake by {x}.", { x: settings.multiplier })
+      : T("Martingale off — the stake stays at {stake}.", { stake: (window.EvieCurrency
           ? window.EvieCurrency.bare(settings.stake, currencyOf())
-          : settings.stake.toFixed(2)) + ".", "success");
+          : settings.stake.toFixed(2)) }), "success");
   });
 
   /* ── accounts ───────────────────────────────────────────────────────── */

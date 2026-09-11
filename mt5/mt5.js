@@ -16,6 +16,14 @@
 
 (function (global) {
   "use strict";
+  /* The language layer's t() when it is on the page, English otherwise; and a
+     {name} filler for the strings built with numbers in them. */
+  var T = function (s, vars) {
+    var out = (typeof window !== "undefined" && typeof window.t === "function") ? window.t(s) : s;
+    if (vars) for (var k in vars) out = out.split("{" + k + "}").join(String(vars[k]));
+    return out;
+  };
+
 
   var API = "/api/mt5/signals";
   var CATEGORIES = "forex,volatility";
@@ -74,7 +82,7 @@
           '<span class="mt5-prof-tick">' + svg('<path d="M20 6 9 17l-5-5"/>', 15) + "</span>" +
         "</span>" +
         '<p class="mt5-prof-s">' + esc(p.blurb) + "</p>" +
-        '<div class="mt5-prof-r">Risk per trade ' + esc(p.riskPerTradePct) + "%</div>" +
+        '<div class="mt5-prof-r">' + T("Risk per trade {pct}%", { pct: esc(p.riskPerTradePct) }) + "</div>" +
       "</button>";
     }).join("");
   }
@@ -141,16 +149,14 @@
       sigs.innerHTML = d.signals.map(signalCard).join("");
     } else {
       sigs.className = "mt5-quiet";
-      sigs.innerHTML = "<span>No entries right now — the engine only fires on a clean setup. " +
-        "It re-scans continuously and refreshes here every minute.</span>";
+      sigs.innerHTML = "<span>" + T("No entries right now — the engine only fires on a clean setup. It re-scans continuously and refreshes here every minute.") + "</span>";
     }
 
-    el("sig-meta").textContent = d.signals.length + " active · " +
-      d.meta.withData + "/" + d.meta.evaluated + " markets scanned · highest-confidence first";
+    el("sig-meta").textContent = T("{n} active · {a}/{b} markets scanned · highest-confidence first", { n: d.signals.length, a: d.meta.withData, b: d.meta.evaluated });
 
     if (d.standAside && d.standAside.length) {
       aside.innerHTML = '<details class="mt5-aside">' +
-        "<summary>Standing aside on " + d.standAside.length + " markets</summary>" +
+        "<summary>" + T("Standing aside on {n} markets", { n: d.standAside.length }) + "</summary>" +
         '<div class="mt5-aside-l">' + d.standAside.map(function (a) {
           return '<div class="mt5-aside-r"><span class="mt5-aside-s">' + esc(a.name) +
             '</span><span class="mt5-aside-w">' + esc(a.reason) + "</span></div>";
@@ -183,7 +189,7 @@
       sigs.className = "mt5-quiet";
       sigs.innerHTML = '<span class="mt5-quiet-in">' +
         svg('<path d="M21 12a9 9 0 1 1-6.2-8.6"/>', 16) +
-        "Scanning forex + Volatility…</span>";
+        T("Scanning forex + Volatility…") + "</span>";
     }
 
     fetch(API + "?profile=" + encodeURIComponent(profile) + "&categories=" + CATEGORIES, { cache: "no-store" })
@@ -204,7 +210,7 @@
         if (d.profiles) drawProfiles(d.profiles);
         draw(d);
         var stamp = el("stamp");
-        stamp.textContent = "updated " + new Date().toLocaleTimeString() + " · auto every 60s";
+        stamp.textContent = T("updated {time} · auto every 60s", { time: new Date().toLocaleTimeString() });
         stamp.hidden = false;
       })
       .catch(function (e) {
@@ -221,6 +227,9 @@
   } catch (e) { /* private mode — the default stands */ }
 
   drawProfiles();
+  // The profile cards carry a number-in-a-sentence built here, so a language
+  // arriving after the first paint has to redraw them.
+  window.addEventListener("langchange", function () { drawProfiles(); });
 
   el("profiles").addEventListener("click", function (ev) {
     var b = ev.target.closest("[data-p]");
