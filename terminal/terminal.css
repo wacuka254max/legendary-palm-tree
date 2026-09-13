@@ -480,15 +480,15 @@
 .tm-tab-ico { position: relative; display: block; }
 .tm-dot {
   position: absolute;
-  top: -6px; right: -9px;
-  min-width: 18px; height: 18px;
+  top: -5px; right: -6px;
+  min-width: 16px; height: 16px;
   padding: 0 4px;
-  border-radius: 9px;
-  background: var(--red);
+  border-radius: 8px;
+  background: #ff3b30;
   color: #fff;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 500;
-  line-height: 18px;
+  line-height: 16px;
   text-align: center;
 }
 .tm-bal {

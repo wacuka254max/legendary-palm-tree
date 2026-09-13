@@ -25,7 +25,7 @@
  * under /api is ever cached, and neither is any other origin.
  */
 
-const VERSION = "uptick-shell-v1";
+const VERSION = "uptick-shell-v2";
 const NET_TIMEOUT_MS = 2500;
 
 /* What the launch screen is waiting on. The start page and everything it
