@@ -3,7 +3,9 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "functions": {
-    "api/mt5/signals.js": { "maxDuration": 30 }
+    "api/mt5/signals.js": {
+      "maxDuration": 30
+    }
   },
   "headers": [
     {
@@ -23,6 +25,15 @@
     },
     {
       "source": "/(home|analysis|analyss|automatic-ai|automatc-ai|mt5|terminal).html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(terminal/.*|sw.js)",
       "headers": [
         {
           "key": "Cache-Control",

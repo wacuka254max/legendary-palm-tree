@@ -25,7 +25,7 @@
  * under /api is ever cached, and neither is any other origin.
  */
 
-const VERSION = "uptick-shell-v2";
+const VERSION = "uptick-shell-v3";
 const NET_TIMEOUT_MS = 2500;
 
 /* What the launch screen is waiting on. The start page and everything it
@@ -87,6 +87,10 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+  /* The terminal is a live trading screen and is never served from a cache.
+     A stale copy of it is worse than a slow one: it was showing last week's
+     colours to anyone whose signal was weak for a moment. */
+  if (url.pathname === "/terminal.html" || url.pathname.startsWith("/terminal/")) return;
 
   /* Icons, logos, fonts: served from cache when there, fetched and stored when not. */
   if (isStatic(url)) {
