@@ -20,7 +20,8 @@
  * THE SWITCHER. A flag-and-code button that opens a menu of four flags. Drawn
  * as inline SVG rather than emoji, because emoji flags render as two letters
  * on Windows. It mounts into [data-lang-switch] when a page provides one, else
- * into the first <header>, else floats at the top-right.
+ * into the first <header>, else floats at the top-right. A page with
+ * data-no-lang-switch on <html> gets the translation but no switch.
  *
  * Text a script builds with variables in it — "3 signals", "updated 12:07" —
  * cannot be matched whole. Those call window.t("…") with an English template
@@ -300,7 +301,12 @@
   })();
 
   var mount = null, menuOpen = false;
+  /* A page can carry the language without offering the switch: the terminal
+     is a copy of the MT5 screen, and MT5 has no flag in its top bar. The
+     choice made anywhere else on the site still applies there. */
+  var NO_SWITCH = document.documentElement.hasAttribute("data-no-lang-switch");
   function paintSwitch() {
+    if (NO_SWITCH) return;
     if (!mount) {
       mount = document.querySelector("[data-lang-switch]");
       if (!mount) {
