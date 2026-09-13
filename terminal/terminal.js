@@ -957,10 +957,53 @@
       $("tm-scrim").hidden = true;
       openSheet("tm-accts");
     });
-    $("tm-add").addEventListener("click", function () {
-      $("tm-scrim").hidden = true;
-      openSheet("tm-accts");
+
+    /* ── whose account this is ──────────────────────────────────────────
+       The drawer names an account holder the way the platform does: the
+       name in capitals, then the login and the server. A quick double tap
+       on the name moves to the next holder, and the choice is kept in this
+       browser, so it survives a reload, a closed tab and a restart. The
+       login differs per holder in its last four digits only, the way a run
+       of accounts opened on one server would. */
+    var HOLDERS = [
+      ["Michael Thompson",  "140183742"],
+      ["Sarah Mitchell",    "140187519"],
+      ["James Whitaker",    "140189063"],
+      ["Emily Harrison",    "140184286"],
+      ["Daniel Foster",     "140186931"],
+      ["Charlotte Bennett", "140185478"],
+      ["Oliver Hughes",     "140188207"],
+      ["Grace Palmer",      "140182654"]
+    ];
+    var SERVER = "DerivSVG-Server-02";
+    var HOLDER_KEY = "evie_tm_holder";
+
+    function holderIndex() {
+      var n = parseInt((function () { try { return localStorage.getItem(HOLDER_KEY); } catch (e) { return null; } })(), 10);
+      return n >= 0 && n < HOLDERS.length ? n : 0;
+    }
+    function drawHolder() {
+      var h = HOLDERS[holderIndex()];
+      $("tm-who").textContent = h[0];
+      $("tm-acct-id").textContent = h[1] + " - " + SERVER;
+      $("tm-accts-h").textContent = h[1] + " - " + SERVER;
+    }
+    function nextHolder() {
+      var n = (holderIndex() + 1) % HOLDERS.length;
+      try { localStorage.setItem(HOLDER_KEY, String(n)); } catch (e) {}
+      drawHolder();
+    }
+    /* Two taps inside 350ms. Counted here rather than left to dblclick,
+       which phones do not fire reliably and which a mouse fires along with
+       two clicks — so the count runs on click alone and covers both. */
+    var whoTaps = 0, whoTimer = null;
+    $("tm-who").addEventListener("click", function () {
+      whoTaps += 1;
+      clearTimeout(whoTimer);
+      if (whoTaps >= 2) { whoTaps = 0; nextHolder(); return; }
+      whoTimer = setTimeout(function () { whoTaps = 0; }, 350);
     });
+    drawHolder();
 
     $("tm-deposit").addEventListener("click", function () {
       var v = prompt("Deposit", "1000");

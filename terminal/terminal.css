@@ -34,7 +34,7 @@
   --blue:    #0a84ff;
   --red:     #ff453a;
   --teal:    #26a69a;   /* rising candles */
-  --pill:    #2c2c2e;
+  --pill:    #3a3a3c;
 
   position: fixed;
   inset: 0;
@@ -457,22 +457,38 @@
   padding: 8px 0 10px;
   border: 0;
   background: transparent;
-  color: var(--ink-2);
+  color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
 }
 .tm-tab.on { color: var(--blue); }
 .tm-tab svg { display: block; }
+/* The unread count on Messages: a red disc riding the icon's top-right. */
+.tm-tab-ico { position: relative; display: block; }
+.tm-dot {
+  position: absolute;
+  top: -6px; right: -9px;
+  min-width: 18px; height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--red);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+}
 .tm-bal {
   padding: 2px 11px;
   border-radius: 11px;
   background: var(--pill);
-  color: var(--ink);
+  color: #c7c7cc;
   font-size: 12.5px;
   font-weight: 500;
 }
+:root[data-theme="light"] .tm-bal { color: #3a3a3c; }
 /* Once something is open the pill stops being the balance and becomes the
    floating figure, tinted to match its sign — the one place on the tab bar
    that tells you how the account is doing without opening it. */
@@ -505,18 +521,34 @@
 }
 @keyframes tm-in { from { transform: translateX(-16px); opacity: 0.5; } }
 
-.tm-acct { position: relative; padding: 13px 16px 0; overflow: hidden; }
-/* Below the ribbon rather than under it. */
-#tm-add { margin-top: 20px; }
-.tm-acct-r { display: flex; align-items: flex-start; gap: 15px; }
-/* Its own box rather than a flex item that can be squeezed: the balls fill the
-   square, and `flex-shrink` at 0 keeps a long account name from crushing it. */
-.tm-avatar { flex: 0 0 44px; width: 44px; height: 44px; display: block; }
-.tm-acct-t { flex: 1; min-width: 0; padding-top: 2px; }
-.tm-acct-t b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+.tm-acct { padding: 10px 40px 0 32px; }
+.tm-acct-r { display: flex; align-items: center; gap: 24px; }
+/* Its own box rather than a flex item that can be squeezed: `flex-shrink` at
+   0 keeps a long account name from crushing the mark. */
+.tm-avatar { flex: 0 0 32px; width: 32px; height: 32px; display: block; }
+.tm-acct-t { flex: 1; min-width: 0; }
+/* The name as the platform holds it: capitals, one line, cut with an
+   ellipsis when it runs on. It is also the switch — see terminal.js. */
+.tm-acct-t b {
+  display: block;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
 .tm-acct-t span {
   display: block;
+  margin-top: 1px;
   font-size: 15px;
+  line-height: 1.25;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
@@ -524,7 +556,8 @@
 }
 .tm-manage {
   display: block;
-  padding: 12px 0 14px 60px;
+  margin-left: 56px;
+  padding: 14px 0 14px;
   border: 0;
   background: transparent;
   color: var(--blue);
@@ -533,27 +566,13 @@
   cursor: pointer;
 }
 
-/* The corner ribbon. Rotated through the corner rather than drawn as a
-   triangle, so the word sits on it the way it does in the app. */
-.tm-demo {
-  position: absolute;
-  top: 12px; right: -32px;
-  width: 108px;
-  padding: 2px 0;
-  transform: rotate(45deg);
-  background: #35a600;
-  color: #fff;
-  font-size: 13px;
-  text-align: center;
-}
-
 .tm-menu { padding: 4px 0 20px; border-top: 1px solid var(--line); }
 .tm-item {
   display: flex;
   align-items: center;
   gap: 27px;
   width: 100%;
-  padding: 11px 20px;
+  padding: 11px 20px 11px 27px;
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -561,6 +580,7 @@
   font-size: 17px;
   font-weight: 700;
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
 }
 .tm-item:active { background: var(--pill); }
@@ -576,7 +596,9 @@
   text-align: center;
 }
 .tm-ads {
+  margin-left: 6px;
   padding: 2px 10px;
+  font-weight: 700;
   border: 1px solid var(--blue);
   border-radius: 12px;
   color: var(--blue);
