@@ -33,6 +33,13 @@
   --ink-3:   #6a6a6a;   /* the leader dots */
   --blue:    #0a84ff;
   --red:     #ff453a;
+  /* Profit and loss, as the app colours them: a bright sky blue and a coral
+     red for the figures, and for the pill on the tab bar the same two sunk
+     into a dark fill — navy under blue, maroon under red. */
+  --up:      #4d9fff;
+  --down:    #ff5c5c;
+  --up-fill:   #1c3f68;
+  --down-fill: #4a2327;
   --teal:    #26a69a;   /* rising candles */
   --pill:    #3a3a3c;
 
@@ -56,6 +63,10 @@
   --ink-3: #b8b8b8;
   --blue: #0a6ed1;
   --red: #d92d20;
+  --up: #0a6ed1;
+  --down: #d92d20;
+  --up-fill: #d6e8ff;
+  --down-fill: #ffdcdc;
   --pill: #ececec;
 }
 
@@ -117,8 +128,8 @@
    account that is currently exposed. */
 .tm-bar--pl .tm-h b { font-size: 15px; font-weight: 500; }
 .tm-bar--pl .tm-h span { font-size: 19px; font-weight: 700; }
-.tm-h span.up { color: var(--blue); }
-.tm-h span.down { color: var(--red); }
+.tm-h span.up { color: var(--up); }
+.tm-h span.down { color: var(--down); }
 /* The actions are a row. .tm-ico is a grid box, which is block-level, so
    without this each screen's icons stack down the right-hand edge. */
 #tm-actions { display: flex; align-items: center; }
@@ -238,8 +249,8 @@
 .px { font-size: 17px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
 .px b { font-size: 26px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
 .px sup { font-size: 14px; font-weight: 700; color: var(--ink); vertical-align: super; line-height: 0; }
-.up { color: var(--blue); }
-.down { color: var(--red); }
+.up { color: var(--up); }
+.down { color: var(--down); }
 
 /* A quote is coloured by the direction of its OWN last tick, head, body and
    raised digit together — which is why the whole token takes the colour rather
@@ -248,10 +259,10 @@
    row where only one side ticked, its partner is sitting exactly like this. */
 .tm-q-px .px.up,
 .tm-q-px .px.up b,
-.tm-q-px .px.up sup { color: var(--blue); }
+.tm-q-px .px.up sup { color: var(--up); }
 .tm-q-px .px.down,
 .tm-q-px .px.down b,
-.tm-q-px .px.down sup { color: var(--red); }
+.tm-q-px .px.down sup { color: var(--down); }
 
 /* ── Trade: the position rows under the three figures ───────────────────── */
 
@@ -492,8 +503,9 @@
 /* Once something is open the pill stops being the balance and becomes the
    floating figure, tinted to match its sign — the one place on the tab bar
    that tells you how the account is doing without opening it. */
-.tm-bal.up { background: rgba(10, 132, 255, 0.20); color: var(--blue); }
-.tm-bal.down { background: rgba(255, 69, 58, 0.20); color: var(--red); }
+.tm-bal.up, .tm-bal.down { font-size: 13px; font-weight: 700; }
+.tm-bal.up { background: var(--up-fill); color: var(--up); }
+.tm-bal.down { background: var(--down-fill); color: var(--down); }
 
 /* ── the drawer ──────────────────────────────────────────────────────────
    Slides in from the left over about seven eighths of the width, so a strip
