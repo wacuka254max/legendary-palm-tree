@@ -240,7 +240,7 @@
   function load(code) {
     if (code === "en") return Promise.resolve(null);
     if (cache[code]) return Promise.resolve(cache[code]);
-    return fetch(BASE + code + ".json", { cache: "force-cache" })
+    return fetch(BASE + code + ".json", { cache: "no-cache" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) { cache[code] = d || {}; return cache[code]; })
       .catch(function () { return {}; });
