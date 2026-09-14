@@ -433,3 +433,37 @@
   .mt5-stamp { margin-right: auto; }
   .mt5-meta { width: 100%; margin-left: 0; }
 }
+
+/* ── the install steps: copy the address, and MT5's own on/off ───────────
+   The WebRequest address is the one string in the steps that has to be
+   typed exactly, so it has a button. Algo Trading is drawn the way MT5's
+   toolbar draws it — a green play for on, a red stop for off — because
+   "enable it" is easy to think you have done. */
+.mt5-copy {
+  display: inline-flex; align-items: center; gap: 5px; vertical-align: middle;
+  margin-left: 4px; padding: 3px 8px;
+  border: 1px solid var(--line-hi); border-radius: 999px;
+  background: var(--panel-2); color: var(--text-2);
+  font: inherit; font-size: 11.5px; font-weight: 700; line-height: 1.2;
+  cursor: pointer; transition: color .15s, border-color .15s, background .15s;
+}
+.mt5-copy:hover { color: var(--violet); border-color: var(--violet); }
+.mt5-copy.is-copied { color: #07070a; background: var(--mint); border-color: var(--mint); }
+
+.algo {
+  display: inline-flex; align-items: center; gap: 6px; vertical-align: middle;
+  margin: 0 2px; padding: 2px 8px 2px 6px;
+  border: 1px solid var(--line-hi); border-radius: 4px;
+  background: var(--panel-2);
+  font-size: 12px; font-weight: 600; color: var(--text);
+  white-space: nowrap;
+}
+.algo i { width: 10px; height: 10px; flex: none; }
+.algo-on { border-color: #34d399; }
+.algo-on i { background: #34d399; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.algo-off { border-color: #ff6a6a; }
+.algo-off i { background: #ff6a6a; border-radius: 2px; }
+:root[data-theme="light"] .algo-on { border-color: #14a05a; }
+:root[data-theme="light"] .algo-on i { background: #14a05a; }
+:root[data-theme="light"] .algo-off { border-color: #d92d20; }
+:root[data-theme="light"] .algo-off i { background: #d92d20; }
