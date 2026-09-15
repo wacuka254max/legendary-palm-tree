@@ -394,5 +394,6 @@
 "Drag it onto <b>any one chart</b>, set <code>InpProfile</code> to your risk level, and enable <b>Algo Trading</b> — the toolbar button must be green: <span class=\"algo algo-on\"><i></i>Algo Trading</span> is <b>on</b>, <span class=\"algo algo-off\"><i></i>Algo Trading</span> is <b>off</b>.":"Arraste-o para <b>qualquer gráfico</b>, defina <code>InpProfile</code> para o seu nível de risco e ative o <b>Algo Trading</b>: o botão da barra deve estar verde. <span class=\"algo algo-on\"><i></i>Algo Trading</span> está <b>ligado</b>, <span class=\"algo algo-off\"><i></i>Algo Trading</span> está <b>desligado</b>.",
 "Copy":"Copiar",
 "Copied":"Copiado",
-"Copy the address":"Copiar o endereço"
+"Copy the address":"Copiar o endereço",
+"<b>Make sure you have followed every step above, in order.</b> A skipped step — the WebRequest address, Algo Trading, the risk profile — is the usual reason a bot sits idle.":"<b>Confira que seguiu cada passo acima, na ordem.</b> Um passo pulado — o endereço WebRequest, o Algo Trading, o perfil de risco — é o motivo habitual de um bot ficar parado."
 }
