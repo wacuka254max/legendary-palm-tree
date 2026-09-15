@@ -305,6 +305,21 @@
     return '<p class="tm-wait">' + esc(what) + "</p>";
   }
 
+  /* The market chosen in settings decides whether the volatility indices
+     are on screen at all — in Quotes, and in the order ticket's list. */
+  function shown(s) {
+    var c = simCfg();
+    return !global.EvieSim || global.EvieSim.shows(s, c ? c.market : null);
+  }
+  function fillTicketSymbols() {
+    var sel = $("tm-osym"), was = sel.value;
+    var list = T.symbols().filter(shown);
+    sel.innerHTML = list.map(function (s) {
+      return '<option value="' + esc(s.name) + '">' + esc(s.name) + "</option>";
+    }).join("");
+    if (list.some(function (s) { return s.name === was; })) sel.value = was;
+  }
+
   function drawQuotes() {
     if (!T.symbols().length) {
       $("tm-quotes").innerHTML = waitingHtml(
@@ -313,7 +328,7 @@
           : "Connecting to Deriv…");
       return;
     }
-    $("tm-quotes").innerHTML = T.quotes().map(function (q) {
+    $("tm-quotes").innerHTML = T.quotes().filter(shown).map(function (q) {
       var dir = cls(q.points);
       return '<div class="tm-q" data-sym="' + esc(q.name) + '">' +
         '<div class="tm-q-chg num"><b>' + (q.points > 0 ? "+" : "") + q.points + "</b> " +
@@ -623,14 +638,20 @@
     var c = simCfg();
     if (!c) return;
     var sel = $("tm-sim-market");
-    var names = T.symbols().map(function (x) { return x.name; });
+    /* The Headway markets first, the volatility indices after them, so the
+       list reads the way the choice above it does. */
+    var syms = T.symbols();
+    var names = syms.filter(function (x) { return !x.synthetic; }).map(function (x) { return x.name; })
+      .concat(syms.filter(function (x) { return x.synthetic; }).map(function (x) { return x.name; }));
     var opts = '<option value="' + global.EvieSim.ALL + '">All markets</option>' +
+               '<option value="' + global.EvieSim.ALLVOL + '">All markets + Volatility</option>' +
                '<option value="' + global.EvieSim.RANDOM + '">Random market</option>';
     sel.innerHTML = opts + names.map(function (n) {
       return '<option value="' + esc(n) + '">' + esc(n) + "</option>";
     }).join("");
     if (!c.market || (names.indexOf(c.market) < 0 &&
-        c.market !== global.EvieSim.ALL && c.market !== global.EvieSim.RANDOM)) {
+        c.market !== global.EvieSim.ALL && c.market !== global.EvieSim.ALLVOL &&
+        c.market !== global.EvieSim.RANDOM)) {
       c.market = global.EvieSim.ALL;
     }
     sel.value = c.market;
@@ -663,9 +684,10 @@
     /* Across a set of instruments there is no single specification to quote, so
        the note says what the run will draw from instead of pretending there is
        one contract size for all of them. */
-    if (v === global.EvieSim.ALL || v === global.EvieSim.RANDOM) {
-      var live = T.symbols().filter(function (x) { return x.isOpen !== false; });
-      $("tm-sim-sub").textContent = v === global.EvieSim.ALL ? "All markets" : "Random market";
+    if (v === global.EvieSim.ALL || v === global.EvieSim.ALLVOL || v === global.EvieSim.RANDOM) {
+      var live = T.symbols().filter(function (x) { return x.isOpen !== false && global.EvieSim.shows(x, v); });
+      $("tm-sim-sub").textContent = v === global.EvieSim.ALL ? "All markets"
+        : v === global.EvieSim.ALLVOL ? "All markets + Volatility" : "Random market";
       el.textContent = live.length + " markets trading now. Each trade takes that " +
         "instrument's own contract size, volume limits, leverage and swap from " +
         "Deriv's specification, and its price from the live feed.";
@@ -694,6 +716,11 @@
     if (!global.EvieSim || !global.EvieSim.autoStart) return;
     if (c && c.scalp === "on") global.EvieSim.autoStart(c, function () { draw(); drawBar(); });
     else global.EvieSim.autoStop();
+  }
+
+  function rememberSim() {
+    if (!global.EvieSim || !global.EvieSim.remember || $("tm-sim").hidden) return;
+    global.EvieSim.remember(readSim());
   }
 
   function readSim() {
@@ -791,6 +818,7 @@
       if (act === "newOrder" || act === "plus") {
         $("tm-osl").value = "";
         $("tm-otp").value = "";
+        fillTicketSymbols();
         openSheet("tm-order");
         drawTicket();
       }
@@ -871,17 +899,27 @@
       }
     });
 
-    $("tm-sim-market").addEventListener("change", simNote);
+    $("tm-sim-market").addEventListener("change", function () {
+      simNote(); rememberSim();
+      if (tab === "quotes") drawQuotes();
+    });
+    /* Typed, tapped or picked: kept at once. Nothing runs until Run is
+       pressed, but the sheet comes back as it was left. */
+    ["tm-sim-deposit", "tm-sim-balance", "tm-sim-trades", "tm-sim-open", "tm-sim-risk", "tm-sim-lev",
+     "tm-sim-comm", "tm-sim-days", "tm-sim-plmin", "tm-sim-plmax", "tm-sim-scalpmax", "tm-sim-scalpwin"]
+      .forEach(function (id) { var el = $(id); if (el) el.addEventListener("input", rememberSim); });
     document.querySelectorAll("[data-risk]").forEach(function (b) {
       b.addEventListener("click", function () {
         document.querySelectorAll("[data-risk]").forEach(function (x) { x.classList.remove("on"); });
         b.classList.add("on");
+        rememberSim();
       });
     });
     document.querySelectorAll("[data-scalp]").forEach(function (b) {
       b.addEventListener("click", function () {
         document.querySelectorAll("[data-scalp]").forEach(function (x) { x.classList.remove("on"); });
         b.classList.add("on");
+        rememberSim();
       });
     });
     $("tm-sim-run").addEventListener("click", function () {

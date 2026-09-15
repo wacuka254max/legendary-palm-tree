@@ -35,7 +35,16 @@
 
   var KEY = "evie_term_sim";
 
-  var ALL = "*all*", RANDOM = "*random*";
+  /* ALL is every market a Headway MT5 account carries; ALLVOL adds the
+     volatility indices; RANDOM draws from the Headway set per trade. */
+  var ALL = "*all*", ALLVOL = "*allvol*", RANDOM = "*random*";
+
+  /** Whether an instrument belongs on screen under this market choice: a
+   *  synthetic only when they were asked for, or when it is the one chosen. */
+  function shows(sym, market) {
+    if (!sym || !sym.synthetic) return true;
+    return market === ALLVOL || market === sym.name;
+  }
 
   var DEFAULTS = {
     deposit: 10000,
@@ -75,15 +84,16 @@
 
   /** The instruments a run may use: one, all of them, or a fresh pick each time. */
   function pool(market) {
-    var live = T().symbols().filter(function (s) { return s.isOpen !== false; });
-    if (!live.length) live = T().symbols();
-    if (market === ALL || market === RANDOM) return live;
+    var all = T().symbols().filter(function (s) { return shows(s, market); });
+    var live = all.filter(function (s) { return s.isOpen !== false; });
+    if (!live.length) live = all;
+    if (market === ALL || market === ALLVOL || market === RANDOM) return live;
     var one = T().symbol(market);
     return one ? [one] : live;
   }
 
   function pick(list, market) {
-    if (market === ALL || market === RANDOM || list.length === 1) {
+    if (market === ALL || market === ALLVOL || market === RANDOM || list.length === 1) {
       return list[Math.floor(Math.random() * list.length)];
     }
     return list[0];
@@ -418,11 +428,11 @@
   function autoPick() {
     var Tm = T();
     if (!Tm) return null;
-    var live = Tm.symbols().filter(function (s) { return s.isOpen !== false; });
+    var market = auto.cfg && auto.cfg.market;
+    var live = Tm.symbols().filter(function (s) { return s.isOpen !== false && shows(s, market); });
     if (!live.length) return null;
 
-    var market = auto.cfg && auto.cfg.market;
-    if (market && market !== ALL && market !== RANDOM) {
+    if (market && market !== ALL && market !== ALLVOL && market !== RANDOM) {
       var one = Tm.symbol(market);
       if (one && one.isOpen !== false) return one;
     }
@@ -674,8 +684,13 @@
 
   global.EvieSim = {
     ALL: ALL,
+    ALLVOL: ALLVOL,
     RANDOM: RANDOM,
+    shows: shows,
     settings: load,
+    /* The sheet as it stands, kept without running anything — so a reload or
+       a closed tab brings back what was typed, not the defaults. */
+    remember: save,
     saveSettings: save,
     autoStart: autoStart,
     autoStop: autoStop,

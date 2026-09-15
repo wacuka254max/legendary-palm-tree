@@ -395,5 +395,6 @@
 "Copy":"Copiar",
 "Copied":"Copiado",
 "Copy the address":"Copiar la dirección",
-"<b>Make sure you have followed every step above, in order.</b> A skipped step — the WebRequest address, Algo Trading, the risk profile — is the usual reason a bot sits idle.":"<b>Asegúrate de haber seguido cada paso anterior, en orden.</b> Un paso omitido — la dirección WebRequest, Algo Trading, el perfil de riesgo — es la razón habitual por la que un bot se queda parado."
+"<b>Make sure you have followed every step above, in order.</b> A skipped step — the WebRequest address, Algo Trading, the risk profile — is the usual reason a bot sits idle.":"<b>Asegúrate de haber seguido cada paso anterior, en orden.</b> Un paso omitido — la dirección WebRequest, Algo Trading, el perfil de riesgo — es la razón habitual por la que un bot se queda parado.",
+"All markets + Volatility":"Todos los mercados + Volatilidad"
 }

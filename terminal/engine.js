@@ -422,6 +422,7 @@
       bidDir: s.bidDir, askDir: s.askDir,
       low: round(s, s.low), high: round(s, s.high),
       isOpen: s.isOpen !== false,
+      synthetic: !!s.synthetic,
       points: pts,
       percent: s.open24 ? (s.price - s.open24) / s.open24 * 100 : 0,
       time: s.time
@@ -433,6 +434,8 @@
   function makeSymbol(d) {
     return {
       name: d.name, digits: d.digits, size: d.size, usdBase: !!d.usdBase,
+      /* A volatility index — shown only when the settings ask for them. */
+      synthetic: !!d.synthetic,
       /* Deriv's own figures for this instrument — see specs.js. Leverage is
          per-symbol, not one number for the account: 1:1000 on EURUSD, 1:800 on
          gold, 1:4000 on Volatility 25 (1s). */

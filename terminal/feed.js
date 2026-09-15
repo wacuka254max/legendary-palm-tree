@@ -81,7 +81,7 @@
    * margin. See specs.js.
    */
   function spec(name, sym, market) {
-    var s = global.EvieSpecs && global.EvieSpecs.get(name);
+    var s = global.EvieSpecs && (global.EvieSpecs.get(name) || global.EvieSpecs.get(SPEC_ALIAS[name] || ""));
     if (s) return s;
     return {
       size: /XAU|XPT|XPD/.test(sym) ? 100 : /XAG/.test(sym) ? 5000
@@ -111,13 +111,26 @@
    * already shows, keeps Quotes, Charts, Trade and History talking about the
    * same markets.
    */
+  /* Since the move to Headway the list is what a Headway MT5 account
+     carries and this feed can price: the forex majors and minors, the four
+     metals, the two cryptos and the stock indices Deriv streams — then the
+     ten volatility indices, which only show when the settings ask for them.
+     Energies and single stocks are on Headway but not on this feed, so they
+     are not pretended. */
   var WANTED = [
+    "frxEURUSD", "frxGBPUSD", "frxUSDJPY", "frxAUDUSD", "frxUSDCAD", "frxUSDCHF", "frxNZDUSD",
+    "frxXAUUSD", "frxXAGUSD", "frxXPTUSD", "frxXPDUSD",
+    "cryBTCUSD", "cryETHUSD",
+    "frxEURGBP", "frxEURJPY", "frxGBPJPY", "frxEURAUD", "frxEURCAD", "frxEURCHF", "frxEURNZD",
+    "frxGBPAUD", "frxGBPCAD", "frxGBPCHF", "frxGBPNZD",
+    "frxAUDJPY", "frxAUDCAD", "frxAUDCHF", "frxAUDNZD", "frxNZDJPY", "frxUSDMXN", "frxUSDPLN",
+    "OTC_SPC", "OTC_NDX", "OTC_DJI", "OTC_FTSE", "OTC_GDAXI", "OTC_FCHI", "OTC_SX5E",
+    "OTC_N225", "OTC_HSI", "OTC_AS51", "OTC_SSMI", "OTC_AEX",
     "R_10", "R_25", "R_50", "R_75", "R_100",
-    "1HZ10V", "1HZ25V", "1HZ50V", "1HZ75V", "1HZ100V",
-    "frxXAUUSD", "frxXAGUSD", "frxXPTUSD",
-    "frxEURUSD", "frxGBPUSD", "frxUSDJPY",
-    "frxAUDUSD", "frxUSDCAD", "frxUSDCHF", "frxNZDUSD"
+    "1HZ10V", "1HZ25V", "1HZ50V", "1HZ75V", "1HZ100V"
   ];
+  /* Deriv's own names for two indices differ from the specification table's. */
+  var SPEC_ALIAS = { "US 500": "US SP 500", "Euro 50": "Europe 50" };
 
   function choose(list) {
     var by = {};
@@ -262,6 +275,7 @@
           minVol: hsp.min, maxVol: hsp.max,
           swapLong: hsp.swapLong, swapShort: hsp.swapShort,
           usdBase: /^frxUSD/.test(hs), isOpen: false,
+          synthetic: hm.market === "synthetic_index",
           bid: last, ask: last, quote: last
         };
         T().applySymbols(ordered());
@@ -298,6 +312,7 @@
             minVol: sp.min, maxVol: sp.max,
             swapLong: sp.swapLong, swapShort: sp.swapShort,
             usdBase: /^frxUSD/.test(sym),
+            synthetic: m.market === "synthetic_index",
             isOpen: true,
             bid: b, ask: a, quote: Number(t.quote)
           };
