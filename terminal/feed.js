@@ -129,6 +129,9 @@
     "R_10", "R_25", "R_50", "R_75", "R_100",
     "1HZ10V", "1HZ25V", "1HZ50V", "1HZ75V", "1HZ100V"
   ];
+  /* The heading an instrument sits under in the settings list. */
+  var GROUP = { forex: "Forex", commodities: "Metals", cryptocurrency: "Crypto", indices: "Indices", synthetic_index: "Volatility" };
+  function groupOf(market) { return GROUP[market] || "Other"; }
   /* Deriv's own names for two indices differ from the specification table's. */
   var SPEC_ALIAS = { "US 500": "US SP 500", "Euro 50": "Europe 50" };
 
@@ -275,7 +278,7 @@
           minVol: hsp.min, maxVol: hsp.max,
           swapLong: hsp.swapLong, swapShort: hsp.swapShort,
           usdBase: /^frxUSD/.test(hs), isOpen: false,
-          synthetic: hm.market === "synthetic_index",
+          synthetic: hm.market === "synthetic_index", group: groupOf(hm.market),
           bid: last, ask: last, quote: last
         };
         T().applySymbols(ordered());
@@ -312,7 +315,7 @@
             minVol: sp.min, maxVol: sp.max,
             swapLong: sp.swapLong, swapShort: sp.swapShort,
             usdBase: /^frxUSD/.test(sym),
-            synthetic: m.market === "synthetic_index",
+            synthetic: m.market === "synthetic_index", group: groupOf(m.market),
             isOpen: true,
             bid: b, ask: a, quote: Number(t.quote)
           };

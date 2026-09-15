@@ -436,6 +436,7 @@
       name: d.name, digits: d.digits, size: d.size, usdBase: !!d.usdBase,
       /* A volatility index — shown only when the settings ask for them. */
       synthetic: !!d.synthetic,
+      group: d.group || (d.synthetic ? "Volatility" : "Other"),
       /* Deriv's own figures for this instrument — see specs.js. Leverage is
          per-symbol, not one number for the account: 1:1000 on EURUSD, 1:800 on
          gold, 1:4000 on Volatility 25 (1s). */

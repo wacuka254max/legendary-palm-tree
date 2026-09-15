@@ -144,7 +144,10 @@
   function drawBar() {
     var b = BARS[tab];
     $("tm-title").textContent = b.title;
-    $("tm-sub").textContent = b.sub;
+    /* While the bar is showing the floating figure, the subtitle is that
+       figure — draw() owns it, and clearing it here (to be refilled a moment
+       later) was one more thing that could blink. */
+    if (!document.querySelector(".tm-bar").classList.contains("tm-bar--pl")) $("tm-sub").textContent = b.sub;
     $("tm-actions").innerHTML = b.acts.map(function (k) {
       return '<button class="tm-ico" type="button" data-act="' + k + '">' + ICON[k] + "</button>";
     }).join("");
@@ -646,8 +649,19 @@
     var opts = '<option value="' + global.EvieSim.ALL + '">All markets</option>' +
                '<option value="' + global.EvieSim.ALLVOL + '">All markets + Volatility</option>' +
                '<option value="' + global.EvieSim.RANDOM + '">Random market</option>';
-    sel.innerHTML = opts + names.map(function (n) {
-      return '<option value="' + esc(n) + '">' + esc(n) + "</option>";
+    /* Then one heading per market — Forex, Metals, Crypto, Indices,
+       Volatility — so a single instrument is found by where it belongs
+       rather than by reading fifty names. */
+    var ORDER = ["Forex", "Metals", "Crypto", "Indices", "Volatility", "Other"];
+    var groups = {};
+    syms.forEach(function (x) {
+      var g = x.group || (x.synthetic ? "Volatility" : "Other");
+      (groups[g] = groups[g] || []).push(x.name);
+    });
+    sel.innerHTML = opts + ORDER.filter(function (g) { return groups[g]; }).map(function (g) {
+      return '<optgroup label="' + esc(g) + '">' + groups[g].map(function (n) {
+        return '<option value="' + esc(n) + '">' + esc(n) + "</option>";
+      }).join("") + "</optgroup>";
     }).join("");
     if (!c.market || (names.indexOf(c.market) < 0 &&
         c.market !== global.EvieSim.ALL && c.market !== global.EvieSim.ALLVOL &&
@@ -773,23 +787,39 @@
     $("tm-oc-vol").textContent = volText(s, oneClickVol);
   }
 
+  var liveUntil = 0;
   function draw() {
     /* The middle tab shows the account balance until something is open, and
        the floating profit from then on — coloured, on a tinted pill. The bar
        does the same above it: the screen name shrinks and the figure takes
        over, which is what makes an open account read at a glance. */
     var sm = T.summary();
-    var live = T.positions().length > 0;
+    /* "Live" is sticky. The scalper closes one position and opens the next a
+       frame or two later, and in between the account has nothing open — so
+       the bar flipped from the floating figure to the screen title and back,
+       several times a second, which read as blinking. The figure now stays
+       up while the scalper runs and for a moment after the last position
+       closes, and every write below is skipped when nothing changed. */
+    var now = Date.now();
+    var open = T.positions().length > 0;
+    var running = !!(global.EvieSim && global.EvieSim.autoRunning && global.EvieSim.autoRunning());
+    if (open) liveUntil = now + 1500;
+    var live = open || running || now < liveUntil;
     var pill = $("tm-bal");
-    pill.textContent = live ? money(sm.floating) : short(sm.balance);
-    pill.className = "tm-bal" + (live ? " " + cls(sm.floating) : "");
+    var pillText = live ? money(sm.floating) : short(sm.balance);
+    var pillClass = "tm-bal" + (live ? " " + cls(sm.floating) : "");
+    if (pill.textContent !== pillText) pill.textContent = pillText;
+    if (pill.className !== pillClass) pill.className = pillClass;
+    var sub = $("tm-sub"), bar = document.querySelector(".tm-bar");
     if (tab === "trade") {
-      $("tm-sub").textContent = live ? money(sm.floating) + " USD" : "";
-      $("tm-sub").className = live ? cls(sm.floating) : "";
-      document.querySelector(".tm-bar").classList.toggle("tm-bar--pl", live);
+      var subText = live ? money(sm.floating) + " USD" : "";
+      var subClass = live ? cls(sm.floating) : "";
+      if (sub.textContent !== subText) sub.textContent = subText;
+      if (sub.className !== subClass) sub.className = subClass;
+      bar.classList.toggle("tm-bar--pl", live);
     } else {
-      $("tm-sub").className = "";
-      document.querySelector(".tm-bar").classList.remove("tm-bar--pl");
+      if (sub.className) sub.className = "";
+      bar.classList.remove("tm-bar--pl");
     }
     if (tab === "trade") drawTrade();
     else if (tab === "quotes") drawQuotes();
