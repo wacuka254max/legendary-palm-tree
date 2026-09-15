@@ -422,7 +422,7 @@
       bidDir: s.bidDir, askDir: s.askDir,
       low: round(s, s.low), high: round(s, s.high),
       isOpen: s.isOpen !== false,
-      synthetic: !!s.synthetic,
+      synthetic: !!s.synthetic, group: s.group,
       points: pts,
       percent: s.open24 ? (s.price - s.open24) / s.open24 * 100 : 0,
       time: s.time

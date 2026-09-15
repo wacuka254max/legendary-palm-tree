@@ -38,11 +38,23 @@
   /* ALL is every market a Headway MT5 account carries; ALLVOL adds the
      volatility indices; RANDOM draws from the Headway set per trade. */
   var ALL = "*all*", ALLVOL = "*allvol*", RANDOM = "*random*";
+  /* A whole group — "*group:Forex*" — is a choice too: every instrument under
+     that heading, and only those. */
+  var GROUP_PREFIX = "*group:";
+  function groupOf(market) {
+    return typeof market === "string" && market.indexOf(GROUP_PREFIX) === 0
+      ? market.slice(GROUP_PREFIX.length, -1) : null;
+  }
+  function isSet(market) { return market === ALL || market === ALLVOL || market === RANDOM || !!groupOf(market); }
 
   /** Whether an instrument belongs on screen under this market choice: a
-   *  synthetic only when they were asked for, or when it is the one chosen. */
+   *  group shows its own; otherwise a synthetic only when they were asked
+   *  for, or when it is the one chosen. */
   function shows(sym, market) {
-    if (!sym || !sym.synthetic) return true;
+    if (!sym) return true;
+    var g = groupOf(market);
+    if (g) return sym.group === g;
+    if (!sym.synthetic) return true;
     return market === ALLVOL || market === sym.name;
   }
 
@@ -87,13 +99,13 @@
     var all = T().symbols().filter(function (s) { return shows(s, market); });
     var live = all.filter(function (s) { return s.isOpen !== false; });
     if (!live.length) live = all;
-    if (market === ALL || market === ALLVOL || market === RANDOM) return live;
+    if (isSet(market)) return live;
     var one = T().symbol(market);
     return one ? [one] : live;
   }
 
   function pick(list, market) {
-    if (market === ALL || market === ALLVOL || market === RANDOM || list.length === 1) {
+    if (isSet(market) || list.length === 1) {
       return list[Math.floor(Math.random() * list.length)];
     }
     return list[0];
@@ -432,7 +444,7 @@
     var live = Tm.symbols().filter(function (s) { return s.isOpen !== false && shows(s, market); });
     if (!live.length) return null;
 
-    if (market && market !== ALL && market !== ALLVOL && market !== RANDOM) {
+    if (market && !isSet(market)) {
       var one = Tm.symbol(market);
       if (one && one.isOpen !== false) return one;
     }
@@ -686,6 +698,9 @@
     ALL: ALL,
     ALLVOL: ALLVOL,
     RANDOM: RANDOM,
+    GROUP_PREFIX: GROUP_PREFIX,
+    groupOf: groupOf,
+    isSet: isSet,
     shows: shows,
     settings: load,
     /* The sheet as it stands, kept without running anything — so a reload or

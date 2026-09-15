@@ -43,6 +43,27 @@
   var askedAt = 0, asking = null;
   var order = [];            // the names in the order the feed chose them
   var resync = null;
+  /* Fifty-odd subscriptions go out in one burst when the list lands, and
+     Deriv refuses a few of them now and then. A refusal is answered by asking
+     again a little later; and a sweep looks for any open instrument that has
+     still never priced and asks for that one too — so the screen ends up
+     with every market, not most of them. */
+  var sweep = null;
+  function askTicks(sym, delay) {
+    setTimeout(function () {
+      var m = meta[sym], n = named[sym];
+      if (closed || !m || !n || !m.exchange_is_open || defs[n]) return;
+      send({ ticks: sym, subscribe: 1 });
+    }, delay || 0);
+  }
+  function sweepSilent() {
+    if (closed || !ws || ws.readyState !== 1) return;
+    var i = 0;
+    Object.keys(named).forEach(function (sym) {
+      var m = meta[sym];
+      if (m && m.exchange_is_open && !defs[named[sym]]) askTicks(sym, 150 * i++);
+    });
+  }
 
   /* The definitions in that order, so the book is built the way the screen
      should read: everything trading first. */
@@ -207,6 +228,8 @@
          the last price it had and went on looking live all weekend. */
       clearInterval(resync);
       resync = setInterval(function () { send({ active_symbols: "brief" }); }, 300000);
+      clearInterval(sweep);
+      sweep = setInterval(sweepSilent, 15000);
     };
 
     ws.onmessage = function (ev) {
@@ -220,6 +243,8 @@
         if (d.echo_req && d.echo_req.active_symbols) {
           clearTimeout(asking);
           asking = setTimeout(askSymbols, 2000);
+        } else if (d.echo_req && d.echo_req.ticks && d.echo_req.subscribe) {
+          askTicks(String(d.echo_req.ticks), 3000 + Math.random() * 2000);
         }
         return;
       }
@@ -372,7 +397,7 @@
     };
 
     ws.onclose = function () {
-      clearInterval(watchdog); clearInterval(pinger); clearInterval(resync);
+      clearInterval(watchdog); clearInterval(pinger); clearInterval(resync); clearInterval(sweep);
       clearTimeout(asking);
       ws = null;
       if (!closed) retry();
@@ -413,7 +438,7 @@
 
     stop: function () {
       closed = true;
-      clearInterval(watchdog); clearInterval(pinger); clearInterval(resync);
+      clearInterval(watchdog); clearInterval(pinger); clearInterval(resync); clearInterval(sweep);
       clearTimeout(asking);
       if (ws) { try { ws.close(); } catch (e) {} }
     }

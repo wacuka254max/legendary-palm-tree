@@ -646,26 +646,29 @@
     var syms = T.symbols();
     var names = syms.filter(function (x) { return !x.synthetic; }).map(function (x) { return x.name; })
       .concat(syms.filter(function (x) { return x.synthetic; }).map(function (x) { return x.name; }));
-    var opts = '<option value="' + global.EvieSim.ALL + '">All markets</option>' +
-               '<option value="' + global.EvieSim.ALLVOL + '">All markets + Volatility</option>' +
-               '<option value="' + global.EvieSim.RANDOM + '">Random market</option>';
-    /* Then one heading per market — Forex, Metals, Crypto, Indices,
-       Volatility — so a single instrument is found by where it belongs
-       rather than by reading fifty names. */
     var ORDER = ["Forex", "Metals", "Crypto", "Indices", "Volatility", "Other"];
     var groups = {};
     syms.forEach(function (x) {
       var g = x.group || (x.synthetic ? "Volatility" : "Other");
       (groups[g] = groups[g] || []).push(x.name);
     });
-    sel.innerHTML = opts + ORDER.filter(function (g) { return groups[g]; }).map(function (g) {
+    var present = ORDER.filter(function (g) { return groups[g]; });
+    /* The sets first: everything, everything plus the volatility indices, a
+       random draw — then each market as a choice of its own, "Forex (25)",
+       so one kind can be picked without reading fifty names. */
+    var opts = '<option value="' + global.EvieSim.ALL + '">All markets</option>' +
+               '<option value="' + global.EvieSim.ALLVOL + '">All markets + Volatility</option>' +
+               '<option value="' + global.EvieSim.RANDOM + '">Random market</option>' +
+               present.map(function (g) {
+                 return '<option value="' + global.EvieSim.GROUP_PREFIX + esc(g) + '*">' + esc(g) + " (" + groups[g].length + ")</option>";
+               }).join("");
+    /* Then the same headings again, opened out to their instruments. */
+    sel.innerHTML = opts + present.map(function (g) {
       return '<optgroup label="' + esc(g) + '">' + groups[g].map(function (n) {
         return '<option value="' + esc(n) + '">' + esc(n) + "</option>";
       }).join("") + "</optgroup>";
     }).join("");
-    if (!c.market || (names.indexOf(c.market) < 0 &&
-        c.market !== global.EvieSim.ALL && c.market !== global.EvieSim.ALLVOL &&
-        c.market !== global.EvieSim.RANDOM)) {
+    if (!c.market || (names.indexOf(c.market) < 0 && !global.EvieSim.isSet(c.market))) {
       c.market = global.EvieSim.ALL;
     }
     sel.value = c.market;
@@ -698,10 +701,11 @@
     /* Across a set of instruments there is no single specification to quote, so
        the note says what the run will draw from instead of pretending there is
        one contract size for all of them. */
-    if (v === global.EvieSim.ALL || v === global.EvieSim.ALLVOL || v === global.EvieSim.RANDOM) {
+    if (global.EvieSim.isSet(v)) {
       var live = T.symbols().filter(function (x) { return x.isOpen !== false && global.EvieSim.shows(x, v); });
       $("tm-sim-sub").textContent = v === global.EvieSim.ALL ? "All markets"
-        : v === global.EvieSim.ALLVOL ? "All markets + Volatility" : "Random market";
+        : v === global.EvieSim.ALLVOL ? "All markets + Volatility"
+        : v === global.EvieSim.RANDOM ? "Random market" : global.EvieSim.groupOf(v);
       el.textContent = live.length + " markets trading now. Each trade takes that " +
         "instrument's own contract size, volume limits, leverage and swap from " +
         "Deriv's specification, and its price from the live feed.";
