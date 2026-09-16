@@ -174,18 +174,73 @@
      EURUSD is 100,000 units, one lot of a Volatility index is one contract,
      and that single number is the whole difference between the two. */
 
+  /* ── the account is in dollars, the markets are not ────────────────────
+     A position earns its profit in the QUOTE currency of what it trades:
+     dollars on EURUSD and on every index, metal and crypto here — but yen on
+     GBPJPY, pounds on EURGBP, Canadian dollars on AUDCAD. Printing those
+     straight onto a dollar balance is how a ten-pip move on a yen cross came
+     out as a thousand dollars instead of six, and why its profit could only
+     ever land on whole numbers.
+
+     One unit of a currency, in dollars, from the rates already on the tape:
+     EURUSD gives the euro directly, USDJPY gives the yen by its reciprocal.
+     A currency neither pair covers returns null, and the callers then behave
+     exactly as they did before — the conversion is a correction where it can
+     be made, never a guess. */
+  var PAIR = /^([A-Z]{3})([A-Z]{3})$/;
+  function usdPerUnit(ccy) {
+    if (ccy === "USD") return 1;
+    var direct = book[ccy + "USD"];
+    if (direct && direct.price > 0) return direct.price;
+    var inverse = book["USD" + ccy];
+    if (inverse && inverse.price > 0) return 1 / inverse.price;
+    return null;
+  }
+
+  /* Japan 225 is quoted in YEN, and it is the only one here that is.
+     Deriv publishes a contract size of 1000 for it against 10 for every other
+     index — a hundredfold that only makes sense in a currency worth about a
+     hundredth of a dollar. Read as dollars its lot is worth 64 MILLION and its
+     margin $320,000, against $190 to $2,500 for the eleven others; read as yen
+     it is $413,000 and $2,065, which sits exactly among them. The same
+     arithmetic the other way: one per cent of the index costs $4,128 on a lot
+     of Japan 225 and $760 on a lot of US 500 — a ratio of 5.4, which is the
+     ratio of their notionals. Every other index here checks out in dollars,
+     so no other name belongs in this list. */
+  var QUOTED_IN = { "Japan 225": "JPY" };
+
+  /** What one unit of this instrument's PROFIT is worth in dollars. */
+  function usdRate(s) {
+    var name = (s && s.name) || "";
+    var m = PAIR.exec(name);
+    var ccy = m ? m[2] : QUOTED_IN[name];
+    if (!ccy) return 1;                     // the rest are quoted in dollars
+    var r = usdPerUnit(ccy);
+    return r == null ? 1 : r;
+  }
+
+  /** What one unit of its BASE — the thing a lot is a lot OF — is worth. */
+  function usdBaseRate(s) {
+    var m = s && PAIR.exec(s.name || "");
+    return m ? usdPerUnit(m[1]) : null;
+  }
+
+  /** What a position is worth against a given price. */
+  function profitAt(p, now) {
+    var s = book[p.symbol];
+    if (!s) return 0;
+    var diff = p.type === "buy" ? now - p.open : p.open - now;
+    /* In the quote currency, then in dollars. For USDJPY that divides by the
+       rate, as it always did; for GBPJPY it now divides by USDJPY rather than
+       by nothing at all. */
+    var v = diff * p.volume * s.size * usdRate(s);
+    return Math.round(v * 100) / 100;
+  }
+
   function profitOf(p) {
     var s = book[p.symbol];
     if (!s) return 0;
-    var now = p.type === "buy" ? bid(s) : ask(s);
-    var diff = p.type === "buy" ? now - p.open : p.open - now;
-    var v = diff * p.volume * s.size;
-    /* USDJPY is quoted in yen, so a move of it earns YEN, and the account is
-       in dollars. Without this a 1.5-pip move on one lot showed as $1,500
-       instead of $10 — the yen figure printed straight onto a dollar balance.
-       Everything else here is quoted in dollars already. */
-    if (s.usdBase) v /= now;
-    return Math.round(v * 100) / 100;
+    return profitAt(p, p.type === "buy" ? bid(s) : ask(s));
   }
 
   /* Margin is the position's size in its BASE currency, converted to the
@@ -236,7 +291,16 @@
     /* Notional in the account's currency, over the leverage that binds.
        For EURUSD the base is euros and the rate converts it; for USDJPY the
        base is already dollars, so the rate must not be applied. */
-    return (s.usdBase ? volume * s.size : volume * s.size * price) / lev;
+    /* A lot is a lot of the BASE currency, and the margin is what that costs
+       in dollars: one lot of EURGBP is 100 000 euros — worth its EURUSD rate,
+       not its EURGBP price. Where the base has no rate on the tape (gold, the
+       indices) the quoted price is already the dollar value of one unit. */
+    var br = usdBaseRate(s);
+    /* A pair's notional is its base currency; anything else is priced in its
+       own quote currency, so the price gives the notional and the rate puts
+       it into dollars — one, for everything but Japan 225. */
+    var notional = br == null ? volume * s.size * price * usdRate(s) : volume * s.size * br;
+    return notional / lev;
   }
 
   function marginOf(p) {
@@ -277,7 +341,11 @@
     if (asked < s.minVol - 1e-9) return "Invalid volume";
     if (asked > (s.maxVol || Infinity) + 1e-9) return "Invalid volume";
 
-    var price = type === "buy" ? ask(s) : bid(s);
+    /* On the instrument's own grid, the way a fill is quoted: a position
+       opened at 8092.035 on a market that prices in tenths shows an entry
+       nobody was ever quoted, and its profit then disagrees with the two
+       prices printed beside it. */
+    var price = round(s, type === "buy" ? ask(s) : bid(s));
     var need = marginFor(s, volume, price);
     /* The real terminal's wording, and the real rule: free margin, not
        balance, is what has to cover it. */
@@ -346,8 +414,9 @@
 
     var p = state.positions[i];
     var s = book[p.symbol];
-    var out = p.type === "buy" ? bid(s) : ask(s);
-    var profit = profitOf(p);
+    var out = round(s, p.type === "buy" ? bid(s) : ask(s));
+    /* Against the price the row will show, so the history always adds up. */
+    var profit = profitAt(p, out);
 
     state.balance = Math.round((state.balance + profit) * 100) / 100;
     state.positions.splice(i, 1);
@@ -523,8 +592,9 @@
     var per = p.volume * s.size;
     if (!(per > 0) || !(out > 0)) return 0;
 
-    var diff = profit / per;
-    if (s.usdBase) diff = diff * out;
+    /* The inverse of profitOf, through the same rate. */
+    var rate = usdRate(s);
+    var diff = rate > 0 ? profit / (per * rate) : 0;
     var entry = p.type === "buy" ? out - diff : out + diff;
     if (!(entry > 0)) return Infinity;      // no entry could show that figure
 
@@ -598,6 +668,9 @@
     applySymbols: applySymbols, setOpen: setOpen, setDigits: setDigits,
     applyRun: applyRun,
     setProfit: setProfit,
+    /* What one unit of an instrument's profit is worth in the account's
+       currency — the simulator sizes and prices its trades with it. */
+    usdRate: usdRate,
     summary: summary,
     positions: function () { return state.positions; },
     deals: function () { return state.deals; },

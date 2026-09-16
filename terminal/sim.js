@@ -120,8 +120,7 @@
    * size the platform would have refused.
    */
   function volumeFor(sym, risk, stopDist) {
-    var perLot = stopDist * sym.size;
-    if (sym.usdBase) perLot = perLot / sym.price;
+    var perLot = stopDist * sym.size * T().usdRate(sym);
     if (!(perLot > 0)) return sym.minVol;
 
     /* One snapper, the engine's, so a simulated size and a hand-placed one
@@ -152,8 +151,7 @@
     }
     if (!nights) return 0;
 
-    var v = rate * Math.pow(10, -sym.digits) * volume * sym.size * nights;
-    if (sym.usdBase) v = v / sym.price;
+    var v = rate * Math.pow(10, -sym.digits) * volume * sym.size * nights * T().usdRate(sym);
     return Math.round(v * 100) / 100;
   }
 
@@ -261,9 +259,8 @@
     /* ── turn the results back into prices ─────────────────────────────── */
     var deals = [];
     raw.forEach(function (t) {
-      var perUnit = t.volume * t.sym.size;
+      var perUnit = t.volume * t.sym.size * Tm.usdRate(t.sym);
       var move = perUnit ? t.gross / perUnit : 0;
-      if (t.sym.usdBase) move = move * t.sym.price;
       var close = t.buy ? t.open + move : t.open - move;
       if (!(close > 0)) close = t.open;
 
@@ -292,10 +289,9 @@
       if (t0) {
         /* Move its close price with it, or the row would show a result its own
            two prices do not produce. */
-        var perUnit0 = t0.volume * t0.sym.size;
+        var perUnit0 = t0.volume * t0.sym.size * Tm.usdRate(t0.sym);
         var g0 = deals[0].profit - deals[0].swap + deals[0].commission;
         var move0 = perUnit0 ? g0 / perUnit0 : 0;
-        if (t0.sym.usdBase) move0 = move0 * t0.sym.price;
         var c0 = t0.buy ? t0.open + move0 : t0.open - move0;
         if (c0 > 0) deals[0].close = Number(c0.toFixed(t0.sym.digits));
       }
