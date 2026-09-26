@@ -165,9 +165,14 @@
 
   function money(n, cur) {
     if (n == null || isNaN(Number(n))) return "—";
-    var d = window.EvieCurrency ? window.EvieCurrency.digits(cur) : 2;
+    if (window.EvieCurrency) {
+      var d = window.EvieCurrency.digits(cur);
+      return (cur || "USD") + " " + Number(n).toLocaleString(undefined, {
+        minimumFractionDigits: d, maximumFractionDigits: d
+      });
+    }
     return (cur || "USD") + " " + Number(n).toLocaleString(undefined, {
-      minimumFractionDigits: d, maximumFractionDigits: d
+      minimumFractionDigits: 2, maximumFractionDigits: 2
     });
   }
 
@@ -414,6 +419,11 @@
     }
 
     if (d.msg_type === "balance" && d.balance) {
+      /* In analysis-only the socket is open on a demo purely for prices, and
+         the badge beside this figure still reads Real. Writing the demo's
+         balance there is a claim about how much money is at stake, so the
+         perch stays blank until there is an account it belongs to. */
+      if (analysisOnly) return;
       $("balance").textContent = money(d.balance.balance, d.balance.currency);
     }
   });
@@ -759,6 +769,7 @@
   function applyCurrency(cur) {
     if (txn && txn.setCurrency) txn.setCurrency(cur);
 
+    var label = document.querySelector('label[for="stake"], .fld-k');
     var stakeEl = $("stake");
     if (stakeEl && window.EvieCurrency) {
       var floor = window.EvieCurrency.min(cur);
@@ -767,13 +778,12 @@
          that lets Deriv answer. */
       if (floor == null) stakeEl.removeAttribute("min");
       else stakeEl.setAttribute("min", String(floor));
-      stakeEl.setAttribute("step", window.EvieCurrency.step(cur));
+      stakeEl.setAttribute("step", String(window.EvieCurrency.step(cur)));
     }
 
     /* The field is titled with the currency, so nobody types dollars into a
        euro account because the label told them to. */
-    var fld = stakeEl && stakeEl.closest(".fld");
-    var k = fld && fld.querySelector(".fld-k");
+    var k = stakeEl && stakeEl.closest(".fld") && stakeEl.closest(".fld").querySelector(".fld-k");
     if (k) k.textContent = "Stake (" + (cur || "USD") + ")";
 
     showNextStake();
@@ -840,6 +850,12 @@
       ? allAccounts
       : allAccounts.filter(function (a) { return !a.demo; });
 
+    /* Analysis-only means the picker has nothing to trade on — not a verdict
+       reached once when the portfolio arrived. Revealing the demo puts an
+       account back in it, and turning trading back on is the whole point of
+       the reveal; hiding it again takes trading away with it. */
+    analysisOnly = !accounts.length;
+
     $("account").innerHTML = accounts.map(function (a) {
       return '<option value="' + esc(a.id) + '">' + esc(a.id) + " · " +
         (a.demo ? "Demo" : "Real") + " · " + esc(money(a.balance, a.currency)) + "</option>";
@@ -867,13 +883,20 @@
       $("acct-fld").hidden = !showDemo;
       renderAccounts();
 
-      if (showDemo && accounts.length && !session.isLive()) {
-        /* A login with no real account had nothing to open a session on, so
-           revealing the demo is the moment there is finally something to
-           trade. Without this the picker fills in and the page stays dead. */
-        $("account").value = accounts[0].id;
+      if (showDemo && accounts.length) {
+        /* Revealing the demo is the moment a login with no real account
+           finally has something to trade on. The header has to say so —
+           without this the badge went on reading Real over a demo, and the
+           risk line went on saying trading was off while it was back on. */
+        var pick = accounts.some(function (a) { return a.id === $("account").value; })
+          ? $("account").value
+          : accounts[0].id;
+        $("account").value = pick;
         describeAccount();
-        openSession(accounts[0].id);
+
+        /* The socket may already be open on this very account: in
+           analysis-only it is the price feed the cards are drawn from. */
+        if (session.accountId !== pick) openSession(pick);
       }
 
       if (!showDemo) {
@@ -890,13 +913,14 @@
           describeAccount();
           if (session.accountId !== real.id) openSession(real.id);
         } else {
-          // Nothing real to fall back to: end the demo session rather than
-          // leave it running behind a hidden picker.
-          session.close();
+          /* Nothing real to fall back to. The session stays open on the demo
+             — it is the price feed the cards are drawn from, and closing it
+             left the page dead behind a hidden picker. Only trading goes,
+             and renderAccounts has already taken it. */
           $("balance").textContent = "—";
           $("acct-badge").textContent = "Real";
           $("acct-badge").classList.remove("badge--demo");
-          $("risk").textContent = "This login has no real options account.";
+          $("risk").textContent = "No real options account yet — the analysis is live, trading is not.";
           $("risk").className = "risk";
         }
       }
@@ -984,15 +1008,11 @@
       $("risk").textContent = "No real options account yet — the analysis is live, trading is not.";
       $("risk").className = "risk";
 
-      analysisOnly = true;
       var feed = allAccounts[0];          // a demo, since there is no real one
       if (feed && session.accountId !== feed.id) openSession(feed.id);
 
       return status("Analysis only: this login has no real options account to trade on.", "warning");
     }
-
-    // A real account has appeared (or been revealed): trading is on again.
-    analysisOnly = false;
 
     // Keep the remembered account if it is still one of the ones on offer.
     var keep = accounts.filter(function (a) { return a.id === remembered; })[0];
@@ -1023,7 +1043,20 @@
          parked at the bottom and the trades would otherwise land out of sight;
          on a wide screen the rail is already open and this does nothing. */
       showTransactions: function () { txn.open(); },
-      isLive: function () { return session.isLive(); },
+
+      /* Live, to the bot, means CAN TRADE — not merely that a socket is open.
+         Analysis-only opens a socket for prices on whatever account the login
+         has, and placeTrade refuses on it. Reporting that as live is what let
+         the bot spend eight attempts finding out, then blame the stake. */
+      isLive: function () { return session.isLive() && !analysisOnly; },
+
+      /* Why it cannot trade, when the reason is not going to change by
+         waiting. Empty means keep waiting — the socket is simply not up yet. */
+      blocked: function () {
+        return analysisOnly
+          ? "No real options account to trade on — the analysis is live, trading is not."
+          : "";
+      },
       busy: function () { return inFlight; },
       settings: settings,
       nextStake: function () { return settings.martingale ? nextStake : settings.stake; },

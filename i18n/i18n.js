@@ -271,6 +271,39 @@
     var out = dict[norm(s)];
     return out == null ? s : out;
   };
+  /** For a line the server wrote: an exact entry if there is one, else the
+   *  first template entry ("Partner ID: {id}") whose shape the line fits —
+   *  the captured parts are carried into the translation in order. Anything
+   *  that fits nothing (an owner's own reply, a code) comes back untouched.
+   *  Templates are compiled once per dictionary. */
+  var tmCache = null, tmFor = null;
+  function templates() {
+    if (tmFor === dict && tmCache) return tmCache;
+    tmCache = []; tmFor = dict;
+    if (!dict) return tmCache;
+    for (var k in dict) {
+      if (k.indexOf("{") === -1) continue;
+      var names = [];
+      var rx = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\\\{([a-z]+)\\\}/g, function (_, n) { names.push(n); return "(.+?)"; });
+      tmCache.push({ rx: new RegExp("^" + rx + "$"), names: names, out: dict[k] });
+    }
+    return tmCache;
+  }
+  window.tm = function (s) {
+    if (!dict) return s;
+    var key = norm(String(s == null ? "" : s));
+    if (!key) return s;
+    if (dict[key] != null) return dict[key];
+    var list = templates();
+    for (var i = 0; i < list.length; i++) {
+      var m = key.match(list[i].rx);
+      if (!m) continue;
+      var out = list[i].out;
+      for (var j = 0; j < list[i].names.length; j++) out = out.split("{" + list[i].names[j] + "}").join(m[j + 1]);
+      return out;
+    }
+    return s;
+  };
   window.i18n = { get lang() { return lang; }, set: function (c) { return apply(c, true); }, langs: LANGS };
 
   /* ── the switcher ─────────────────────────────────────────────────────── */

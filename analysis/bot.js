@@ -161,7 +161,7 @@
    * A recovery STAYS on the type it opened with until it wins. The percentages
    * move a little with every tick, so re-deciding each time would hop between
    * types that are within a point of each other in the middle of a martingale
-   * ladder - three trades into a recovery on three different contracts, none
+   * ladder — three trades into a recovery on three different contracts, none
    * of them the one the ladder was sized against. It picks once, on the
    * highest percentage at the moment the recovery starts, and sees it through.
    */
@@ -177,7 +177,7 @@
     if (chosen.type !== "match" && chosen.type !== "differ") return chosen;
 
     /* Already recovering on something: keep it. Only a type Deriv would now
-       refuse - Over or Under gone out of range - is given up on. */
+       refuse — Over or Under gone out of range — is given up on. */
     if (locked && usable(locked, s) && typeof s[locked] === "number") {
       return { type: locked, pct: s[locked], recovering: true };
     }
@@ -206,13 +206,13 @@
     };
   }
 
-  /** Why the run should end, or null to carry on. Judged on the ledger.
-      `hit` names the target so the run's end can raise the card for it. Only
-      the two limits carry one: they are the only endings the user asked for. */
+  /** Why the run should end, or null to carry on. Judged on the ledger. */
   function stopReason(t) {
     var l = limits();
     var profit = t.profit || 0;
 
+    /* `hit` names the target so the run's end can raise the card for it. Only
+       these two carry one: they are the only endings the user asked for. */
     if (l.sl != null && !isNaN(l.sl) && profit <= -Math.abs(l.sl)) {
       return { msg: T("Stop loss hit at {x}", { x: bare(profit) }) + ".", kind: "warning", hit: "sl" };
     }
@@ -266,7 +266,16 @@
       var waitedFor = 0;
 
       while (alive()) {
-        if (!host.isLive()) { say("Reconnecting to Deriv…", "warning"); await sleep(1200); continue; }
+        if (!host.isLive()) {
+          /* A socket that is coming back is worth waiting for; a login with
+             nothing to trade on is not, and waiting on it in silence is how
+             this looked like a connection problem. */
+          var why = host.blocked && host.blocked();
+          if (why) { ended = { msg: why, kind: "error" }; break; }
+          say("Reconnecting to Deriv…", "warning");
+          await sleep(1200);
+          continue;
+        }
 
         if (host.busy()) {
           waitedFor += 300;
@@ -326,8 +335,8 @@
           fails++;
           if (fails >= MAX_FAILS) {
             ended = {
-              msg: T("Deriv refused {n} trades in a row — stopped.", { n: fails }) + " " +
-                   "The stake may be larger than the balance.",
+              msg: T("Stopped after {n} refused trades.", { n: fails }) + " " +
+                   ((e && e.message) || "The stake may be larger than the balance."),
               kind: "error"
             };
             break;
@@ -486,8 +495,8 @@
        every stop — so pressing Start re-applied whatever had been stored
        earlier in the tab, over whatever was on screen. Somebody who set 500,
        put it back to 100 and pressed Start ran to 500. It also stacked another
-       pair of listeners on every field each time, and meant the listeners that
-       SAVE were not attached until the first run either.
+       pair of listeners on every field each time, and could click a toggle
+       back to a state the user had just left.
 
        After the selects are filled and the toggles wired, because a restore
        replays the interaction: a value needs its <option> to exist, and a
@@ -507,6 +516,11 @@
         say("Stopped.", "warning");
         return;
       }
+      /* Nothing to trade on is worth saying at the press, not eight refusals
+         later. Only reasons that will not change by waiting stop it here. */
+      var why = host.blocked && host.blocked();
+      if (why) return say(why, "error");
+
       /* Start is a clean slate: a new run id, an emptied ledger, the
          martingale back at the base stake, and the card's own figures
          cleared. Nothing from the last run is carried into this one. */
@@ -518,7 +532,7 @@
       say("Starting…", "info");
 
       /* The trades are about to start arriving. On a phone they arrive at the
-         bottom of the page, out of sight, so the sheet comes up - and stays up
+         bottom of the page, out of sight, so the sheet comes up — and stays up
          until it is closed or scrolled away. */
       if (host.showTransactions) host.showTransactions();
 
@@ -546,9 +560,10 @@
     draggable(card, el("bot-head"));
     syncStats();
 
-    /* On a narrow screen the card would sit on top of the analysis the moment
-       the page opened. It starts closed there, and the button brings it up
-       when there is actually something to trade. */
+    /* Closed on every screen, not just the narrow ones.
+       On a phone it sat on top of the analysis; on a desktop it sat on top of
+       the cards somebody opened the page to read. Either way it is in the way
+       until there is something to trade, and getting to it is one click. */
     card.hidden = true;
     var opener = el("bot-open");
     if (opener) opener.hidden = false;
