@@ -1,5 +1,5 @@
 /**
- * UPTICK MT5 — the three risk profiles.
+ * PIPVANA MT5 — the three risk profiles.
  *
  * One engine, three parameter sets. Conservative takes fewer trades and never
  * adds to a position; Aggressive presses winners and trades the in-between

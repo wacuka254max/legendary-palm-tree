@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   UPTICK — the app.
+   PIPVANA — the app.
 
    The dashboard and the furniture the tool pages share, in the same language
    as the landing page: black ground, dotted field, violet and amber, panels
@@ -320,7 +320,7 @@
 /* ── This card is Evie's ──────────────────────────────────────────────────
    The prices panel is the one piece of furniture the two sites share
    outright: same heading, same three columns, same paddings, same sparkline
-   box, same pill on the right. Only the palette is Uptick's. Sizes below are
+   box, same pill on the right. Only the palette is Pipvana's. Sizes below are
    the numbers from evietrader.site rather than anything derived here, so
    changing one of them there and not here is what would break the pair. */
 

@@ -1,5 +1,5 @@
 /**
- * UPTICK — the take profit / stop loss card.
+ * PIPVANA — the take profit / stop loss card.
  *
  * Both bots already knew when a run had hit a target the user typed in; they
  * said so in a status line and stopped. But the person who set a take profit
@@ -26,13 +26,13 @@
 (function (global) {
   "use strict";
 
-  /* The platform's own mark, so the card is plainly Uptick's and not the
+  /* The platform's own mark, so the card is plainly Pipvana's and not the
      browser's or Deriv's. Inline rather than an <img>: it must paint with the
      card, and a request that has not landed yet is a hole in it. */
   var MARK =
     '<svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true">' +
     '<circle cx="16" cy="16" r="16" fill="#7c5cff"/>' +
-    '<path d="M9 20.5 16 9l7 11.5-7-4.2-7 4.2z" fill="#fff"/>' +
+    '<g transform="translate(-1.1 -0.3)"><path d="M12.2 24V8.6h4.9a4.85 4.85 0 0 1 0 9.7h-4.9" fill="none" stroke="#fff" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="21.6" cy="22.6" r="2.05" fill="#fff"/></g>' +
     "</svg>";
 
   /* Deriv's own portfolio, where money is moved into the options account the

@@ -1,5 +1,5 @@
 /**
- * UPTICK — light or dark, remembered.
+ * PIPVANA — light or dark, remembered.
  *
  * Light is the default. The choice lives in localStorage and is applied to
  * <html> as data-theme, which every colour token keys off.
@@ -48,5 +48,5 @@
   // Reflect whatever the head script decided, so the button starts correct.
   apply(current());
 
-  global.UptickTheme = { apply: apply, current: current };
+  global.PipvanaTheme = { apply: apply, current: current };
 })(window);

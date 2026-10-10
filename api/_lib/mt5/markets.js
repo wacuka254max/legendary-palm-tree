@@ -1,5 +1,5 @@
 /**
- * UPTICK MT5 — the market registry.
+ * PIPVANA MT5 — the market registry.
  *
  * `ws` is the symbol Deriv's feed answers to, which is where the candles come
  * from. `mt5` is what the same instrument is called inside a MetaTrader 5

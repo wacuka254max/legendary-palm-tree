@@ -1,5 +1,5 @@
 /**
- * UPTICK — the service worker.
+ * PIPVANA — the service worker.
  *
  * Fresh first, fast always.
  *
@@ -25,7 +25,7 @@
  * under /api is ever cached, and neither is any other origin.
  */
 
-const VERSION = "uptick-shell-v7";
+const VERSION = "pipvana-shell-v8";
 const NET_TIMEOUT_MS = 2500;
 
 /* What the launch screen is waiting on. The start page and everything it

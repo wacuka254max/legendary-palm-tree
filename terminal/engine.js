@@ -1,5 +1,5 @@
 /**
- * UPTICK — the terminal's account.
+ * PIPVANA — the terminal's account.
  *
  * A MetaTrader 5 account with nothing behind it but this file: no Expert
  * Advisor, no broker, no socket. Prices are generated here, orders are filled

@@ -1,5 +1,5 @@
 /**
- * UPTICK — the terminal's market data.
+ * PIPVANA — the terminal's market data.
  *
  * Every price on every screen comes from Deriv, over the public market socket:
  *

@@ -1,5 +1,5 @@
 /**
- * UPTICK — the MT5 automation page.
+ * PIPVANA — the MT5 automation page.
  *
  * Three things happen here, in the order the page presents them: the file is
  * downloaded and installed, a risk profile is chosen, and the signals the
@@ -317,6 +317,6 @@
     });
   }
 
-  global.UptickMt5 = { load: load, profile: function () { return profile; } };
+  global.PipvanaMt5 = { load: load, profile: function () { return profile; } };
 
 })(window);

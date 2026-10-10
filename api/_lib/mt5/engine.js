@@ -1,5 +1,5 @@
 /**
- * UPTICK MT5 — the orchestrator, and the only entry point the route calls.
+ * PIPVANA MT5 — the orchestrator, and the only entry point the route calls.
  *
  * Pull the candles, run the strategy on every market, then put the whole
  * basket through the risk governor in ONE pass. The governor has to see

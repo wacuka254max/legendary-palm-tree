@@ -1,5 +1,5 @@
 /**
- * UPTICK MT5 — the indicators. Pure functions, no dependencies.
+ * PIPVANA MT5 — the indicators. Pure functions, no dependencies.
  *
  * Every one takes a chronological array of candles (oldest first) and answers
  * for the LATEST bar. Thresholds everywhere else are expressed in ATRs or

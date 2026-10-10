@@ -1,5 +1,5 @@
 /**
- * UPTICK — "Install app".
+ * PIPVANA — "Install app".
  *
  * Installing is a browser feature, not a page feature, and the three families
  * of browser expose it three different ways. This does the honest version of
@@ -66,11 +66,11 @@
     var wrap = document.createElement("div");
     wrap.className = "how";
     wrap.setAttribute("role", "dialog");
-    wrap.setAttribute("aria-label", "How to install Uptick");
+    wrap.setAttribute("aria-label", "How to install Pipvana");
     wrap.innerHTML =
       '<div class="how-card">' +
         '<div class="how-head">' +
-          "<h3>Add Uptick to your home screen</h3>" +
+          "<h3>Add Pipvana to your home screen</h3>" +
           '<button type="button" class="how-x" aria-label="Close">' +
             '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
           "</button>" +

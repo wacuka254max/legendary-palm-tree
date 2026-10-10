@@ -1,5 +1,5 @@
 /**
- * UPTICK — move the site to a different origin.
+ * PIPVANA — move the site to a different origin.
  *
  *   node tools/set-domain.mjs https://www.uptick.example
  *
@@ -34,7 +34,7 @@ import { dirname, join } from "node:path";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Files that name the origin, and how many times each should. */
-const FILES = ["mt5.html", "mt5/UptickMT5.mq5"];
+const FILES = ["mt5.html", "mt5/PipvanaMT5.mq5"];
 
 /** The banner in the .mq5 is a drawn box; its lines are this wide between
  *  the opening "//|" and the closing "|". A longer host would push the edge
@@ -52,9 +52,9 @@ if (!/^https:\/\/[a-z0-9.-]+[a-z0-9]$/i.test(next)) {
 /* The address the bot actually calls is the one that matters, so that is the
    one taken as current — not a guess, and not a second constant to keep in
    step with it. */
-const ea = readFileSync(join(ROOT, "mt5/UptickMT5.mq5"), "utf8");
+const ea = readFileSync(join(ROOT, "mt5/PipvanaMT5.mq5"), "utf8");
 const found = ea.match(/string\s+g_base\s*=\s*"(https:\/\/[^/"]+)\//);
-if (!found) die("could not find g_base in mt5/UptickMT5.mq5 — has the EA changed?");
+if (!found) die("could not find g_base in mt5/PipvanaMT5.mq5 — has the EA changed?");
 const current = found[1];
 
 if (current === next) die(`already on ${next} — nothing to do.`);

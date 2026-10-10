@@ -1,5 +1,5 @@
 /**
- * UPTICK — the trading simulator.
+ * PIPVANA — the trading simulator.
  *
  * It fills the account: a run of finished trades in the history, and a set of
  * positions left open on the Trade screen. What it does NOT do is invent a

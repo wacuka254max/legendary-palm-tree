@@ -1,7 +1,7 @@
 /**
- * UPTICK — connecting a Deriv account, and reading what is in it.
+ * PIPVANA — connecting a Deriv account, and reading what is in it.
  *
- * Uptick has its own Deriv app id, the way evietrader.site, clunoid.com and
+ * Pipvana has its own Deriv app id, the way evietrader.site, clunoid.com and
  * magicbotslab.com each have theirs: one app per platform, so the trades each
  * one places are attributed to it and a user revoking one does not revoke the
  * others. The flow below is the same on all four because the id is the same
@@ -17,7 +17,7 @@
  *      and this app has neither, which is what "Could not reach Deriv" was.
  *
  * Nothing is stored on a server. The tokens live in this browser and only this
- * browser; Uptick never sees them, and there is no account to sign in to.
+ * browser; Pipvana never sees them, and there is no account to sign in to.
  *
  * The stored token EXPIRES — about an hour. That single fact is what makes a
  * connection look like it "failed" a day later, so every read goes through
@@ -57,14 +57,14 @@
    * registered — Deriv hands the code back there. Clunoid points at a dashboard
    * route the same way (/trading/command), not at its front door.
    *
-   * window.UPTICK_DERIV_REDIRECT_URI still overrides the whole thing, for the
+   * window.PIPVANA_DERIV_REDIRECT_URI still overrides the whole thing, for the
    * odd case of the app being registered against a different host than the one
    * serving the page.
    */
   var REDIRECT_PATH = "/home.html";
 
   function redirectUri() {
-    return global.UPTICK_DERIV_REDIRECT_URI || (global.location.origin + REDIRECT_PATH);
+    return global.PIPVANA_DERIV_REDIRECT_URI || (global.location.origin + REDIRECT_PATH);
   }
 
   var TOKEN_KEY = "evie_deriv_token";
@@ -100,7 +100,7 @@
   /**
    * Somebody who has just connected an account means to come back, and this is
    * the one moment we know it. install.js reads the flag and opens the install
-   * offer by itself, so getting Uptick onto a phone stops depending on anybody
+   * offer by itself, so getting Pipvana onto a phone stops depending on anybody
    * noticing the button in the header.
    *
    * Only where there was no session already. The token refresh below saves a

@@ -1,5 +1,5 @@
 /**
- * UPTICK — the terminal's screens.
+ * PIPVANA — the terminal's screens.
  *
  * Rebuilt against screenshots of the app. The details that were wrong the
  * first time and are the whole character of the thing:

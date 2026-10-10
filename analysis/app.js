@@ -495,7 +495,7 @@
    * result nothing would ever send. There is nothing here to disagree with:
    * one contract, its own listener, its own timer, removed when it ends.
    *
-   * The same four steps Deriv requires, and the same ones Uptick Auto Ai takes:
+   * The same four steps Deriv requires, and the same ones Pipvana AI takes:
    *   proposal → buy → subscribe to the contract → settled.
    */
   function placeTrade(type, sym, stake, forRun) {

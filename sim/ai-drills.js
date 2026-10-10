@@ -1,5 +1,5 @@
 /**
- * UPTICK — recovery drills for the Uptick Auto Ai simulation.
+ * PIPVANA — recovery drills for the Pipvana AI simulation.
  *
  * With losses set to none, nothing loses. The bot then spends the whole
  * session on Differs at the base stake and never once shows the thing it is

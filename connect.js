@@ -1,5 +1,5 @@
 /**
- * UPTICK — the landing page's half of the Deriv connection.
+ * PIPVANA — the landing page's half of the Deriv connection.
  *
  * Three jobs, in the order they matter:
  *

@@ -1,5 +1,5 @@
 /**
- * UPTICK — Deriv's contract specifications, on MT5's lot grid.
+ * PIPVANA — Deriv's contract specifications, on MT5's lot grid.
  *
  * Taken from https://deriv.com/trading-specifications, which is where Deriv
  * publishes them, because the API does not: the endpoint list at

@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Uptick - fully automated AI trading bots",
-  "short_name": "Uptick",
+  "name": "Pipvana - fully automated AI trading bots",
+  "short_name": "Pipvana",
   "description": "Fully automated AI trading bots that run on a broker account you already own.",
   "start_url": "/",
   "scope": "/",

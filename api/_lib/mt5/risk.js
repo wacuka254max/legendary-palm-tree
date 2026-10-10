@@ -1,5 +1,5 @@
 /**
- * UPTICK MT5 — the risk governor.
+ * PIPVANA MT5 — the risk governor.
  *
  * The split of labour: here we decide risk as a PERCENTAGE of balance — which
  * trades, how much of the account each one is allowed, and what the whole book

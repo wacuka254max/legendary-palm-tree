@@ -1,5 +1,5 @@
 /**
- * UPTICK — practice mode.
+ * PIPVANA — practice mode.
  *
  * A mode the dashboard does not advertise. Three clicks on the "o" of Home
  * open a bare field; the right phrase turns the mode on and is remembered on

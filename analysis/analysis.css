@@ -1,11 +1,11 @@
 /* ══════════════════════════════════════════════════════════════════════
-   UPTICK — Analysis.
+   PIPVANA — Analysis.
 
    Laid out like dbotzone's Advanced tool: a card per market, a digit grid
    with the notable digits outlined, and each trade pair as
    percentage · buttons · percentage.
 
-   The reference is a light theme; this keeps Uptick's own surface so the
+   The reference is a light theme; this keeps Pipvana's own surface so the
    page still belongs to the rest of the site, and carries the reference's
    colour language across: green rise, red fall, blue even, red odd,
    orange over, cyan under. Flat colours only — no gradients anywhere.

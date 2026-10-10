@@ -1,5 +1,5 @@
 /**
- * UPTICK MT5 — where the candles come from.
+ * PIPVANA MT5 — where the candles come from.
  *
  * Straight from Deriv, over their public market-data socket. Market data needs
  * no token and no account, which is why this page works for somebody who has

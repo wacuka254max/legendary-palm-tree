@@ -1,5 +1,5 @@
 /**
- * UPTICK MT5 — the strategy. One classifier in front of two engines.
+ * PIPVANA MT5 — the strategy. One classifier in front of two engines.
  *
  * Every symbol, every bar, is put into a regime by the EMA stack, ADX and
  * Choppiness together. A clean trend goes to the TREND engine (breakout, ATR

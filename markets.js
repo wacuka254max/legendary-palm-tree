@@ -1,5 +1,5 @@
 /**
- * UPTICK — the prices rail.
+ * PIPVANA — the prices rail.
  *
  * Five minutes of price movement for every Deriv volatility index, live: a
  * sparkline of the window and the percentage it moved across it.

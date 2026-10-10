@@ -1,8 +1,8 @@
 /**
- * UPTICK — Uptick Auto Ai (trading engine).
+ * PIPVANA — Pipvana AI (trading engine).
  *
  * This is magicbotslab.com's Smart Recovery Differ, copied whole. It is the
- * strategy Uptick ships as "Uptick Auto Ai": it trades digit contracts on the
+ * strategy Pipvana ships as "Pipvana AI": it trades digit contracts on the
  * Volatility indices, and after a loss it stops guessing — it reads the recent
  * digit history of every market and switches to an OVER/UNDER recovery trade on
  * whichever one is leaning hardest.
@@ -85,7 +85,7 @@
 
       const token = this.resolveAuthToken();
       if (!token) {
-        this.ui.showStatus('Connect your Deriv account before running Uptick Auto Ai.', 'error');
+        this.ui.showStatus('Connect your Deriv account before running Pipvana AI.', 'error');
         return;
       }
 
@@ -146,7 +146,7 @@
           }
         } else {
           // OTP-authenticated WS: subscribe immediately and start trading.
-          this.ui.showStatus('Connected. Uptick Auto Ai is running.', 'success');
+          this.ui.showStatus('Connected. Pipvana AI is running.', 'success');
           this.subscribeToBalance();
           this.subscribeToContracts();
           this.subscribeToAllMarketTicks();
@@ -326,7 +326,7 @@
               this.ui.showStatus('Reconnected. Resuming trading...', 'success');
               this.isReconnecting = false;
             } else {
-              this.ui.showStatus('Connected. Uptick Auto Ai is running.', 'success');
+              this.ui.showStatus('Connected. Pipvana AI is running.', 'success');
             }
 
             this.subscribeToBalance();

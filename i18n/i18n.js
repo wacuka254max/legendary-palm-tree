@@ -1,5 +1,5 @@
 /**
- * UPTICK — the language layer.
+ * PIPVANA — the language layer.
  *
  * English is the source of truth and lives in the pages themselves. This file
  * swaps it for Spanish, French or Portuguese at runtime, from a dictionary

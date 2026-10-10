@@ -1,10 +1,10 @@
 //+------------------------------------------------------------------+
-//|                                                   UptickMT5.mq5   |
-//|   Uptick — Deriv MT5 automation (custody-free)                    |
+//|                                                   PipvanaMT5.mq5  |
+//|   Pipvana — Deriv MT5 automation (custody-free)                   |
 //|                                                                   |
-//|   The AI/strategy runs in Uptick's cloud. This EA polls the       |
+//|   The AI/strategy runs in Pipvana's cloud. This EA polls the      |
 //|   signal feed and executes on YOUR terminal, on YOUR account —    |
-//|   Uptick never sees a password. Put it on a VPS (Deriv/MT5        |
+//|   Pipvana never sees a password. Put it on a VPS (Deriv/MT5       |
 //|   Virtual Hosting) to trade 24/7 with your PC off.                |
 //|                                                                   |
 //|   Opens trades, sets stop-loss & take-profit, TRAILS the stop,    |
@@ -15,7 +15,7 @@
 //|     tick "Allow WebRequest for listed URL" and add:               |
 //|         https://legendary-palm-tree-tawny.vercel.app              |
 //+------------------------------------------------------------------+
-#property copyright "Uptick"
+#property copyright "Pipvana"
 #property link      "https://legendary-palm-tree-tawny.vercel.app"
 #property version   "3.10"
 #property strict
@@ -26,7 +26,7 @@ enum RiskProfile { CONSERVATIVE=0, MODERATE=1, AGGRESSIVE=2 };
 
 input RiskProfile InpProfile        = AGGRESSIVE; // Risk profile — Conservative / Moderate / Aggressive (sets the risk caps)
 input int         InpPollSeconds    = 30;         // How often to poll for signals
-input long        InpMagic          = 99090001;   // Magic number (Uptick trades only)
+input long        InpMagic          = 99090001;   // Magic number (Pipvana trades only)
 input int         InpMaxSpreadPts   = 40;         // Skip if spread exceeds this (points)
 input string      InpSymbolSuffix   = "";         // Broker symbol suffix, e.g. ".r" (blank if none)
 input double      InpMaxDailyLossPct= 5;          // Daily-loss cap % of day-start equity (halts new entries)
@@ -75,7 +75,7 @@ int OnInit()
    g_dayStart = today;
 
    EventSetTimer(MathMax(5, InpPollSeconds));
-   PrintFormat("Uptick MT5 EA v3.1 started — profile=%s, trading forex + Volatility. Ensure https://legendary-palm-tree-tawny.vercel.app is whitelisted in WebRequest.", ProfileStr());
+   PrintFormat("Pipvana MT5 EA v3.1 started — profile=%s, trading forex + Volatility. Ensure https://legendary-palm-tree-tawny.vercel.app is whitelisted in WebRequest.", ProfileStr());
    Poll();
    return(INIT_SUCCEEDED);
   }
@@ -102,7 +102,7 @@ double OnTester()
    return profit / (1.0 + ddPct);   // reward profit, penalise drawdown
   }
 
-// Stamp the re-entry cooldown when an Uptick position CLOSES (not at entry).
+// Stamp the re-entry cooldown when an Pipvana position CLOSES (not at entry).
 void OnTradeTransaction(const MqlTradeTransaction &trans, const MqlTradeRequest &req, const MqlTradeResult &res)
   {
    if(trans.type!=TRADE_TRANSACTION_DEAL_ADD) return;
@@ -184,7 +184,7 @@ void Poll()
    CleanupPlans();                             // drop plans for closed tickets
 
    string capFlag = (g_maxOpenRisk<=0) ? " · CAPS PENDING (entries blocked)" : "";
-   Comment(StringFormat("Uptick MT5 v3.1 · %s · forex+volatility · %d signals · %s%s%s%s",
+   Comment(StringFormat("Pipvana MT5 v3.1 · %s · forex+volatility · %d signals · %s%s%s%s",
            ProfileStr(), nSigs, TimeToString(TimeCurrent(), TIME_SECONDS), dailyHalt?" · DAILY LOSS HALT":"", capFlag, stale?" · STALE FEED":""));
   }
 
@@ -266,10 +266,10 @@ void OpenBase(Sig &s)
       GVset("up_add_"+sym, 0);                 // reset pyramid counter for this symbol
       BindPlan(s, lots, s.risk);
       int d=(int)SymbolInfoInteger(sym,SYMBOL_DIGITS);
-      PrintFormat("Uptick %s %s %.2f lots @ %s SL %s TP %s", s.side, sym, lots,
+      PrintFormat("Pipvana %s %s %.2f lots @ %s SL %s TP %s", s.side, sym, lots,
                   DoubleToString(price,d), DoubleToString(s.sl,d), DoubleToString(s.tp,d));
      }
-   else PrintFormat("Uptick order failed %s %s: %d", s.side, sym, g_trade.ResultRetcode());
+   else PrintFormat("Pipvana order failed %s %s: %d", s.side, sym, g_trade.ResultRetcode());
   }
 
 void DoPyramiding(Sig &sigs[], int n)
@@ -315,7 +315,7 @@ void DoPyramiding(Sig &sigs[], int n)
         {
          GVset("up_add_"+sym, done+1);
          BindPlan(sigs[k], lots, apct);
-         PrintFormat("Uptick ADD #%d %s %s %.2f lots", done+1, sigs[k].side, sym, lots);
+         PrintFormat("Pipvana ADD #%d %s %s %.2f lots", done+1, sigs[k].side, sym, lots);
         }
      }
   }
@@ -328,7 +328,7 @@ void BindPlan(Sig &s, double lots, double riskPct)
    if(deal>0 && HistoryDealSelect(deal)) posTk=(ulong)HistoryDealGetInteger(deal, DEAL_POSITION_ID);
    if(posTk==0 || !PositionSelectByTicket(posTk)) posTk=FindUnplannedPosition(s.sym+InpSymbolSuffix);
    if(posTk>0) StorePlan(posTk, s, lots, riskPct);
-   else PrintFormat("Uptick: opened %s but could not bind plan yet (will retry next poll).", s.sym);
+   else PrintFormat("Pipvana: opened %s but could not bind plan yet (will retry next poll).", s.sym);
   }
 
 // Total + per-cluster open-risk cap, enforced against the live book (incl. adds).
@@ -463,7 +463,7 @@ void DeleteTicketGVs(ulong tk)
    for(int i=0;i<8;i++) { GlobalVariableDel("up_pp_"+T+"_"+(string)i); GlobalVariableDel("up_pc_"+T+"_"+(string)i); }
   }
 
-// Attach a plan to any Uptick position that has none yet (heals a missed bind).
+// Attach a plan to any Pipvana position that has none yet (heals a missed bind).
 void AttachMissingPlans(Sig &sigs[], int n)
   {
    for(int i=PositionsTotal()-1;i>=0;i--)
