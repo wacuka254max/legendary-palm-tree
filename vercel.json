@@ -5,6 +5,9 @@
   "functions": {
     "api/mt5/signals.js": {
       "maxDuration": 30
+    },
+    "api/mt5/ea-download.js": {
+      "includeFiles": "api/_files/**"
     }
   },
   "headers": [
@@ -71,7 +74,12 @@
   "redirects": [
     {
       "source": "/mt5/UptickMT5.mq5",
-      "destination": "/mt5/PipvanaMT5.mq5",
+      "destination": "/mt5.html#get",
+      "permanent": false
+    },
+    {
+      "source": "/mt5/PipvanaMT5.mq5",
+      "destination": "/mt5.html#get",
       "permanent": false
     },
     {

@@ -24,6 +24,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <link rel="stylesheet" href="/site.css" />
 <link rel="stylesheet" href="/app.css" />
 <link rel="stylesheet" href="/mt5/mt5.css" />
+<link rel="stylesheet" href="/support.css" />
 </head>
 <body class="app">
 
@@ -88,11 +89,11 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 
     <div class="mt5-panel">
       <div class="mt5-get">
-        <a class="btn btn--violet" id="get-ea" href="/mt5/PipvanaMT5.mq5" download>
+        <button class="btn btn--violet" id="get-ea" type="button">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
           Download Pipvana EA
-        </a>
-        <span class="mt5-get-s">One EA, one chart — no per-market setup.</span>
+        </button>
+        <span class="mt5-get-s">Free for our Deriv community — a quick check, then the file.</span>
       </div>
 
       <ol class="mt5-steps">
@@ -145,9 +146,114 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 
 </main>
 
+<!-- ── the access sheet ────────────────────────────────────────────────────
+     The EA is free but not public: it runs on our engine's signals, so it
+     goes to people who came to Deriv through us. One form asks for the ID
+     that proves that, the answer comes back in the support bubble, and the
+     code it carries unlocks the download — on this browser only. -->
+<div class="ea-root" id="eaRoot" hidden role="dialog" aria-modal="true" aria-label="Get the Pipvana EA">
+  <div class="ea">
+    <header class="ea-head">
+      <div class="ea-head-t">
+        <span class="ea-eyebrow">MT5 · Pipvana EA</span>
+        <h2>Get the Pipvana EA</h2>
+      </div>
+      <button type="button" class="ea-x" id="eaClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </header>
+
+    <ol class="ea-track" id="eaTrack" aria-hidden="true">
+      <li data-k="form"><i></i>Your details</li>
+      <li data-k="sent"><i></i>We check</li>
+      <li data-k="done"><i></i>Download</li>
+    </ol>
+
+    <div class="ea-body">
+      <section id="eaForm">
+        <p class="ea-lede">The EA takes its signals from our engine, so it goes to Pipvana&rsquo;s own Deriv community. Paste the ID of your Deriv account and we check it — usually within a day.</p>
+
+        <div class="ea-acct">
+          <span>No Deriv MT5 account yet?</span>
+          <a class="ea-mt5" href="https://t.deriv.link?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored">
+            <img class="ea-mt5-ink" src="/logos/metatrader5-ink.svg" alt="MetaTrader 5" />
+            <img class="ea-mt5-white" src="/logos/metatrader5.svg" alt="" aria-hidden="true" />
+            <span>Create account</span>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+          </a>
+        </div>
+
+        <div id="eaFields">
+          <label class="ea-f">
+            <span>Client ID or MT5 login</span>
+            <input class="field" id="eaId" placeholder="01a0b1c2-d3e4-7f56-a789-0b1c2d3e4f56" autocomplete="off" spellcheck="false" />
+            <small>Either works. The client ID is on your <a href="https://home.deriv.com/dashboard/profile" target="_blank" rel="noopener noreferrer">Deriv profile</a>; the MT5 login is the number MT5 shows.</small>
+          </label>
+          <div class="ea-two">
+            <label class="ea-f"><span>Name</span><input class="field" id="eaName" placeholder="Your name" autocomplete="name" /></label>
+            <label class="ea-f"><span>Email</span><input class="field" id="eaMail" type="email" placeholder="you@email.com" autocomplete="email" /></label>
+          </div>
+          <p class="ea-limit" id="eaLimit" hidden>You have sent this three times. Wait for our reply in the support window — it unlocks sending again.</p>
+          <button type="button" class="btn btn--violet ea-send" id="eaSend" disabled>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+            Send for checking
+          </button>
+        </div>
+
+        <!-- After sending, the three fields fold into one line. -->
+        <div class="ea-summary" id="eaSummary" hidden>
+          <div class="ea-summary-t"><b id="eaSumId"></b><span id="eaSumWho"></span></div>
+          <button type="button" class="ea-link" id="eaEdit">Edit</button>
+        </div>
+        <div class="ea-sent" id="eaSent" hidden>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          <span><b>Sent.</b> We are checking your ID now. Your code arrives in the <b>support window</b> at the corner of this page — keep it open, the reply lands there.</span>
+        </div>
+
+        <div class="ea-code" id="eaCodeWrap">
+          <button type="button" class="ea-link ea-code-toggle" id="eaHaveCode">Already have a code?</button>
+          <div class="ea-code-f" id="eaCodeField" hidden>
+            <label class="ea-f">
+              <span>Download code</span>
+              <div class="ea-row">
+                <input class="field ea-code-in" id="eaCode" placeholder="PIP-XXXX-XXXX" autocomplete="off" spellcheck="false" />
+                <button type="button" class="btn btn--violet" id="eaRedeem" disabled>
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  Download
+                </button>
+              </div>
+              <small>Your code works only on this browser.</small>
+            </label>
+          </div>
+        </div>
+
+        <p class="ea-err" id="eaErr" hidden></p>
+        <p class="ea-foot">If your account is not under us we say so, and tell you how to ask Deriv to place it under partner <code>01a056b0-e5c4-7bdd-a7e1-2d7d36eb5d02</code> — reply in the support window once they confirm and we check again.</p>
+      </section>
+
+      <section class="ea-done" id="eaDone" hidden>
+        <span class="ea-done-ico">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </span>
+        <h3>Downloaded</h3>
+        <p><code>PipvanaMT5.mq5</code> is in your downloads. Follow the install steps on this page next. Keep your code — it works again on this browser if you ever need the file back.</p>
+        <button type="button" class="btn btn--violet" id="eaDoneClose">Done</button>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+  // The access code arrives as a support reply, so the bubble on this page is
+  // where it lands.
+  window.PIPVANA_SUPPORT_SOURCE = "MT5 bots";
+  window.PIPVANA_SUPPORT_GREETING = "ask us anything about the MT5 EA. Tell us what happened and what you expected.";
+</script>
 <script src="/unlock.js"></script>
 <script src="/mt5/mt5.js"></script>
+<script src="/mt5/access.js" defer></script>
 <script src="/theme.js"></script>
+<script src="/support.js" defer></script>
 <script src="/i18n/i18n.js"></script>
 </body>
 </html>

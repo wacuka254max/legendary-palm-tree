@@ -599,6 +599,8 @@ a { color: inherit; text-decoration: none; }
   --alt-tint:   rgba(255, 255, 255, 0.04);
   --pink:       var(--danger);
   --blue:       var(--violet);
+  --blue-hi:    var(--violet-hi);
+  --ok:         var(--mint);
 
   --up:     var(--mint);
   --down:   var(--danger);

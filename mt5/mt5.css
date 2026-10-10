@@ -467,3 +467,173 @@
 :root[data-theme="light"] .algo-on i { background: #14a05a; }
 :root[data-theme="light"] .algo-off { border-color: #d92d20; }
 :root[data-theme="light"] .algo-off i { background: #d92d20; }
+
+/* ── the access sheet ───────────────────────────────────────────────────
+   Centred card on a wide screen, a sheet rising from the bottom on a phone.
+   One form rather than a stack of numbered cards: the ID, the two lines
+   about you, one button — and the code field folded away until a code is
+   what you are holding. Flat, like the rest of the site. */
+
+.ea-root {
+  position: fixed; inset: 0; z-index: 120;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(6, 6, 10, 0.55);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+.ea-root[hidden] { display: none; }
+body.ea-open { overflow: hidden; }
+
+.ea {
+  width: 100%; max-height: 92dvh;
+  display: flex; flex-direction: column;
+  background: var(--raise);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.25);
+  animation: ea-up .22s ease-out;
+}
+@keyframes ea-up { from { transform: translateY(24px); opacity: 0; } }
+@media (min-width: 640px) {
+  .ea-root { align-items: center; padding: 24px; }
+  .ea { width: 460px; max-height: calc(100dvh - 48px); border-bottom: 1px solid var(--line); border-radius: 20px; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3); }
+}
+@media (prefers-reduced-motion: reduce) { .ea { animation: none; } }
+
+.ea-head {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 18px 18px 0 20px;
+}
+.ea-head-t { flex: 1; min-width: 0; }
+.ea-eyebrow {
+  display: block; margin-bottom: 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--blue);
+}
+.ea-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.ea-x {
+  flex: none; width: 34px; height: 34px; margin: -4px -4px 0 0;
+  display: grid; place-items: center;
+  border: 0; border-radius: 999px; background: transparent; color: var(--ink-muted);
+  cursor: pointer; transition: background .15s, color .15s;
+}
+.ea-x:hover { background: var(--surface-2); color: var(--ink); }
+
+/* Three stops, the current one lit, the ones behind it ticked. */
+.ea-track {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  margin: 16px 20px 0; padding: 0; list-style: none;
+}
+.ea-track li {
+  position: relative; padding-top: 10px;
+  font-size: 11.5px; font-weight: 600; color: var(--ink-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ea-track li i { position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: 999px; background: var(--line); }
+.ea-track li.on { color: var(--ink); }
+.ea-track li.on i { background: var(--blue); }
+.ea-track li.past { color: var(--ink-muted); }
+.ea-track li.past i { background: var(--ok); }
+
+.ea-body { flex: 1; overflow-y: auto; padding: 14px 20px 20px; scrollbar-width: thin; }
+.ea-lede { margin: 0 0 14px; font-size: 14px; line-height: 1.55; color: var(--ink-muted); }
+
+.ea-acct {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-bottom: 14px; padding: 10px 12px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 13px; color: var(--ink-muted);
+}
+/* The way in, as a button carrying MetaTrader's own mark — the wordmark
+   swaps between its ink and white cuts with the theme. */
+.ea-mt5 {
+  display: inline-flex; align-items: center; gap: 8px; flex: none;
+  padding: 7px 11px;
+  border: 1px solid var(--line-hi); border-radius: 10px;
+  background: var(--raise); color: var(--ink); text-decoration: none;
+  font-size: 12.5px; font-weight: 700;
+  transition: border-color .15s, background .15s;
+}
+.ea-mt5:hover { border-color: var(--blue); }
+.ea-mt5 img { height: 15px; width: auto; display: block; }
+.ea-mt5 svg { color: var(--ink-faint); }
+.ea-mt5 .ea-mt5-white { display: none; }
+:root[data-theme="dark"] .ea-mt5 .ea-mt5-ink { display: none; }
+:root[data-theme="dark"] .ea-mt5 .ea-mt5-white { display: block; }
+@media (max-width: 420px) {
+  .ea-acct { flex-direction: column; align-items: stretch; }
+  .ea-mt5 { justify-content: center; }
+}
+
+.ea-f { display: block; margin-bottom: 12px; }
+.ea-f > span { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.ea-f small { display: block; margin-top: 6px; font-size: 12px; line-height: 1.45; color: var(--ink-faint); }
+.ea-f small a { color: var(--blue); font-weight: 600; }
+.ea .field {
+  width: 100%;
+  border: 1px solid var(--line-hi); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink);
+  padding: 11px 12px; font: inherit; font-size: 14.5px; line-height: 1.3;
+  outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.ea .field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22); }
+.ea .field::placeholder { color: var(--ink-faint); }
+.ea .field:disabled { opacity: .6; }
+.ea-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .ea-two { grid-template-columns: 1fr; gap: 0; } }
+.ea-send { width: 100%; gap: 8px; margin-top: 2px; }
+.ea-limit {
+  margin: 0 0 10px; padding: 9px 12px;
+  border: 1px solid var(--amber); border-radius: var(--radius-sm);
+  color: var(--amber); font-size: 12.5px; line-height: 1.45;
+}
+.ea .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+.ea-summary {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 10px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-2);
+}
+.ea-summary-t { flex: 1; min-width: 0; }
+.ea-summary-t b { display: block; font-size: 13.5px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ea-summary-t span { display: block; font-size: 12px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ea-link {
+  all: unset; cursor: pointer; flex: none;
+  font-size: 13px; font-weight: 700; color: var(--blue);
+}
+.ea-link:hover { text-decoration: underline; }
+
+.ea-sent {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-bottom: 14px; padding: 11px 12px;
+  border: 1px solid var(--ok); border-radius: var(--radius-sm);
+  background: var(--real-tint);
+  font-size: 13px; line-height: 1.5; color: var(--ink);
+}
+.ea-sent svg { flex: none; margin-top: 2px; color: var(--ok); }
+
+.ea-code { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.ea-code-toggle { display: block; }
+.ea-row { display: flex; gap: 8px; }
+.ea-row .field { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; text-transform: uppercase; }
+.ea-row .btn { flex: none; gap: 7px; padding: 0 16px; }
+
+.ea-err {
+  margin: 12px 0 0; padding: 9px 12px;
+  border: 1px solid var(--danger); border-radius: var(--radius-sm);
+  color: var(--danger); font-size: 13px; line-height: 1.45;
+}
+.ea-foot { margin: 14px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-faint); }
+.ea-foot code { font-size: 11px; word-break: break-all; }
+
+.ea-done { text-align: center; padding: 18px 8px 8px; }
+.ea-done-ico {
+  display: grid; place-items: center; width: 56px; height: 56px; margin: 0 auto 14px;
+  border-radius: 999px; background: var(--ok); color: #fff;
+}
+.ea-done h3 { margin: 0 0 8px; font-size: 20px; letter-spacing: -0.02em; }
+.ea-done p { margin: 0 0 18px; font-size: 14px; line-height: 1.55; color: var(--ink-muted); }
+/* `hidden` must beat the display rules above, or a folded-away part shows. */
+.ea [hidden] { display: none !important; }
