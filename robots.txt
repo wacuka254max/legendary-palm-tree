@@ -1,13 +1,9 @@
-# Pipvana
+# Pipvana — www.pipvana.com
 #
-# Nothing here is meant to be found yet. This site has no domain of its own,
-# and it is a near-mirror of Evie Trader, which does — indexed together on
-# identical wording they would be duplicate content competing with each other.
-# So the front door carries noindex,follow and everything behind the broker
-# connection carries noindex,nofollow.
-#
-# The day a real domain points here: flip index.html back to index,follow, add
-# a Sitemap line below, and give each page a canonical.
+# The front door is indexable and canonical at https://www.pipvana.com/.
+# Everything behind the broker connection carries noindex,nofollow in its own
+# head, and the old .vercel.app address answers with an X-Robots-Tag noindex
+# (vercel.json), so only the one address is ever a search result.
 
 User-agent: *
 Allow: /
@@ -27,3 +23,5 @@ Allow: /
 # /analysis/ and /mt5/ hold the JavaScript and CSS the pages render with.
 # Blocking them stopped Google and Bing seeing the site as a visitor does,
 # which cost more than it ever protected.
+
+Sitemap: https://www.pipvana.com/sitemap.xml

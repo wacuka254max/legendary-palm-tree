@@ -24,6 +24,15 @@
       ]
     },
     {
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        }
+      ]
+    },
+    {
       "source": "/(home|analysis|analyss|automatic-ai|automatc-ai|mt5|terminal).html",
       "headers": [
         {
@@ -57,6 +66,24 @@
           "value": "SAMEORIGIN"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/mt5/UptickMT5.mq5",
+      "destination": "/mt5/PipvanaMT5.mq5",
+      "permanent": false
+    },
+    {
+      "source": "/((?!api/).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "legendary-palm-tree-tawny.vercel.app"
+        }
+      ],
+      "destination": "https://www.pipvana.com/$1",
+      "permanent": true
     }
   ]
 }

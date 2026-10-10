@@ -13,10 +13,10 @@
 //|                                                                   |
 //|   One-time setup: Tools > Options > Expert Advisors >             |
 //|     tick "Allow WebRequest for listed URL" and add:               |
-//|         https://legendary-palm-tree-tawny.vercel.app              |
+//|         https://www.pipvana.com                                   |
 //+------------------------------------------------------------------+
 #property copyright "Pipvana"
-#property link      "https://legendary-palm-tree-tawny.vercel.app"
+#property link      "https://www.pipvana.com"
 #property version   "3.10"
 #property strict
 
@@ -46,7 +46,7 @@ struct Sig
    int    nA; double aPrice[8]; double aPct[8];
   };
 
-string  g_base = "https://legendary-palm-tree-tawny.vercel.app/api/mt5/signals";
+string  g_base = "https://www.pipvana.com/api/mt5/signals";
 CTrade  g_trade;
 double  g_dayStartEquity = 0.0;
 int     g_dayStart = 0;
@@ -75,7 +75,7 @@ int OnInit()
    g_dayStart = today;
 
    EventSetTimer(MathMax(5, InpPollSeconds));
-   PrintFormat("Pipvana MT5 EA v3.1 started — profile=%s, trading forex + Volatility. Ensure https://legendary-palm-tree-tawny.vercel.app is whitelisted in WebRequest.", ProfileStr());
+   PrintFormat("Pipvana MT5 EA v3.1 started — profile=%s, trading forex + Volatility. Ensure https://www.pipvana.com is whitelisted in WebRequest.", ProfileStr());
    Poll();
    return(INIT_SUCCEEDED);
   }
@@ -596,7 +596,7 @@ string HttpGet(string url)
    if(code==-1)
      {
       int err=GetLastError();
-      if(err==4014 || err==4060) PrintFormat("WebRequest blocked — add https://legendary-palm-tree-tawny.vercel.app in Tools>Options>Expert Advisors.");
+      if(err==4014 || err==4060) PrintFormat("WebRequest blocked — add https://www.pipvana.com in Tools>Options>Expert Advisors.");
       else PrintFormat("WebRequest error %d", err);
       return "";
      }
