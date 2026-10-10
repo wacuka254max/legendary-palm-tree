@@ -36,6 +36,15 @@
       ]
     },
     {
+      "source": "/(yandex_98353a8c2c9bb509\\.html|BingSiteAuth\\.xml|013574a55b139b101eeb643a5fd1d3be\\.txt)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    },
+    {
       "source": "/013574a55b139b101eeb643a5fd1d3be.txt",
       "headers": [
         {
