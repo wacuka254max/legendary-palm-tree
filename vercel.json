@@ -36,6 +36,15 @@
       ]
     },
     {
+      "source": "/013574a55b139b101eeb643a5fd1d3be.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
       "source": "/(home|analysis|analyss|automatic-ai|automatc-ai|mt5|terminal).html",
       "headers": [
         {
@@ -72,6 +81,11 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
     {
       "source": "/mt5/UptickMT5.mq5",
       "destination": "/mt5.html#get",

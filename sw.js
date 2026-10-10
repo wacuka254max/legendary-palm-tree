@@ -25,14 +25,13 @@
  * under /api is ever cached, and neither is any other origin.
  */
 
-const VERSION = "pipvana-shell-v9";
+const VERSION = "pipvana-shell-v10";
 const NET_TIMEOUT_MS = 2500;
 
 /* What the launch screen is waiting on. The start page and everything it
    needs to paint; the other pages are cached as they are visited. */
 const SHELL = [
   "/",
-  "/index.html",
   "/home.html",
   "/site.css",
   "/app.css",
