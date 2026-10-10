@@ -91,6 +91,17 @@
   ],
   "redirects": [
     {
+      "source": "/((?!yandex_98353a8c2c9bb509\\.html).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "pipvana.com"
+        }
+      ],
+      "destination": "https://www.pipvana.com/$1",
+      "permanent": true
+    },
+    {
       "source": "/index.html",
       "destination": "/",
       "permanent": true
