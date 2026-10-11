@@ -476,6 +476,11 @@
   function figures() {
     var R = global.EvieRisk;
     if (!R || !host || !host.balance) return;
+    /* A run's figures and words stay as they were at its start. The balance moves with every
+       trade, and words read against it came and went — a loss tipped the take profit just
+       past 10%, a win brought it back — and the card jumped under Start/Stop. They are read
+       again when the run stops (setRunning). */
+    if (running) return;
     var cur = host.currency(), min = host.minStake(), bal = host.balance(), st = host.settings;
     var mult = st.martingale ? st.multiplier : 1, kind = kindOf();
     /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a

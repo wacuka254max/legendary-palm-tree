@@ -184,6 +184,8 @@
   function figures() {
     var R = window.EvieRisk, a = chosen();
     if (!R) return;
+    // A run's figures and words stay as they were at its start; read again when it stops.
+    if (running) return;
     var cur = (a && a.currency) || "USD";
     var min = window.EvieCurrency ? window.EvieCurrency.min(cur) : 0.35;
     var bal = a ? Number(a.balance) : NaN, mult = num($("mart"), 3.1);

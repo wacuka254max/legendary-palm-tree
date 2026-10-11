@@ -93,7 +93,7 @@
          ×3.1 need 17.7, 6.3, 3.9) is no recovery ladder: the smallest stake, not a large one. */
       var rec = step(kind, 1);
       if (m < rec[1] / (rec[1] - 1)) stake = min;
-      tp = round2(balance * TP_SHARE);
+      tp = cents(balance * TP_SHARE);   // to the cent below: never a hair over 10%
     }
     return { stake: Math.max(min, stake), tp: Math.max(TP_MIN, tp) };
   }
@@ -114,13 +114,13 @@
   function assess(kind, balance, stake, mult, tp, min) {
     if (!(mult > 1) || !(balance >= 0) || !(stake > 0) || !(tp > 0)) return null;
     var d = perKind(DEPTH, kind), m = mult, c = cycle(kind, balance, stake, m, min);
-    var share = balance > 0 ? tp / balance : Infinity;
     var safeStake = defaults(kind, balance, m, min).stake;
     return {
       stake: c.depth >= d ? "safe" : c.depth === d - 1 ? "high" : "over", depth: c.depth,
       atMin: stake <= min + 1e-9, needBal: c.depth >= d ? 0 : balanceFor(kind, stake, m, d, min),
       safeStake: cycle(kind, balance, safeStake, m, min).depth >= d ? safeStake : 0,
-      tp: share <= TP_SHARE + 1e-9 ? "safe" : share <= TP_HIGH + 1e-9 ? "high" : "over", safeTp: cents(balance * TP_SHARE),
+      // In whole cents, as the figures are typed: 10% of 1,036.67 is 103.66, and 103.67 is over it.
+      tp: tp <= cents(balance * TP_SHARE) + 1e-9 ? "safe" : tp <= cents(balance * TP_HIGH) + 1e-9 ? "high" : "over", safeTp: cents(balance * TP_SHARE),
     };
   }
 

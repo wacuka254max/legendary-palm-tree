@@ -567,6 +567,7 @@
         if (subId) session.send({ forget: subId });
         inFlight = false;
         ui.runState(false);
+        figuresChanged();   // settled: the starting figures may follow the balance again (bot.js)
         fn(arg);
       }
 
