@@ -190,14 +190,17 @@
     /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a
        balance too small to size, and words that say so — starts the figures. */
     var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known;
+    var on = R.guide();
     if (known && !running) {
-      var d = ok ? R.defaults("differ", bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
+      // The guide off: the page's own starting figures, as they always were.
+      var d = !on ? { stake: Number($("stake").defaultValue) || min, tp: Number($("tp").defaultValue) || R.TP_MIN }
+        : ok ? R.defaults("differ", bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
       if (d) {
         if (!own.stake && Math.abs(num($("stake"), 0) - d.stake) > 1e-9) $("stake").value = String(d.stake);
         if (!own.tp && Math.abs(num($("tp"), 0) - d.tp) > 1e-9) $("tp").value = String(d.tp);
       }
     }
-    var r = ok ? R.assess("differ", bal, num($("stake"), 0), mult, num($("tp"), 0), min) : null;
+    var r = ok && on ? R.assess("differ", bal, num($("stake"), 0), mult, num($("tp"), 0), min) : null;
     R.paint({ stake: $("stake-risk"), tp: $("tp-risk") }, $("fig-note"), r, function (v) {
       return (window.EvieCurrency ? window.EvieCurrency.bare(v, cur) : Number(v).toFixed(2)) + " " + cur;
     }, function (k, v) {
@@ -214,6 +217,7 @@
     ["input", "change"].forEach(function (ev) { $(id).addEventListener(ev, function () { own[id] = true; figures(); }); });
   });
   ["input", "change"].forEach(function (ev) { $("mart").addEventListener(ev, figures); });
+  if (window.EvieRisk) window.EvieRisk.wireGuide($("guide-tog"), figures);
   window.addEventListener("langchange", figures);
 
   selectEl.addEventListener("change", describeChoice);

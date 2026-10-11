@@ -147,7 +147,7 @@ location.replace("/home.html");})();
            setting, and stake beside martingale is exactly the pair you do not
            want misread. -->
       <label class="fld">
-        <span class="fld-k">Stake</span>
+        <span class="fld-k"><span data-k>Stake</span><b class="fig-risk" id="stake-risk" data-i18n-skip hidden></b></span>
         <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
       </label>
       <label class="fld">
@@ -155,13 +155,19 @@ location.replace("/home.html");})();
         <input class="fld-i" id="mart" type="number" min="1" step="0.1" value="3.1" inputmode="decimal" />
       </label>
       <label class="fld">
-        <span class="fld-k">Take profit</span>
+        <span class="fld-k"><span>Take profit</span><b class="fig-risk" id="tp-risk" data-i18n-skip hidden></b></span>
         <input class="fld-i" id="tp" type="number" min="0" step="1" value="100" inputmode="decimal" />
       </label>
       <label class="fld">
         <span class="fld-k">Stop loss</span>
         <input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" />
       </label>
+      <div class="fig-note" id="fig-note" data-i18n-skip hidden></div>
+      <!-- The risk guide (off unless turned on): the starting figures for the balance, and Safe /
+           High / Too high on the stake and the take profit. Off: as they always were. -->
+      <div class="fld">
+        <span class="fld-k fld-k--tog">Risk guide <button class="tog" id="guide-tog" type="button" role="switch" aria-checked="false" aria-label="Risk guide"><span class="tog-dot"></span></button></span>
+      </div>
 
       <div class="run-actions">
         <button class="btn btn--violet btn--lg" id="start" type="button">Start</button>
@@ -216,6 +222,7 @@ location.replace("/home.html");})();
 /* ai-drills.js sits between the two: the engine has to exist for it to stand
    in front of, and the page has to build its bot afterwards. */
 window.EVIE_SIM_SCRIPTS = [
+  "/risk.js",
   "/automatic-ai-engine.js",
   "/sim/ai-drills.js",
   "/automatic-ai.js"

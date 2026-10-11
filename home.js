@@ -94,6 +94,13 @@
     }
     amountEl.textContent = data && data.real ? money(data.real.amount, data.real.currency) : "—";
     fillPanel();
+    /* No real options account on this login: the red way to open one where the balance is, and
+       the card once a visit (real.js) — as on Analysis and the AI page. */
+    if (window.EvieReal && data) {
+      var accts = data.accounts || [];
+      var real = accts.some(function (a) { return !a.demo && a.kind === "Options"; });
+      window.EvieReal.set(real ? null : accts.some(function (a) { return a.demo && a.kind === "Options"; }) ? "real" : "none");
+    }
   }
 
   function fail(message) {

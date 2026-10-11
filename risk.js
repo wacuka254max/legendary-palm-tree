@@ -108,6 +108,17 @@
     return { stake: Math.max(min, stake), tp: Math.max(TP_MIN, tp) };
   }
 
+  /** The balance this stake's ladder needs to cover the kind's losses in a row (0: none —
+   *  a step's payout would pass Deriv's maximum first). */
+  function balanceFor(kind, stake, mult, d, min) {
+    var st = Math.max(min, stake), sum = 0;
+    for (var i = 0; i < d; i++) {
+      if (st * step(kind, i)[1] > PAYOUT_CAP) return 0;
+      sum += st; st = round2(st * mult);
+    }
+    return cents(sum, true);
+  }
+
   /** Safe / high / over for the stake and the take profit, and the safe figures (null
    *  with the martingale off). */
   function assess(kind, balance, stake, mult, tp, min) {
@@ -117,6 +128,7 @@
     var safeStake = defaults(kind, balance, m, min).stake;
     return {
       stake: c.depth >= d ? "safe" : c.depth === d - 1 ? "high" : "over", depth: c.depth,
+      atMin: stake <= min + 1e-9, needBal: c.depth >= d ? 0 : balanceFor(kind, stake, m, d, min),
       safeStake: cycle(kind, balance, safeStake, m, min).depth >= d ? safeStake : 0,
       tp: odds < 0.05 ? "safe" : odds <= 0.12 ? "high" : "over", odds: odds, safeTp: safeTarget(c),
     };
@@ -144,7 +156,9 @@
    */
   var CHECK = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
   function paint(tags, note, r, money, use) {
-    [["stake", r && r.stake], ["tp", r && r.tp]].forEach(function (x) {
+    // The smallest stake Deriv accepts cannot go lower: Safe, or no word on it.
+    var stakeWord = r && (r.atMin && r.stake !== "safe" ? null : r.stake);
+    [["stake", stakeWord], ["tp", r && r.tp]].forEach(function (x) {
       var el = tags[x[0]];
       if (!el) return;
       el.hidden = !x[1];
@@ -152,9 +166,11 @@
     });
     if (!note) return;
     var USE = "\u0001", lines = [];
-    if (r && r.stake && r.stake !== "safe") lines.push([r.stake, T("Stake"),
+    // No stake safe on this balance: it says so, and the balance this one needs (at the smallest stake, in green — advice, not a warning).
+    if (r && r.stake && r.stake !== "safe") lines.push([r.atMin ? "safe" : r.stake, T("Stake"),
       (r.depth === 1 ? T("survives 1 loss in a row.") : r.depth ? T("survives {n} losses in a row.", { n: r.depth }) : T("is more than the balance.")) + " " +
-      (r.safeStake > 0 ? T("Safe stake: {v}.", { v: USE }) : T("The balance is small for this type.")), r.safeStake > 0 && ["stake", r.safeStake]]);
+      (r.safeStake > 0 ? T("Safe stake: {v}.", { v: USE }) : T("The balance is small for this type.") +
+        (r.needBal > 0 ? " " + T("Recommended balance: {v}.", { v: money(r.needBal) }) : "")), r.safeStake > 0 && ["stake", r.safeStake]]);
     if (r && r.tp && r.tp !== "safe" && r.safeTp >= 1 && isFinite(r.safeTp)) lines.push([r.tp, T("Take profit"), T("Safe target: {v}.", { v: USE }), ["tp", r.safeTp]]);
     note.hidden = !lines.length;
     note.innerHTML = lines.map(function (l) {
@@ -176,5 +192,23 @@
     }
   }
 
-  global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, maxStake: maxStake, TP_MIN: TP_MIN };
+  /* ── the Risk guide switch ───────────────────────────────────────────────
+     Off unless turned on, remembered in this browser (the simulation pages keep their own).
+     On: the starting figures above and the words. Off: the page's own starting figures, as
+     they always were, and no words. */
+  var GUIDE_KEY = document.body && document.body.classList.contains("sim-body") ? "evie_sim_guide" : "evie_risk_guide";
+  function guide() { try { return global.localStorage.getItem(GUIDE_KEY) === "1"; } catch (e) { return false; } }
+  /** A .tog switch for the guide: its state on the button; a press turns it over, then `after`. */
+  function wireGuide(btn, after) {
+    if (!btn) return;
+    btn.setAttribute("aria-checked", String(guide()));
+    btn.addEventListener("click", function () {
+      var on = btn.getAttribute("aria-checked") !== "true";
+      btn.setAttribute("aria-checked", String(on));
+      try { if (on) global.localStorage.setItem(GUIDE_KEY, "1"); else global.localStorage.removeItem(GUIDE_KEY); } catch (e) {}
+      if (after) after(on);
+    });
+  }
+
+  global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, maxStake: maxStake, TP_MIN: TP_MIN, guide: guide, wireGuide: wireGuide };
 })(window);

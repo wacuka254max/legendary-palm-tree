@@ -20,6 +20,8 @@
     var perch = document.querySelector(".perch"), btn = document.getElementById("acct-real");
     if (perch) perch.classList.toggle("is-noreal", !!kind);
     if (btn) btn.hidden = !kind;
+    // On small screens the button sits under the header; the page makes room for it (the sites' CSS).
+    document.documentElement.classList.toggle("has-noreal", !!kind);
   }
 
   function offer() {

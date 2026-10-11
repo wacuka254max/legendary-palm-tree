@@ -33,6 +33,7 @@
     "/analysis/session.js",
     "/analysis/analyser.js",
     "/analysis/txn.js",
+    "/risk.js",
     "/analysis/bot.js",
     "/analysis/app.js"
   ];

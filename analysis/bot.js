@@ -481,15 +481,18 @@
     /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a
        balance too small to size, and words that say so — starts the figures. */
     var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known;
+    var on = R.guide();
     if (known && !running) {
-      var d = ok ? R.defaults(kind, bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
+      // The guide off: the page's own starting figures, as they always were.
+      var d = !on ? { stake: Number(el("stake").defaultValue) || min, tp: Number(el("bot-tp").defaultValue) || R.TP_MIN }
+        : ok ? R.defaults(kind, bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
       if (d) {
         if (!host.stakeOwn() && host.ladderIdle() && Math.abs(d.stake - st.stake) > 1e-9) host.setStake(d.stake);
         if (!tpOwn && Math.abs(parseFloat(el("bot-tp").value) - d.tp) > 1e-9) el("bot-tp").value = String(d.tp);
       }
     }
     var tpOn = el("bot-tp-tog").getAttribute("aria-checked") === "true";
-    var r = ok ? R.assess(kind, bal, st.stake, mult, tpOn ? parseFloat(el("bot-tp").value) : 0.01, min) : null;
+    var r = ok && on ? R.assess(kind, bal, st.stake, mult, tpOn ? parseFloat(el("bot-tp").value) : 0.01, min) : null;
     if (r && !tpOn) r.tp = null;   // no take profit set: no word on it
     R.paint({ stake: el("stake-risk"), tp: el("bot-tp-risk") }, el("bot-risk"), r,
       function (v) { return bare(v) + " " + cur; }, useFigure);
@@ -553,6 +556,7 @@
        switch needs its own handler to hide or show the row. */
     ["input", "change"].forEach(function (ev) { el("bot-tp").addEventListener(ev, function () { tpOwn = true; figures(); }); });
     el("bot-pair").addEventListener("change", figures);
+    if (global.EvieRisk) global.EvieRisk.wireGuide(el("bot-guide-tog"), figures);
     el("bot-tp-tog").addEventListener("click", figures);
     global.addEventListener("evie:figures", figures);
     global.addEventListener("langchange", figures);

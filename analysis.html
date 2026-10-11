@@ -200,6 +200,15 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
       </div>
     </div>
 
+    <!-- The risk guide (off unless turned on): the pair's own starting figures for the balance,
+         and Safe / High / Too high on the stake and the take profit. Off: as they always were. -->
+    <div class="bot-f">
+      <span class="bot-k">
+        Risk guide
+        <button class="tog" id="bot-guide-tog" type="button" role="switch" aria-checked="false" aria-label="Risk guide"><span class="tog-dot"></span></button>
+      </span>
+    </div>
+
     <!-- Safe / High / Too high on the stake and the take profit: why, and the safe figure (risk.js). -->
     <div class="fig-note" id="bot-risk" data-i18n-skip hidden></div>
 

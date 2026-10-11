@@ -596,21 +596,20 @@
 .perch-real:active { transform: scale(0.98); }
 .perch-real:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .perch-real svg { flex: none; }
-.perch.is-noreal #balance, .perch.is-noreal #acct-badge { display: none; }
-@media (max-width: 640px) {
-  .perch-real { height: 32px; padding: 0 10px; gap: 5px; font-size: 11.5px; }
-  .perch-real svg { width: 12px; height: 12px; }
-}
-/* Pipvana's header also carries the language switch: on a phone the button drops its icon
-   so Home stays on the line. */
-@media (max-width: 480px) {
-  .perch-real { padding: 0 9px; font-size: 11px; }
-  .perch-real svg { display: none; }
-}
+.perch.is-noreal #balance, .perch.is-noreal #acct-badge,
+.perch.is-noreal #amount, .perch.is-noreal #badge { display: none; }   /* Home's balance and its badge */
+/* The Risk guide switch beside its words, on a page whose labels are blocks. */
+.fld-k--tog { display: flex; align-items: center; gap: 8px; }
 .perch-real-s { display: none; }
-/* The narrowest phones: the short label, so the line still fits. */
-@media (max-width: 360px) {
-  .perch-real { padding: 0 9px; }
-  .perch-real-l { display: none; }
-  .perch-real-s { display: inline; }
+/* Small screens: the button leaves the header's line for a small pill just under it, at the
+   right, so the header keeps its own room on every width; the page moves down by as much
+   (real.js marks <html> while it shows). */
+@media (max-width: 640px) {
+  .top-in { position: relative; }
+  .perch-real {
+    position: absolute; top: calc(100% + 6px); right: var(--gutter);
+    height: 24px; padding: 0 10px; gap: 5px; font-size: 11px; box-shadow: 0 4px 12px rgba(217, 43, 54, 0.25);
+  }
+  .perch-real svg { width: 11px; height: 11px; }
+  html.has-noreal .dash-main, html.has-noreal .app-main { margin-top: 30px; }
 }

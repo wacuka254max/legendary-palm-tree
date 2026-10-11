@@ -89,6 +89,11 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <span class="fld-k">Stop loss</span>
         <input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" />
       </label>
+      <!-- The risk guide (off unless turned on): the starting figures for the balance, and Safe /
+           High / Too high on the stake and the take profit. Off: as they always were. -->
+      <div class="fld">
+        <span class="fld-k fld-k--tog">Risk guide <button class="tog" id="guide-tog" type="button" role="switch" aria-checked="false" aria-label="Risk guide"><span class="tog-dot"></span></button></span>
+      </div>
       <div class="fig-note" id="fig-note" data-i18n-skip hidden></div>
 
       <div class="run-actions">

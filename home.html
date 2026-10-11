@@ -24,6 +24,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <link rel="stylesheet" href="/site.css" />
 <link rel="stylesheet" href="/app.css" />
 <link rel="stylesheet" href="/support.css" />
+<link rel="stylesheet" href="/alert/alert.css" />
 </head>
 <body class="app">
 
@@ -55,6 +56,8 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
               title="Double-click for full account details"
               aria-haspopup="dialog"
               aria-label="Real account. Double-click for full account details.">Real</button>
+      <!-- No real account yet (real.js): a red way to open one, in place of the balance. -->
+      <a class="perch-real" id="acct-real" href="https://home.deriv.com/dashboard/home?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored" hidden><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg><span class="perch-real-l">Create real account</span><span class="perch-real-s">Real account</span></a>
     </div>
   </div>
 </header>
@@ -194,6 +197,8 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
   </div>
 </div>
 
+<script src="/alert/alert.js"></script>
+<script src="/real.js"></script>
 <script src="/currency.js"></script>
 <script src="/deriv.js"></script>
 <script src="/markets.js"></script>
