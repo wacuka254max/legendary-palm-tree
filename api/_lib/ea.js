@@ -45,6 +45,25 @@ function codeMessage(code, mt5Login, lead) {
   ].join("\n");
 }
 
+/** Every UNSUCCESSFUL answer — a decline, a deposit asked for — ends with this:
+ *  a wrong decision is a screenshot away from being fixed. A code is not an
+ *  answer that can be wrong, so it never carries it. */
+const MISTAKE_LINE = "If we made a mistake, reply here with a screenshot of your Deriv account and we will fix it right away.";
+
+/** Where a deposit is made — the same Deriv page the site's Deposit button opens. */
+const DERIV_DEPOSIT = "https://home.deriv.com/dashboard/deposit?from=portfolio&depositSheet=1&currency=USD";
+
+/** What somebody is told when their account is under us but not funded yet. */
+function depositMessage(mt5Login) {
+  return [
+    `Your Deriv account (ID ${mt5Login}) is under our community — but it has no deposit yet, and the EA is for accounts ready to trade.`,
+    "",
+    `Deposit any amount you want to start with — ${DERIV_DEPOSIT} — then reply here and we send your code right away.`,
+    "",
+    MISTAKE_LINE,
+  ].join("\n");
+}
+
 /* No I, O, 1 or 0 — the alphabet for anything a human copies by eye. */
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function mintCode() {
@@ -59,10 +78,11 @@ const normaliseCode = (raw) => String(raw || "").toUpperCase().replace(/[^A-Z0-9
 
 const row = (d) => d ? ({
   id: d.id, visitorId: d.visitor_id, mt5Login: d.mt5_login, name: d.name, email: d.email,
-  status: d.status, code: d.code || null,
+  status: d.status, code: d.code || null, createdAt: d.created_at || null,
+  tgMessageId: d.tg_message_id || null, answeredAt: d.answered_at || null, decidedAt: d.decided_at || null,
 }) : null;
 
-const FIELDS = "id,visitor_id,mt5_login,name,email,status,code";
+const FIELDS = "id,visitor_id,mt5_login,name,email,status,code,created_at,tg_message_id,answered_at,decided_at";
 
 /** Record a new request. Returns its id, or null if it could not be stored. */
 async function createRequest(r) {
@@ -133,6 +153,81 @@ async function pendingRequests(limit) {
     for (const d of (done.ok && done.data) || []) settled.add(d.visitor_id);
   }
   return rows.filter((d) => !settled.has(d.visitor_id)).slice(0, limit || 20).map(row);
+}
+
+/**
+ * The waiting list, one entry per PERSON.
+ *
+ * A decision settles every open row of a person, so listing their rows one by
+ * one would show the same decision several times. Each entry is their newest
+ * request, with how many are open and any other email they sent under —
+ * a typo they corrected is still the same person. Longest waiting first,
+ * so the person at the back of the queue is the one at the top.
+ */
+async function waitingPeople() {
+  const rows = await pendingRequests(200);
+  const people = [];
+  const byVisitor = new Map();
+  for (const r of rows) {
+    const key = r.visitorId || r.id;
+    let p = byVisitor.get(key);
+    if (!p) {
+      p = Object.assign({}, r, { requests: 1, otherEmails: [], firstAt: r.createdAt });
+      byVisitor.set(key, p); people.push(p);
+      continue;
+    }
+    p.requests += 1;
+    p.firstAt = r.createdAt || p.firstAt;
+    const e = String(r.email || "").toLowerCase();
+    if (e && e !== String(p.email || "").toLowerCase() && !p.otherEmails.includes(r.email)) p.otherEmails.push(r.email);
+  }
+  return people.sort((a, b) => String(a.firstAt || "").localeCompare(String(b.firstAt || "")));
+}
+
+/**
+ * The request a typed ID points at: a visitor ID first — the one shown in
+ * the request and in the waiting list — then an email or a Deriv ID, matched
+ * against what is waiting. A visitor ID that is not on the waiting list still
+ * finds that person's request (asked to deposit, say), because /approve on it
+ * is exactly how they get their code when they come back.
+ */
+async function requestForKey(key, waiting) {
+  const k = String(key || "").trim();
+  if (!k) return null;
+  const low = k.toLowerCase();
+  const list = waiting || await waitingPeople();
+  const hit = list.find((w) => String(w.visitorId || "").toLowerCase() === low)
+    || list.find((w) => (w.email && w.email.toLowerCase() === low) || w.mt5Login === k);
+  if (hit) return hit;
+  if (!k.includes("@") && /^[A-Za-z0-9-]{6,64}$/.test(k)) {
+    // Case is whatever they typed; the stored id is what the site made.
+    const exact = await requestForVisitor(k);
+    if (exact) return exact;
+    if (k !== k.toUpperCase()) return requestForVisitor(k.toUpperCase());
+  }
+  return null;
+}
+
+/**
+ * Where each of these people stands with the EA, in one query — for the
+ * waiting list, which shows somebody who only wrote in next to the request a
+ * decision would act on: still open (asked to deposit, say, or answered by
+ * hand), declined, or already approved with a code.
+ */
+async function eaStandingFor(visitorIds) {
+  const out = new Map();
+  const ids = [...new Set((visitorIds || []).filter((v) => /^[A-Za-z0-9_-]{1,64}$/.test(v || "")))];
+  if (!configured() || !ids.length) return out;
+  const res = await select(TABLE, `select=${FIELDS}&visitor_id=in.(${ids.join(",")})&order=created_at.asc&limit=1000`);
+  if (!res.ok) { console.error("[ea] standing lookup failed:", res.error); return out; }
+  for (const d of res.data || []) {
+    const s = out.get(d.visitor_id) || { pending: null, approved: null, latest: null };
+    if (d.status === "pending" && !s.pending) s.pending = row(d);   // the oldest open one, as requestForVisitor picks
+    if (d.status === "approved" && d.code) s.approved = row(d);
+    s.latest = row(d);
+    out.set(d.visitor_id, s);
+  }
+  return out;
 }
 
 /** The live code this browser already holds, if any, and what is left of it. */
@@ -259,8 +354,8 @@ async function recentRequestCount(visitorId, withinMinutes) {
 }
 
 module.exports = {
-  PARTNER_ID, DERIV_SIGNUP, DERIV_PROFILE, EXAMPLE_CLIENT_ID, EA_FILE, MAX_CODE_USES, codeMessage,
+  PARTNER_ID, DERIV_SIGNUP, DERIV_PROFILE, EXAMPLE_CLIENT_ID, EA_FILE, MAX_CODE_USES, codeMessage, depositMessage, MISTAKE_LINE,
   createRequest, attachTelegramMessage, requestForTelegramMessage, requestForVisitor,
-  pendingRequests, approvedCodeFor, approvedMatch, markAnswered, markAnsweredByEmail, approveRequest, declineRequest,
+  pendingRequests, waitingPeople, requestForKey, eaStandingFor, approvedCodeFor, approvedMatch, markAnswered, markAnsweredByEmail, approveRequest, declineRequest,
   declineCount, checkCode, recentRequestCount, normaliseCode,
 };
