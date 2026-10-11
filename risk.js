@@ -5,14 +5,13 @@
  *
  *   The starting figures. A stake sized so the martingale ladder it starts can
  *   be paid for a set number of losses in a row on this balance, and a take
- *   profit that is a small share of the balance — never under 3 USD — and no
- *   more than a run reaches about 19 times in 20.
+ *   profit of 10% of the balance — never under 3 USD: a run should end on a
+ *   profit that means something.
  *
  *   A word on each figure: Safe, High or Too high. The stake by the losses in
- *   a row it survives; the take profit by the chance a run ends with the
- *   balance unable to pay the next stake — under 5% is safe, 5–12% high,
- *   above that too high. When one is not safe, a line says why and gives the
- *   safe figure.
+ *   a row it survives; the take profit by its share of the balance — up to
+ *   10% safe, up to 16% high, more too high. When one is not safe, a line
+ *   says why and gives the safe figure.
  *
  * Each kind of trade is a ladder of chances and payouts (per 1 staked, the
  * app's markup in):
@@ -40,7 +39,7 @@
      kind (Over/Under at 90–60%) 3 or more, Even/Odd, Rise/Fall and Over/Under at 50% 6 —
      and its take profit as a share of the balance. */
   var DEPTH = { evenodd: 6, risefall: 6, differ: 4, ou: [3, 3, 4, 5, 6, 6, 9, 14] };
-  var TP_SHARE = { evenodd: 0.02, risefall: 0.03, differ: 0.015, ou: [0.015, 0.025, 0.0275, 0.0275, 0.03, 0.0325, 0.025, 0.0275] };
+  var TP_SHARE = 0.10, TP_HIGH = 0.16;
   var TP_MIN = 3;
   /* Deriv pays at most 10,000 on one contract and refuses a stake whose payout would be
      more ("Your payout exceeds the maximum payout"); the bots stay half a percent under. */
@@ -78,12 +77,6 @@
     return { depth: depth, bust: prob, profit: ok > 0 ? e / ok : 0 };
   }
 
-  /** The largest take profit a run reaches 19 times in 20 (0: none at this stake). */
-  function safeTarget(c) {
-    if (!c.depth || !(c.profit > 0) || c.bust >= 0.05) return 0;
-    return c.bust > 0 ? cents(c.profit * Math.log(0.95) / Math.log(1 - c.bust) - 0.005) : Infinity;
-  }
-
   /** The starting stake and take profit for this kind on this balance (null with the
    *  martingale off: a flat stake is no ladder, and the page keeps its own figures). */
   function defaults(kind, balance, mult, min) {
@@ -100,10 +93,7 @@
          ×3.1 need 17.7, 6.3, 3.9) is no recovery ladder: the smallest stake, not a large one. */
       var rec = step(kind, 1);
       if (m < rec[1] / (rec[1] - 1)) stake = min;
-      var c = cycle(kind, balance, stake, m, min);
-      tp = round2(balance * perKind(TP_SHARE, kind));
-      var green = safeTarget(c);
-      if (green > 0 && tp > green) tp = green;   // the cents can tip it just past the green line
+      tp = round2(balance * TP_SHARE);
     }
     return { stake: Math.max(min, stake), tp: Math.max(TP_MIN, tp) };
   }
@@ -124,13 +114,13 @@
   function assess(kind, balance, stake, mult, tp, min) {
     if (!(mult > 1) || !(balance >= 0) || !(stake > 0) || !(tp > 0)) return null;
     var d = perKind(DEPTH, kind), m = mult, c = cycle(kind, balance, stake, m, min);
-    var odds = !c.depth || !(c.profit > 0) ? 1 : 1 - Math.pow(1 - c.bust, Math.max(1, tp / c.profit));
+    var share = balance > 0 ? tp / balance : Infinity;
     var safeStake = defaults(kind, balance, m, min).stake;
     return {
       stake: c.depth >= d ? "safe" : c.depth === d - 1 ? "high" : "over", depth: c.depth,
       atMin: stake <= min + 1e-9, needBal: c.depth >= d ? 0 : balanceFor(kind, stake, m, d, min),
       safeStake: cycle(kind, balance, safeStake, m, min).depth >= d ? safeStake : 0,
-      tp: odds < 0.05 ? "safe" : odds <= 0.12 ? "high" : "over", odds: odds, safeTp: safeTarget(c),
+      tp: share <= TP_SHARE + 1e-9 ? "safe" : share <= TP_HIGH + 1e-9 ? "high" : "over", safeTp: cents(balance * TP_SHARE),
     };
   }
 
@@ -194,8 +184,7 @@
 
   /* ── the Risk guide switch ───────────────────────────────────────────────
      Off unless turned on, remembered in this browser (the simulation pages keep their own).
-     On: the starting figures above and the words. Off: the page's own starting figures, as
-     they always were, and no words. */
+     On: the words. Off: none. Either way the inputs start from the figures above. */
   var GUIDE_KEY = document.body && document.body.classList.contains("sim-body") ? "evie_sim_guide" : "evie_risk_guide";
   function guide() { try { return global.localStorage.getItem(GUIDE_KEY) === "1"; } catch (e) { return false; } }
   /** A .tog switch for the guide: its state on the button; a press turns it over, then `after`. */

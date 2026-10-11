@@ -483,9 +483,8 @@
     var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known;
     var on = R.guide();
     if (known && !running) {
-      // The guide off: the page's own starting figures, as they always were.
-      var d = !on ? { stake: Number(el("stake").defaultValue) || min, tp: Number(el("bot-tp").defaultValue) || R.TP_MIN }
-        : ok ? R.defaults(kind, bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
+      // The same starting figures, the guide on or off: it only says what they risk.
+      var d = ok ? R.defaults(kind, bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
       if (d) {
         if (!host.stakeOwn() && host.ladderIdle() && Math.abs(d.stake - st.stake) > 1e-9) host.setStake(d.stake);
         if (!tpOwn && Math.abs(parseFloat(el("bot-tp").value) - d.tp) > 1e-9) el("bot-tp").value = String(d.tp);
