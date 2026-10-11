@@ -478,9 +478,11 @@
     if (!R || !host || !host.balance) return;
     var cur = host.currency(), min = host.minStake(), bal = host.balance(), st = host.settings;
     var mult = st.martingale ? st.multiplier : 1, kind = kindOf();
-    var ok = cur === "USD" && min != null && bal > 0;
-    if (ok && !running) {
-      var d = R.defaults(kind, bal, mult, min);
+    /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a
+       balance too small to size — starts the figures; the words need money in it. */
+    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known && bal > 0;
+    if (known && !running) {
+      var d = ok ? R.defaults(kind, bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
       if (d) {
         if (!host.stakeOwn() && host.ladderIdle() && Math.abs(d.stake - st.stake) > 1e-9) host.setStake(d.stake);
         if (!tpOwn && Math.abs(parseFloat(el("bot-tp").value) - d.tp) > 1e-9) el("bot-tp").value = String(d.tp);
@@ -490,7 +492,15 @@
     var r = ok ? R.assess(kind, bal, st.stake, mult, tpOn ? parseFloat(el("bot-tp").value) : 0.01, min) : null;
     if (r && !tpOn) r.tp = null;   // no take profit set: no word on it
     R.paint({ stake: el("stake-risk"), tp: el("bot-tp-risk") }, el("bot-risk"), r,
-      function (v) { return bare(v) + " " + cur; });
+      function (v) { return bare(v) + " " + cur; }, useFigure);
+  }
+
+  /** A safe figure clicked: into the page's stake or this take profit, as if typed. */
+  function useFigure(k, v) {
+    var f = el(k === "stake" ? "stake" : "bot-tp");
+    if (running || !f || f.disabled || !(v > 0)) return;
+    f.value = String(v);
+    f.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
   /* ── wiring ─────────────────────────────────────────────────────────── */
@@ -508,11 +518,11 @@
       return '<option value="' + p.id + '">' + p.label + "</option>";
     }).join("");
 
-    /* Differs by default. Set here rather than by reordering the
+    /* Even / Odd by default. Set here rather than by reordering the
        list, so the options stay in the order they have always been in — and
        before the prefs are restored below, so a choice already made in this
        tab still wins. */
-    el("bot-pair").value = "match_differ";
+    el("bot-pair").value = "even_odd";
 
     // Take profit and stop loss are hidden until asked for.
     [["bot-tp-tog", "bot-tp-row"], ["bot-sl-tog", "bot-sl-row"]].forEach(function (pair) {

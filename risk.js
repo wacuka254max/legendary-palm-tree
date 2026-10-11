@@ -127,8 +127,12 @@
    * The words on the page: `tags` {stake, tp} are the elements beside the two
    * labels, `note` the box under the fields; `r` an assess() result or null
    * (no balance, another currency) to clear them. `money` formats a figure.
+   * The safe figures are buttons: a click hands `use` ("stake" or "tp", value)
+   * to the page, which puts it in its field as typing would. No safe target
+   * under 1 USD is offered — the word on the field stands alone then.
    */
-  function paint(tags, note, r, money) {
+  var CHECK = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  function paint(tags, note, r, money, use) {
     [["stake", r && r.stake], ["tp", r && r.tp]].forEach(function (x) {
       var el = tags[x[0]];
       if (!el) return;
@@ -136,17 +140,29 @@
       if (x[1]) { el.setAttribute("data-risk", x[1]); el.textContent = word(x[1]); }
     });
     if (!note) return;
-    var lines = [];
+    var USE = "\u0001", lines = [];
     if (r && r.stake && r.stake !== "safe") lines.push([r.stake, T("Stake"),
       (r.depth === 1 ? T("survives 1 loss in a row.") : r.depth ? T("survives {n} losses in a row.", { n: r.depth }) : T("is more than the balance.")) + " " +
-      (r.safeStake > 0 ? T("Safe stake: {v}.", { v: money(r.safeStake) }) : T("The balance is small for this type."))]);
-    if (r && r.tp && r.tp !== "safe") lines.push([r.tp, T("Take profit"),
-      (r.odds >= 0.5 ? T("most runs end in a big loss.") : T("about 1 in {x} runs ends in a big loss.", { x: Math.round(1 / r.odds) })) +
-      (r.safeTp > 0 && isFinite(r.safeTp) ? " " + T("Safe target: {v}.", { v: money(r.safeTp) }) : "")]);
+      (r.safeStake > 0 ? T("Safe stake: {v}.", { v: USE }) : T("The balance is small for this type.")), r.safeStake > 0 && ["stake", r.safeStake]]);
+    if (r && r.tp && r.tp !== "safe" && r.safeTp >= 1 && isFinite(r.safeTp)) lines.push([r.tp, T("Take profit"), T("Safe target: {v}.", { v: USE }), ["tp", r.safeTp]]);
     note.hidden = !lines.length;
     note.innerHTML = lines.map(function (l) {
-      return '<p class="fig-line" data-risk="' + l[0] + '"><b>' + esc(l[1]) + ":</b> " + esc(l[2]) + "</p>";
+      var text = esc(l[2]);
+      if (l[3]) {
+        var m = money(l[3][1]);
+        text = text.replace(USE + ".", USE).replace(USE, '<button class="fig-use" type="button" data-use="' + l[3][0] + '" data-v="' + l[3][1] + '" title="' +
+          esc(T("Use {v}", { v: m })) + '">' + CHECK + esc(m) + "</button>");
+      }
+      return '<p class="fig-line" data-risk="' + l[0] + '"><b>' + esc(l[1]) + ":</b> " + text + "</p>";
     }).join("");
+    note.__use = use;
+    if (!note.__bound) {
+      note.__bound = true;
+      note.addEventListener("click", function (e) {
+        var b = e.target.closest && e.target.closest("[data-use]");
+        if (b && note.__use) note.__use(b.getAttribute("data-use"), Number(b.getAttribute("data-v")));
+      });
+    }
   }
 
   global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, TP_MIN: TP_MIN };

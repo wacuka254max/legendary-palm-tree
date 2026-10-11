@@ -572,3 +572,14 @@
   font-size: 12px; line-height: 1.45; color: var(--ink-muted);
 }
 .fig-line b { color: var(--rc); font-weight: 700; }
+/* The safe figure, a button: one click puts it in its field. Mint — the safe choice. */
+.fig-use {
+  display: inline-flex; align-items: center; gap: 4px; margin: 0 1px; padding: 1px 9px 1px 7px; vertical-align: 1px;
+  border: 1px solid color-mix(in srgb, var(--ok) 45%, transparent); border-radius: 999px;
+  background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok);
+  font: inherit; font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.5; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .1s ease;
+}
+.fig-use:hover { background: color-mix(in srgb, var(--ok) 24%, transparent); border-color: var(--ok); box-shadow: 0 0 10px color-mix(in srgb, var(--ok) 30%, transparent); }
+.fig-use:active { transform: translateY(1px); }
+.fig-use:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }

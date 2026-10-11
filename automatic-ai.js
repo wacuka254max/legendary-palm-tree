@@ -187,9 +187,11 @@
     var cur = (a && a.currency) || "USD";
     var min = window.EvieCurrency ? window.EvieCurrency.min(cur) : 0.35;
     var bal = a ? Number(a.balance) : NaN, mult = num($("mart"), 3.1);
-    var ok = cur === "USD" && min != null && bal > 0;
-    if (ok && !running) {
-      var d = R.defaults("differ", bal, mult, min);
+    /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a
+       balance too small to size — starts the figures; the words need money in it. */
+    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known && bal > 0;
+    if (known && !running) {
+      var d = ok ? R.defaults("differ", bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
       if (d) {
         if (!own.stake && Math.abs(num($("stake"), 0) - d.stake) > 1e-9) $("stake").value = String(d.stake);
         if (!own.tp && Math.abs(num($("tp"), 0) - d.tp) > 1e-9) $("tp").value = String(d.tp);
@@ -198,6 +200,12 @@
     var r = ok ? R.assess("differ", bal, num($("stake"), 0), mult, num($("tp"), 0), min) : null;
     R.paint({ stake: $("stake-risk"), tp: $("tp-risk") }, $("fig-note"), r, function (v) {
       return (window.EvieCurrency ? window.EvieCurrency.bare(v, cur) : Number(v).toFixed(2)) + " " + cur;
+    }, function (k, v) {
+      // A safe figure clicked: into its field, as if typed.
+      var f = $(k === "stake" ? "stake" : "tp");
+      if (running || !f || f.disabled || !(v > 0)) return;
+      f.value = String(v);
+      f.dispatchEvent(new Event("input", { bubbles: true }));
     });
   }
   /* Typed — or restored from this tab — is the user's. Listening before the
