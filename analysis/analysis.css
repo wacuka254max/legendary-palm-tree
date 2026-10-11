@@ -178,6 +178,9 @@
   gap: 6px;
 }
 
+/* Differs alone (no Matches): its bar, then its button. */
+.row--one { grid-template-columns: minmax(0, 1fr) auto; }
+
 .pbar {
   padding: 7px 9px;
   font-size: 11.2px;
@@ -616,6 +619,7 @@
   color: var(--ink-faint);
 }
 .bot-note { font-size: 10.5px; line-height: 1.45; color: var(--ink-faint); margin-top: -4px; }
+.bot-body .fig-note { margin-top: -2px; }
 .bot-f .fld-i { padding: 7px 9px; font-size: 13px; }
 
 .bot-run { width: 100%; padding: 9px; font-size: 13.5px; }

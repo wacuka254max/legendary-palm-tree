@@ -548,3 +548,27 @@
   /* The mark carries the brand on its own at this width. */
   .brand span { display: none; }
 }
+
+/* Safe / High / Too high beside a figure's label, and the line on why (risk.js):
+   mint, amber, danger — the palette's own. The labels are flex rows: their gap spaces it. */
+.fig-risk {
+  --rc: var(--ok);
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--rc) 38%, transparent); border-radius: 999px;
+  background: color-mix(in srgb, var(--rc) 13%, transparent); color: var(--rc);
+  font-size: 9.5px; font-weight: 700; line-height: 1.45; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
+}
+.fig-risk[hidden] { display: none; }
+.fig-risk::before { content: ""; flex: none; width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px color-mix(in srgb, var(--rc) 70%, transparent); }
+.fig-risk[data-risk="high"], .fig-line[data-risk="high"] { --rc: var(--amber); }
+.fig-risk[data-risk="over"], .fig-line[data-risk="over"] { --rc: var(--danger); }
+.fig-note { display: grid; gap: 6px; margin-top: 12px; }
+.fig-note[hidden] { display: none; }
+.fig-line {
+  --rc: var(--ok);
+  margin: 0; padding: 8px 11px; border: 1px solid color-mix(in srgb, var(--rc) 30%, transparent);
+  border-left: 3px solid var(--rc); border-radius: 10px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--rc) 12%, transparent), color-mix(in srgb, var(--rc) 3%, transparent));
+  font-size: 12px; line-height: 1.45; color: var(--ink-muted);
+}
+.fig-line b { color: var(--rc); font-weight: 700; }

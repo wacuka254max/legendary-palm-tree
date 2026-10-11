@@ -69,7 +69,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <select class="fld-i" id="account"></select>
       </label>
       <label class="fld">
-        <span class="fld-k">Stake</span>
+        <span class="fld-k"><span data-k>Stake</span><b class="fig-risk" id="stake-risk" data-i18n-skip hidden></b></span>
         <input class="fld-i" id="stake" type="number" min="0.35" step="0.01" value="1" inputmode="decimal" />
       </label>
       <label class="fld">
@@ -180,6 +180,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <div class="bot-f">
       <span class="bot-k">
         Take profit
+        <b class="fig-risk" id="bot-tp-risk" data-i18n-skip hidden></b>
         <button class="tog" id="bot-tp-tog" type="button" role="switch" aria-checked="true" aria-label="Take profit"><span class="tog-dot"></span></button>
       </span>
       <div id="bot-tp-row">
@@ -196,6 +197,9 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <input class="fld-i" id="bot-sl" type="number" min="0.01" step="0.01" value="1000" inputmode="decimal" />
       </div>
     </div>
+
+    <!-- Safe / High / Too high on the stake and the take profit: why, and the safe figure (risk.js). -->
+    <div class="fig-note" id="bot-risk" data-i18n-skip hidden></div>
 
     <button class="btn btn--violet bot-run" id="bot-run" type="button">Start</button>
 
@@ -217,6 +221,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <script src="/analysis/session.js"></script>
 <script src="/analysis/analyser.js"></script>
 <script src="/analysis/txn.js"></script>
+<script src="/risk.js"></script>
 <script src="/analysis/bot.js"></script>
 <script src="/unlock.js"></script>
 <script src="/analysis/app.js"></script>

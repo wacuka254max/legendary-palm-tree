@@ -550,5 +550,16 @@
 "4. Your code arrives here in this chat. Enter it in \"Already have a code?\" and download.":"4. Votre code arrive ici, dans ce chat. Saisissez-le dans \"Vous avez déjà un code ?\" et téléchargez.",
 "We've got your request for the Pipvana EA, and it just got an update.":"Nous avons bien reçu votre demande pour l'EA Pipvana, et il vient d'être mis à jour.",
 "We're checking your Deriv account now. It needs to be under our partner group — if you opened it another way, open one with our link: https://t.deriv.link?t=8XPRHR2Y8SN8":"Nous vérifions votre compte Deriv en ce moment. Il doit faire partie de notre groupe partenaire — si vous l'avez ouvert autrement, ouvrez-en un avec notre lien : https://t.deriv.link?t=8XPRHR2Y8SN8",
-"Your code arrives here in this chat as soon as you're approved.":"Votre code arrive ici, dans ce chat dès que votre demande est approuvée."
+"Your code arrives here in this chat as soon as you're approved.":"Votre code arrive ici, dans ce chat dès que votre demande est approuvée.",
+"risk: Safe":"Sûr",
+"risk: High":"Élevé",
+"risk: Too high":"Trop élevé",
+"survives 1 loss in a row.":"tient 1 perte d'affilée.",
+"survives {n} losses in a row.":"tient {n} pertes d'affilée.",
+"is more than the balance.":"dépasse le solde.",
+"Safe stake: {v}.":"Mise sûre : {v}.",
+"The balance is small for this type.":"Le solde est faible pour ce type.",
+"most runs end in a big loss.":"la plupart des sessions finissent par une grosse perte.",
+"about 1 in {x} runs ends in a big loss.":"environ 1 session sur {x} finit par une grosse perte.",
+"Safe target: {v}.":"Objectif sûr : {v}."
 }

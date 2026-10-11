@@ -52,7 +52,8 @@
     { id: "even_odd", label: "Even / Odd", a: "even", b: "odd" },
     { id: "rise_fall", label: "Rise / Fall", a: "rise", b: "fall" },
     { id: "over_under", label: "Over / Under", a: "over", b: "under" },
-    { id: "match_differ", label: "Matches / Differs", a: "match", b: "differ" }
+    // Differs alone: Matches wins one time in ten and is not offered. The id stays.
+    { id: "match_differ", label: "Differs", a: "differ", b: "differ" }
   ];
 
   var running = false;
@@ -105,6 +106,7 @@
     });
 
     paintOpener();
+    figures();
   }
 
   /* The button that stands in for a closed card has to say whether the bot is
@@ -121,10 +123,11 @@
 
   /** The side of the chosen pair that is ahead right now. */
   /** Over is impossible above reference 8, Under below 1 — Deriv rejects the
-      barrier, so those are not choices even when they lead. */
+      barrier — and Over 8 and Under 1 win one time in ten: not choices even
+      when they lead. */
   function usable(type, s) {
-    if (type === "over" && s.reference > 8) return false;
-    if (type === "under" && s.reference < 1) return false;
+    if (type === "over" && s.reference > 7) return false;
+    if (type === "under" && s.reference < 2) return false;
     return true;
   }
 
@@ -453,6 +456,43 @@
     });
   }
 
+  /* ── the figures: defaults and risk words (risk.js) ─────────────────── */
+
+  /** The ladder the chosen pair trades: Differs recovers on a 50/50 trade after
+      a loss; Over/Under takes the likelier side of the reference digit. */
+  function kindOf() {
+    var id = el("bot-pair").value;
+    if (id === "even_odd") return "evenodd";
+    if (id === "rise_fall") return "risefall";
+    if (id === "over_under") return global.EvieRisk.ouFor(host.settings.ref);
+    return "differ";
+  }
+
+  var tpOwn = false;   // a take profit typed, or restored from this tab, is the user's
+
+  /** The page's stake and this take profit start at the pair's own figures for the
+      balance (until the user types their own), and each carries Safe, High or Too
+      high. Dollar accounts with the martingale on; nothing otherwise. */
+  function figures() {
+    var R = global.EvieRisk;
+    if (!R || !host || !host.balance) return;
+    var cur = host.currency(), min = host.minStake(), bal = host.balance(), st = host.settings;
+    var mult = st.martingale ? st.multiplier : 1, kind = kindOf();
+    var ok = cur === "USD" && min != null && bal > 0;
+    if (ok && !running) {
+      var d = R.defaults(kind, bal, mult, min);
+      if (d) {
+        if (!host.stakeOwn() && host.ladderIdle() && Math.abs(d.stake - st.stake) > 1e-9) host.setStake(d.stake);
+        if (!tpOwn && Math.abs(parseFloat(el("bot-tp").value) - d.tp) > 1e-9) el("bot-tp").value = String(d.tp);
+      }
+    }
+    var tpOn = el("bot-tp-tog").getAttribute("aria-checked") === "true";
+    var r = ok ? R.assess(kind, bal, st.stake, mult, tpOn ? parseFloat(el("bot-tp").value) : 0.01, min) : null;
+    if (r && !tpOn) r.tp = null;   // no take profit set: no word on it
+    R.paint({ stake: el("stake-risk"), tp: el("bot-tp-risk") }, el("bot-risk"), r,
+      function (v) { return bare(v) + " " + cur; });
+  }
+
   /* ── wiring ─────────────────────────────────────────────────────────── */
 
   function attach(h) {
@@ -468,7 +508,7 @@
       return '<option value="' + p.id + '">' + p.label + "</option>";
     }).join("");
 
-    /* Matches / Differs by default. Set here rather than by reordering the
+    /* Differs by default. Set here rather than by reordering the
        list, so the options stay in the order they have always been in — and
        before the prefs are restored below, so a choice already made in this
        tab still wins. */
@@ -501,6 +541,12 @@
        After the selects are filled and the toggles wired, because a restore
        replays the interaction: a value needs its <option> to exist, and a
        switch needs its own handler to hide or show the row. */
+    ["input", "change"].forEach(function (ev) { el("bot-tp").addEventListener(ev, function () { tpOwn = true; figures(); }); });
+    el("bot-pair").addEventListener("change", figures);
+    el("bot-tp-tog").addEventListener("click", figures);
+    global.addEventListener("evie:figures", figures);
+    global.addEventListener("langchange", figures);
+
     var prefs = global.EviePrefs ? global.EviePrefs.scope("bot") : null;
     if (prefs) {
       prefs.fields(["bot-market", "bot-pair", "bot-tp", "bot-sl"]);

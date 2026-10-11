@@ -7,7 +7,7 @@
  *   Rise / Fall     from the price
  *   Even / Odd      from the digit
  *   Over / Under    from the digit against the reference digit
- *   Matches/Differs the reference digit itself
+ *   Differs         the reference digit itself (Matches is not offered)
  *
  * The side that is currently ahead is marked, because that is what the buttons
  * are for: see that Even is running at 54% and take Even.
@@ -77,7 +77,7 @@
     { a: "rise", b: "fall", tone: "rise", labels: ["Rise", "Fall"] },
     { a: "even", b: "odd", tone: "even", labels: ["Even", "Odd"] },
     { a: "over", b: "under", tone: "over", labels: ["Over", "Under"], ref: true },
-    { a: "match", b: "differ", tone: "match", labels: ["Matches", "Differs"], ref: true }
+    { a: "differ", tone: "differ", labels: ["Differs"], ref: true, one: true }
   ];
 
   var txn = new window.EvieTxn({ root: document.getElementById("txn"), nameOf: nameOf });
@@ -221,15 +221,25 @@
     return el;
   }
 
+  /** Differs on its own: Matches wins one time in ten, and is not offered. */
+  function oneRow(p, s, sym) {
+    return '<div class="row row--one">' +
+      '<span class="pbar pbar--' + p.a + '">' + C.TYPES[p.a].label + " " + s.reference + ": " + s[p.a].toFixed(1) + "%</span>" +
+      '<span class="acts"><button class="act act--' + p.a + '" type="button" data-sym="' + sym + '" data-type="' + p.a + '">' +
+        p.labels[0] + "</button></span>" +
+    "</div>";
+  }
+
   function pairRow(p, s, sym) {
+    if (p.one) return oneRow(p, s, sym);
     var av = s[p.a], bv = s[p.b];
     var refTxt = p.ref ? " " + s.reference : "";
     var aLead = av > bv, bLead = bv > av;
 
-    // Over is impossible above 8 and Under below 1 — Deriv rejects the barrier,
-    // so the button says so rather than failing at the broker.
-    var aOff = p.a === "over" && s.reference > 8;
-    var bOff = p.b === "under" && s.reference < 1;
+    // Over is impossible above 8 and Under below 1 — Deriv rejects the barrier —
+    // and Over 8 and Under 1 win one time in ten, so they are not offered either.
+    var aOff = p.a === "over" && s.reference > 7;
+    var bOff = p.b === "under" && s.reference < 2;
 
     var bar = function (side, val, lead) {
       return '<span class="pbar pbar--' + side + (lead ? " is-lead" : "") + '">' +
@@ -425,6 +435,8 @@
          perch stays blank until there is an account it belongs to. */
       if (analysisOnly) return;
       $("balance").textContent = money(d.balance.balance, d.balance.currency);
+      balanceNow = Number(d.balance.balance);
+      figuresChanged();
     }
   });
 
@@ -679,7 +691,7 @@
   var saveTimer = null;
 
   /** Read the inputs, keep what is valid, and say what happened. */
-  function saveSettings(reason) {
+  function saveSettings(reason, quiet) {
     var ref = parseInt($("ref").value, 10);
     var count = parseInt($("count").value, 10);
     var stake = parseFloat($("stake").value);
@@ -718,8 +730,20 @@
 
     renderCards();
     showNextStake();
-    status(reason || "Saved.", "success");
+    if (!quiet) status(reason || "Saved.", "success");
+    figuresChanged();
   }
+
+  /* The bot's defaults and risk words (bot.js, risk.js) follow the stake, the
+     reference digit, the martingale and the balance. */
+  var balanceNow = NaN;
+  function figuresChanged() {
+    try { window.dispatchEvent(new CustomEvent("evie:figures")); } catch (e) {}
+  }
+  /* A stake typed — or restored from this tab — is the user's: the defaults
+     never move it again. Listening before the prefs restore it, below. */
+  var stakeOwn = false;
+  ["input", "change"].forEach(function (ev) { $("stake").addEventListener(ev, function () { stakeOwn = true; }); });
 
   /* Typing is debounced — saving on every keystroke would fire "Saved" at
      someone halfway through typing 130. */
@@ -739,6 +763,7 @@
     $("mart").disabled = !settings.martingale;
     nextStake = settings.stake;
     showNextStake();
+    figuresChanged();
     status(settings.martingale
       ? T("Martingale on — a loss multiplies the next stake by {x}.", { x: settings.multiplier })
       : T("Martingale off — the stake stays at {stake}.", { stake: (window.EvieCurrency
@@ -754,6 +779,7 @@
     $("acct-badge").textContent = a.demo ? "Demo" : "Real";
     $("acct-badge").classList.toggle("badge--demo", a.demo);
     $("balance").textContent = money(a.balance, a.currency);
+    balanceNow = Number(a.balance);
     $("risk").textContent = a.demo
       ? "Demo account — trades here are practice money."
       : "Real account — every trade placed here uses your own money.";
@@ -763,6 +789,7 @@
        ledger's own figures, the stake field's floor and the size of one step
        in it. A crypto account steps in hundred-millionths, not cents. */
     applyCurrency(a.currency);
+    figuresChanged();
   }
 
   /** Point the page's money at whatever this account is denominated in. */
@@ -783,7 +810,7 @@
 
     /* The field is titled with the currency, so nobody types dollars into a
        euro account because the label told them to. */
-    var k = stakeEl && stakeEl.closest(".fld") && stakeEl.closest(".fld").querySelector(".fld-k");
+    var k = stakeEl && stakeEl.closest(".fld") && (stakeEl.closest(".fld").querySelector(".fld-k [data-k]") || stakeEl.closest(".fld").querySelector(".fld-k"));
     if (k) k.textContent = "Stake (" + (cur || "USD") + ")";
 
     showNextStake();
@@ -1059,6 +1086,19 @@
       },
       busy: function () { return inFlight; },
       settings: settings,
+
+      /* For the defaults and the risk words: the balance (none without an
+         account to trade on), the floor, and the starting stake — set
+         quietly, never over the user's own, mid-trade or mid-ladder. */
+      balance: function () { return analysisOnly ? NaN : balanceNow; },
+      minStake: minStake,
+      stakeOwn: function () { return stakeOwn; },
+      ladderIdle: function () { return !inFlight && nextStake === settings.stake; },
+      setStake: function (v) {
+        $("stake").value = String(v);
+        clearTimeout(saveTimer);
+        saveSettings(null, true);
+      },
       nextStake: function () { return settings.martingale ? nextStake : settings.stake; },
       statsFor: function (sym) {
         return analysers[sym] ? analysers[sym].stats(settings.ref) : null;

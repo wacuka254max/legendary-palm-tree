@@ -80,7 +80,7 @@
       stakeEl.setAttribute("step", window.EvieCurrency.step(cur));
     }
     var fld = stakeEl && stakeEl.closest(".fld");
-    var k = fld && fld.querySelector(".fld-k");
+    var k = fld && (fld.querySelector(".fld-k [data-k]") || fld.querySelector(".fld-k"));
     if (k) k.textContent = "Stake (" + cur + ")";
   }
 
@@ -96,6 +96,7 @@
 
     setRunningState: function (on) {
       running = !!on;
+      if (!running) figures();
       startBtn.disabled = running;
       stopBtn.disabled = !running;
       selectEl.disabled = running;
@@ -170,7 +171,42 @@
 
     // The stake field belongs to this account's currency, not to the dollar.
     applyCurrency();
+    figures();
   }
+
+  /* ── the figures: defaults and risk words (risk.js) ─────────────────────
+     Differs, with a 50/50 recovery after a loss: the stake starts where the
+     martingale ladder survives four losses in a row on this balance, the take
+     profit at 1.5% of it (never under 3 USD) — until the user types their own —
+     and each carries Safe, High or Too high. Dollar accounts only. A run's own
+     balance is the engine's; between runs it is the account's. */
+  var own = { stake: false, tp: false };
+  function figures() {
+    var R = window.EvieRisk, a = chosen();
+    if (!R) return;
+    var cur = (a && a.currency) || "USD";
+    var min = window.EvieCurrency ? window.EvieCurrency.min(cur) : 0.35;
+    var bal = a ? Number(a.balance) : NaN, mult = num($("mart"), 3.1);
+    var ok = cur === "USD" && min != null && bal > 0;
+    if (ok && !running) {
+      var d = R.defaults("differ", bal, mult, min);
+      if (d) {
+        if (!own.stake && Math.abs(num($("stake"), 0) - d.stake) > 1e-9) $("stake").value = String(d.stake);
+        if (!own.tp && Math.abs(num($("tp"), 0) - d.tp) > 1e-9) $("tp").value = String(d.tp);
+      }
+    }
+    var r = ok ? R.assess("differ", bal, num($("stake"), 0), mult, num($("tp"), 0), min) : null;
+    R.paint({ stake: $("stake-risk"), tp: $("tp-risk") }, $("fig-note"), r, function (v) {
+      return (window.EvieCurrency ? window.EvieCurrency.bare(v, cur) : Number(v).toFixed(2)) + " " + cur;
+    });
+  }
+  /* Typed — or restored from this tab — is the user's. Listening before the
+     prefs restore them, at the foot. */
+  ["stake", "tp"].forEach(function (id) {
+    ["input", "change"].forEach(function (ev) { $(id).addEventListener(ev, function () { own[id] = true; figures(); }); });
+  });
+  ["input", "change"].forEach(function (ev) { $("mart").addEventListener(ev, figures); });
+  window.addEventListener("langchange", figures);
 
   selectEl.addEventListener("change", describeChoice);
 

@@ -550,5 +550,16 @@
 "4. Your code arrives here in this chat. Enter it in \"Already have a code?\" and download.":"4. Tu código llega aquí en este chat. Introdúcelo en \"¿Ya tienes un código?\" y descarga.",
 "We've got your request for the Pipvana EA, and it just got an update.":"Tenemos tu solicitud del EA de Pipvana, y el EA acaba de actualizarse.",
 "We're checking your Deriv account now. It needs to be under our partner group — if you opened it another way, open one with our link: https://t.deriv.link?t=8XPRHR2Y8SN8":"Estamos revisando tu cuenta de Deriv. Tiene que estar en nuestro grupo de socios; si la abriste de otra forma, abre una con nuestro enlace: https://t.deriv.link?t=8XPRHR2Y8SN8",
-"Your code arrives here in this chat as soon as you're approved.":"Tu código llega aquí en este chat en cuanto te aprobemos."
+"Your code arrives here in this chat as soon as you're approved.":"Tu código llega aquí en este chat en cuanto te aprobemos.",
+"risk: Safe":"Seguro",
+"risk: High":"Alto",
+"risk: Too high":"Demasiado alto",
+"survives 1 loss in a row.":"aguanta 1 pérdida seguida.",
+"survives {n} losses in a row.":"aguanta {n} pérdidas seguidas.",
+"is more than the balance.":"es mayor que el saldo.",
+"Safe stake: {v}.":"Inversión segura: {v}.",
+"The balance is small for this type.":"El saldo es pequeño para este tipo.",
+"most runs end in a big loss.":"la mayoría de las sesiones acaban con una gran pérdida.",
+"about 1 in {x} runs ends in a big loss.":"alrededor de 1 de cada {x} sesiones acaba con una gran pérdida.",
+"Safe target: {v}.":"Objetivo seguro: {v}."
 }
