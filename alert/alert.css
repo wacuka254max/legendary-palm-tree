@@ -28,6 +28,23 @@
 /* Whichever outcome this is, in one place: everything below paints from it. */
 .tpop--win  { --tpop: var(--mint, #0f9d63); }
 .tpop--loss { --tpop: var(--danger, #d92d20); }
+.tpop--real { --tpop: #d92b36; }   /* no real account yet: Deriv's own red, as the header button */
+
+/* The no-real-account card's second line and its three steps, numbered in the card's colour. */
+.tpop-p--more { margin-top: 6px; }
+/* Its words are longer than a result's: a little wider, and on a short screen the card scrolls
+   inside itself so its buttons are always reachable. */
+.tpop--real .tpop-p { max-width: 36ch; }
+.tpop--real .tpop-card { max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; }
+.tpop-steps {
+  counter-reset: tpop; display: grid; gap: 9px; margin: 16px 0 0; padding: 13px 14px;
+  list-style: none; text-align: left; background: var(--panel-2); border-radius: 12px;
+}
+.tpop-steps li { counter-increment: tpop; display: flex; align-items: center; gap: 10px; font-size: 13px; line-height: 1.4; color: var(--text); }
+.tpop-steps li::before {
+  content: counter(tpop); flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: color-mix(in srgb, var(--tpop) 14%, transparent); color: var(--tpop); font-size: 11.5px; font-weight: 700;
+}
 
 .tpop-back {
   position: absolute;

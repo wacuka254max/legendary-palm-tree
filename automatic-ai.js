@@ -188,8 +188,8 @@
     var min = window.EvieCurrency ? window.EvieCurrency.min(cur) : 0.35;
     var bal = a ? Number(a.balance) : NaN, mult = num($("mart"), 3.1);
     /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a
-       balance too small to size — starts the figures; the words need money in it. */
-    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known && bal > 0;
+       balance too small to size, and words that say so — starts the figures. */
+    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known;
     if (known && !running) {
       var d = ok ? R.defaults("differ", bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
       if (d) {
@@ -280,8 +280,9 @@
           : "This login has no real Deriv options account to trade.",
         "error"
       );
-      startBtn.disabled = true;
+      startBtn.disabled = false;   // Start offers the real account (real.js)
       riskEl.textContent = "";
+      if (window.EvieReal) window.EvieReal.set(allAccounts.length ? "real" : "none");
 
       /* Blank, not the demo's figure. A balance beside a badge reading Real is
          a claim about how much money is at stake, and showing a practice
@@ -293,6 +294,7 @@
     }
 
     startBtn.disabled = running;
+    if (window.EvieReal) window.EvieReal.set(null);
 
     selectEl.innerHTML = accounts.map(function (a) {
       return '<option value="' + esc(a.id) + '">' +
@@ -315,7 +317,11 @@
 
   startBtn.addEventListener("click", function () {
     var account = chosen();
-    if (!account || running) return;
+    if (running) return;
+    if (!account) {
+      if (window.EvieReal && window.EvieReal.kind()) window.EvieReal.offer();   // no real account: the way to open one
+      return;
+    }
 
     var config = {
       initialStake: num($("stake"), 1),

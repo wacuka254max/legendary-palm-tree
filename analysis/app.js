@@ -452,6 +452,7 @@
     if (!session.isLive()) return status("Still connecting to Deriv…", "warning");
 
     if (analysisOnly) {
+      if (window.EvieReal) window.EvieReal.offer();   // the way to open one
       return status(
         "This login has no real options account. The analysis is live; open a real account with Deriv to trade it.",
         "warning"
@@ -510,6 +511,12 @@
    * The same four steps Deriv requires, and the same ones Pipvana AI takes:
    *   proposal → buy → subscribe to the contract → settled.
    */
+  /** How often this contract wins, at the reference digit. */
+  function winChance(type) {
+    var r = C.TYPES[type] && C.TYPES[type].barrier ? C.clampBarrier(type, settings.ref) : null;
+    return type === "over" ? (9 - r) / 10 : type === "under" ? r / 10 : type === "differ" ? 0.9 : type === "match" ? 0.1 : 0.5;
+  }
+
   function placeTrade(type, sym, stake, forRun) {
     if (!session.isLive()) return Promise.reject(new Error("Not connected."));
 
@@ -528,6 +535,11 @@
 
     inFlight = true;
     ui.runState(true);
+
+    /* Deriv pays at most 10,000 on a contract and refuses a stake past it ("Your payout
+       exceeds the maximum payout"): a martingale stake that would is placed at the largest
+       Deriv takes, and the ladder counts on. */
+    if (window.EvieRisk) stake = Math.min(stake, window.EvieRisk.maxStake(winChance(type)));
 
     var spec = {
       type: type,
@@ -882,6 +894,8 @@
        account back in it, and turning trading back on is the whole point of
        the reveal; hiding it again takes trading away with it. */
     analysisOnly = !accounts.length;
+    // No real account: the red button in the header, and the card once a visit (real.js).
+    if (window.EvieReal) window.EvieReal.set(accounts.length ? null : allAccounts.length ? "real" : "none");
 
     $("account").innerHTML = accounts.map(function (a) {
       return '<option value="' + esc(a.id) + '">' + esc(a.id) + " · " +
@@ -1004,7 +1018,11 @@
         return (y.balance || 0) - (x.balance || 0);
       });
 
-    if (!allAccounts.length) return status("This login has no Deriv options account.", "error");
+    if (!allAccounts.length) {
+      analysisOnly = true;   // nothing to trade on: Start and the buttons offer the real account
+      if (window.EvieReal) window.EvieReal.set("none");
+      return status("This login has no Deriv options account.", "error");
+    }
 
     /* The page opens on the remembered account before the portfolio comes
        back, which is what keeps it quick — and means a remembered DEMO would

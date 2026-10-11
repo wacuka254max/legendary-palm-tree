@@ -735,13 +735,21 @@
       this.currentDigit = digit;
       this.ui.updateTargets(market, displayTarget);
 
+      /* Deriv pays at most 10,000 on one contract and refuses a stake past it ("Your payout
+         exceeds the maximum payout"): a martingale stake that would is placed at the largest
+         Deriv takes, and the ladder counts on. */
+      const winP = contractType === 'DIGITDIFF' ? 0.9
+        : contractType === 'DIGITOVER' ? (9 - Number(barrier)) / 10
+        : contractType === 'DIGITUNDER' ? Number(barrier) / 10 : 0.5;
+      const amount = window.EvieRisk ? Math.min(this.currentStake, window.EvieRisk.maxStake(winP)) : this.currentStake;
+
       const proposal = {
         proposal: 1,
         /* At the CURRENCY's precision. Two places turns a BTC stake into
            "0.00", which Deriv refuses — see currency.js. */
         amount: window.EvieCurrency
-          ? window.EvieCurrency.amount(this.currentStake, this.accountCurrency)
-          : this.currentStake.toFixed(2),
+          ? window.EvieCurrency.amount(amount, this.accountCurrency)
+          : amount.toFixed(2),
         basis: 'stake',
         contract_type: contractType,
         currency: this.accountCurrency || 'USD',

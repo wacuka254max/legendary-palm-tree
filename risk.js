@@ -36,11 +36,15 @@
 
   var OU_PAY = [1.06, 1.19, 1.35, 1.56, 1.85, 2.26, 2.92, 4.13];
   var HALF_PAY = 1.845, RISE_PAY = 1.783, RECOVER = [0.5, 1.85];
-  /* The losses in a row each kind's starting stake is sized to survive, and its
-     take profit as a share of the balance. */
-  var DEPTH = { evenodd: 5, risefall: 6, differ: 4, ou: [2, 3, 4, 5, 6, 6, 9, 14] };
+  /* The losses in a row each kind's starting stake is sized to survive — Differs and its
+     kind (Over/Under at 90–60%) 3 or more, Even/Odd, Rise/Fall and Over/Under at 50% 6 —
+     and its take profit as a share of the balance. */
+  var DEPTH = { evenodd: 6, risefall: 6, differ: 4, ou: [3, 3, 4, 5, 6, 6, 9, 14] };
   var TP_SHARE = { evenodd: 0.02, risefall: 0.03, differ: 0.015, ou: [0.015, 0.025, 0.0275, 0.0275, 0.03, 0.0325, 0.025, 0.0275] };
   var TP_MIN = 3;
+  /* Deriv pays at most 10,000 on one contract and refuses a stake whose payout would be
+     more ("Your payout exceeds the maximum payout"); the bots stay half a percent under. */
+  var MAX_PAYOUT = 10000, PAYOUT_CAP = MAX_PAYOUT * 0.995;
 
   function round2(v) { return Math.round(v * 100) / 100; }
   function cents(v, up) { return (up ? Math.ceil(v * 100 - 1e-9) : Math.floor(v * 100 + 1e-9)) / 100; }
@@ -59,10 +63,15 @@
     return [(9 - n) / 10, OU_PAY[n]];
   }
 
+  /** The largest stake whose payout Deriv takes, for a contract that wins with chance p
+   *  (its payout before any markup is under 0.99 / p per 1 staked). */
+  function maxStake(p) { return cents(PAYOUT_CAP * p / 0.99); }
+
   function cycle(kind, balance, stake, mult, min) {
     var st = Math.max(min, stake), spent = 0, prob = 1, depth = 0, e = 0, ok = 0;
-    while (spent + st <= balance + 1e-9 && depth < 300) {
+    while (depth < 300) {
       var s = step(kind, depth);
+      if (spent + st > balance + 1e-9 || st * s[1] > PAYOUT_CAP) break;
       e += prob * s[0] * (cents(st * s[1]) - st - spent); ok += prob * s[0];
       spent += st; prob *= 1 - s[0]; st = round2(st * mult); depth++;
     }
@@ -82,6 +91,8 @@
     var d = perKind(DEPTH, kind), m = mult, stake = min, tp = 0;
     if (balance > 0) {
       stake = cents(balance * (m - 1) / (Math.pow(m, d) - 1));
+      // On a large balance the ladder's last step must stay under Deriv's maximum payout too.
+      stake = Math.min(stake, cents(PAYOUT_CAP / (step(kind, d - 1)[1] * Math.pow(m, d - 1))));
       // Cent rounding up the ladder can cost a step: the largest stake that still covers them all.
       for (var k = 0; k < 100 && stake > min && cycle(kind, balance, stake, m, min).depth < d; k++) stake = round2(stake - 0.01);
       stake = Math.max(min, stake);
@@ -100,7 +111,7 @@
   /** Safe / high / over for the stake and the take profit, and the safe figures (null
    *  with the martingale off). */
   function assess(kind, balance, stake, mult, tp, min) {
-    if (!(mult > 1) || !(balance > 0) || !(stake > 0) || !(tp > 0)) return null;
+    if (!(mult > 1) || !(balance >= 0) || !(stake > 0) || !(tp > 0)) return null;
     var d = perKind(DEPTH, kind), m = mult, c = cycle(kind, balance, stake, m, min);
     var odds = !c.depth || !(c.profit > 0) ? 1 : 1 - Math.pow(1 - c.bust, Math.max(1, tp / c.profit));
     var safeStake = defaults(kind, balance, m, min).stake;
@@ -165,5 +176,5 @@
     }
   }
 
-  global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, TP_MIN: TP_MIN };
+  global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, maxStake: maxStake, TP_MIN: TP_MIN };
 })(window);

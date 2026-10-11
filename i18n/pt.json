@@ -562,5 +562,18 @@
 "most runs end in a big loss.":"a maioria das sessões termina com uma grande perda.",
 "about 1 in {x} runs ends in a big loss.":"cerca de 1 em cada {x} sessões termina com uma grande perda.",
 "Safe target: {v}.":"Meta segura: {v}.",
-"Use {v}":"Usar {v}"
+"Use {v}":"Usar {v}",
+"Create real account":"Criar conta real",
+"Real account needed":"Conta real necessária",
+"Open your real account to start trading":"Abra sua conta real para começar a operar",
+"This Deriv login has only a demo account so far.":"Este login da Deriv por enquanto só tem uma conta demo.",
+"This Deriv login has no trading account yet.":"Este login da Deriv ainda não tem nenhuma conta de trading.",
+"Your demo account is there for practice. To trade real money, the bots need a real Deriv account. Setting one up on Deriv takes a few minutes, and it appears here the moment it is ready.":"Sua conta demo é para praticar. Para operar com dinheiro real, os bots precisam de uma conta real da Deriv. Abri-la na Deriv leva alguns minutos, e ela aparece aqui assim que estiver pronta.",
+"The bots trade on a real Deriv account. Setting one up on Deriv takes a few minutes, and they are ready the moment it appears here.":"Os bots operam em uma conta real da Deriv. Abri-la na Deriv leva alguns minutos, e eles ficam prontos assim que ela aparece aqui.",
+"Open your real account on Deriv":"Abra sua conta real na Deriv",
+"Add funds to it":"Adicione fundos a ela",
+"Come back here and start the bot":"Volte aqui e inicie o bot",
+"Set up my real account":"Configurar minha conta real",
+"Not now":"Agora não",
+"Real account":"Conta real"
 }

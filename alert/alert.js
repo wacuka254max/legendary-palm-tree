@@ -42,6 +42,8 @@
      the bare referral link: that would land them on the front page, one more
      hop from the thing they came to do. */
   var DEPOSIT_URL = "https://home.deriv.com/dashboard/portfolio?t=8XPRHR2Y8SN8";
+  /* Where a login opens its real account: Deriv's own dashboard, with the same attribution. */
+  var OPEN_REAL_URL = "https://home.deriv.com/dashboard/home?t=8XPRHR2Y8SN8";
 
   var open = null;   // only ever one: a second card over the first says nothing
 
@@ -94,7 +96,7 @@
     if (details.time) figs += figure("time", details.time);
 
     var el = document.createElement("div");
-    el.className = "tpop tpop--" + (kind === "win" ? "win" : "loss");
+    el.className = "tpop tpop--" + (kind === "win" ? "win" : kind === "real" ? "real" : "loss");
     el.setAttribute("role", "dialog");
     el.setAttribute("aria-modal", "true");
     el.setAttribute("aria-labelledby", "tpop-t");
@@ -105,6 +107,8 @@
         '<p class="tpop-k">' + esc(kicker) + "</p>" +
         '<h2 class="tpop-t" id="tpop-t">' + esc(title) + "</h2>" +
         '<p class="tpop-p">' + esc(message) + "</p>" +
+        (details.more ? '<p class="tpop-p tpop-p--more">' + esc(details.more) + "</p>" : "") +
+        (details.steps ? '<ol class="tpop-steps">' + details.steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>" : "") +
         (figs ? '<dl class="tpop-figs">' + figs + "</dl>" : "") +
         (action
           ? '<div class="tpop-actions">' +
@@ -160,6 +164,20 @@
       return show("loss", "Bot stopped", "Your account balance is insufficient",
         "There is not enough in the options account to place the next trade.",
         details, { href: DEPOSIT_URL, label: "Deposit" });
+    },
+
+    /* No real account yet (real.js): why it is needed, the three steps, and the way to
+       open it on Deriv. Once a visit by itself, and again on Start. */
+    showNeedsReal: function (demo) {
+      return show("real", "Real account needed", "Open your real account to start trading",
+        demo ? "This Deriv login has only a demo account so far." : "This Deriv login has no trading account yet.",
+        {
+          more: demo
+            ? "Your demo account is there for practice. To trade real money, the bots need a real Deriv account. Setting one up on Deriv takes a few minutes, and it appears here the moment it is ready."
+            : "The bots trade on a real Deriv account. Setting one up on Deriv takes a few minutes, and they are ready the moment it appears here.",
+          steps: ["Open your real account on Deriv", "Add funds to it", "Come back here and start the bot"]
+        },
+        { href: OPEN_REAL_URL, label: "Set up my real account" });
     },
 
     close: function () { close(); }

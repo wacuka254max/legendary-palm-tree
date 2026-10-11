@@ -479,8 +479,8 @@
     var cur = host.currency(), min = host.minStake(), bal = host.balance(), st = host.settings;
     var mult = st.martingale ? st.multiplier : 1, kind = kindOf();
     /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a
-       balance too small to size — starts the figures; the words need money in it. */
-    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known && bal > 0;
+       balance too small to size, and words that say so — starts the figures. */
+    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known;
     if (known && !running) {
       var d = ok ? R.defaults(kind, bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
       if (d) {
@@ -575,7 +575,10 @@
       /* Nothing to trade on is worth saying at the press, not eight refusals
          later. Only reasons that will not change by waiting stop it here. */
       var why = host.blocked && host.blocked();
-      if (why) return say(why, "error");
+      if (why) {
+        if (global.EvieReal && global.EvieReal.kind()) global.EvieReal.offer();   // no real account: the way to open one
+        return say(why, "error");
+      }
 
       /* Start is a clean slate: a new run id, an emptied ledger, the
          martingale back at the base stake, and the card's own figures

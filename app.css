@@ -583,3 +583,34 @@
 .fig-use:hover { background: color-mix(in srgb, var(--ok) 24%, transparent); border-color: var(--ok); box-shadow: 0 0 10px color-mix(in srgb, var(--ok) 30%, transparent); }
 .fig-use:active { transform: translateY(1px); }
 .fig-use:focus-visible { outline: 2px solid var(--ok); outline-offset: 2px; }
+
+/* No real account yet (real.js): a red way to open one, in place of the balance and its
+   badge. A deep Deriv red that keeps its white words readable. */
+.perch-real {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 999px;
+  background: #d92b36; color: #fff; font-size: 12.5px; font-weight: 700; line-height: 1.2; white-space: nowrap; text-decoration: none;
+  box-shadow: 0 6px 18px rgba(217, 43, 54, 0.28); transition: filter .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent;
+}
+.perch-real[hidden] { display: none; }
+.perch-real:hover { filter: brightness(1.07); }
+.perch-real:active { transform: scale(0.98); }
+.perch-real:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.perch-real svg { flex: none; }
+.perch.is-noreal #balance, .perch.is-noreal #acct-badge { display: none; }
+@media (max-width: 640px) {
+  .perch-real { height: 32px; padding: 0 10px; gap: 5px; font-size: 11.5px; }
+  .perch-real svg { width: 12px; height: 12px; }
+}
+/* Pipvana's header also carries the language switch: on a phone the button drops its icon
+   so Home stays on the line. */
+@media (max-width: 480px) {
+  .perch-real { padding: 0 9px; font-size: 11px; }
+  .perch-real svg { display: none; }
+}
+.perch-real-s { display: none; }
+/* The narrowest phones: the short label, so the line still fits. */
+@media (max-width: 360px) {
+  .perch-real { padding: 0 9px; }
+  .perch-real-l { display: none; }
+  .perch-real-s { display: inline; }
+}
