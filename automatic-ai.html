@@ -100,6 +100,11 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <button class="btn btn--violet btn--lg" id="start" type="button">Start</button>
         <button class="btn btn--lg" id="stop" type="button" disabled>Stop</button>
       </div>
+      <!-- Deposit and Withdraw on Deriv, small (Shalobot's two links). -->
+      <div class="fund-links">
+        <a class="fund-link fund-link--dep" href="https://home.deriv.com/dashboard/deposit?from=portfolio&amp;depositSheet=1&amp;currency=USD" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg><span>Deposit</span></a>
+        <a class="fund-link" href="https://home.deriv.com/dashboard/withdraw/verify?currency=USD&amp;from=portfolio&amp;openWithdraw=1" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></svg><span>Withdraw</span></a>
+      </div>
 
       <p class="risk" id="risk"></p>
       <p class="status" id="status" role="status" aria-live="polite"></p>

@@ -613,3 +613,21 @@
   .perch-real svg { width: 11px; height: 11px; }
   html.has-noreal .dash-main, html.has-noreal .app-main { margin-top: 30px; }
 }
+
+/* Deposit and Withdraw on Deriv (Shalobot's two links), small: Home's account card, the auto
+   bot's card, the AI page under Start / Stop. Deposit in the palette's green. */
+.fund-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.fund-link {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 28px; padding: 4px 11px;
+  border: 1px solid var(--line-hi, var(--line)); border-radius: 9px; background: var(--surface); color: var(--ink);
+  font-size: 12px; font-weight: 700; line-height: 1.15; white-space: nowrap; text-decoration: none;
+  transition: background-color .15s ease, border-color .15s ease, transform .1s ease; -webkit-tap-highlight-color: transparent;
+}
+.fund-link:hover { background: var(--surface-2); }
+.fund-link:active { transform: scale(0.97); }
+.fund-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.fund-link svg { flex: none; }
+.fund-link--dep { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.acctp .fund-links, .run-actions + .fund-links { margin-top: 12px; }
+/* In the account sheet: the two links at the left, Disconnect at the right. */
+.sheet-foot:has(.fund-links) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }

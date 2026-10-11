@@ -190,8 +190,9 @@
     var min = window.EvieCurrency ? window.EvieCurrency.min(cur) : 0.35;
     var bal = a ? Number(a.balance) : NaN, mult = num($("mart"), 3.1);
     /* A dollar balance known — 0 included: then the smallest stake and 3 USD, as on a
-       balance too small to size, and words that say so — starts the figures. */
-    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known;
+       balance too small to size — starts the figures; the words need money in it (none at
+       0, as on the other sites). */
+    var known = cur === "USD" && min != null && isFinite(bal) && bal >= 0, ok = known && bal > 0;
     var on = R.guide();
     if (known && !running) {
       // The same starting figures, the guide on or off: it only says what they risk.
