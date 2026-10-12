@@ -25,8 +25,9 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 <link rel="stylesheet" href="/app.css" />
 <link rel="stylesheet" href="/support.css" />
 <link rel="stylesheet" href="/alert/alert.css" />
+<link rel="stylesheet" href="/scan/scan.css" />
 </head>
-<body class="app">
+<body class="app pv-page">
 
 <!-- ══ Header ══════════════════════════════════════════════════════════ -->
 <header class="top">
@@ -39,8 +40,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
       <span>Pipvana</span>
     </a>
 
-    <!-- The real balance, and nothing else: the demo account, the wallets and
-         the per-account detail all live behind the badge. -->
+    <!-- The balance of the account in use is the account switch (scan/deriv.js). -->
     <div class="perch">
       <button class="btn btn--icon" data-theme-toggle type="button" aria-pressed="true" title="Switch to light">
         <svg class="ico-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -51,169 +51,423 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         <span>Install app</span>
       </button>
-      <span class="perch-v" id="amount">&mdash;</span>
-      <button class="badge" id="badge" type="button"
-              title="Double-click for full account details"
-              aria-haspopup="dialog"
-              aria-label="Real account. Double-click for full account details.">Real</button>
-      <!-- No real account yet (real.js): a red way to open one, in place of the balance. -->
-      <a class="perch-real" id="acct-real" href="https://home.deriv.com/dashboard/home?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored" hidden><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg><span class="perch-real-l">Create real account</span><span class="perch-real-s">Real account</span></a>
+      <!-- The balance of the account in use, and the way to the other ones: the figure is the
+           switch (scan/deriv.js). Real and demo are both listed in it. Under it, one line on a
+           balance that looks short and the way to fix it; the menu says it in full. -->
+      <div class="tbal sh-acct" id="acct" hidden>
+        <button class="tbal-chip" id="acctBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="acctMenu">
+          <span class="tbal-live" aria-hidden="true"></span>
+          <span class="tbal-amt" id="acctAmt" data-i18n-skip>—</span>
+          <span class="tbal-kind" id="acctKind">Real</span>
+          <svg class="tbal-caret" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <a class="tbal-hint" href="https://home.deriv.com/dashboard/portfolio?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored" title="Balance missing? Transfer it to your options account to see all of it here."><span class="tbal-hint-q">Balance missing?</span> <b>Transfer funds</b><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a>
+        <div class="tbal-menu" id="acctMenu" role="menu" hidden>
+          <p class="tbal-menu-k">Your Deriv accounts</p>
+          <div class="tbal-list" id="acctList"></div>
+          <div class="tbal-foot">
+            <p class="tbal-note">Balance missing? Transfer it to your <strong>options</strong> account to see all of it here.</p>
+            <a class="tbal-transfer" href="https://home.deriv.com/dashboard/portfolio?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored">Transfer funds<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a>
+            <div class="tbal-row2">
+              <div class="fund-links">
+                <a class="fund-link fund-link--dep" href="https://home.deriv.com/dashboard/deposit?from=portfolio&amp;depositSheet=1&amp;currency=USD" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg><span>Deposit</span></a>
+                <a class="fund-link" href="https://home.deriv.com/dashboard/withdraw/verify?currency=USD&amp;from=portfolio&amp;openWithdraw=1" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></svg><span>Withdraw</span></a>
+              </div>
+              <button class="btn btn--sm btn--danger" id="acctOut" type="button">Disconnect</button>
+            </div>
+          </div>
+        </div>
+        <!-- No real account on this login (scan/deriv.js): a red way to open one, in place of the balance. -->
+        <a class="tbal-open-real" id="acctOpenReal" href="https://home.deriv.com/dashboard/home?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg><span>Create real account</span></a>
+      </div>
     </div>
   </div>
 </header>
 
-<main class="wrap app-main">
+<main class="wrap pv" id="sh">
 
-  <div class="flash" id="connected" hidden>
+  <div class="flash pv-flash" id="connected" hidden>
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 12.5 5 5L20 7"/></svg>
     <span>Deriv account connected</span>
   </div>
 
-  <!-- Three clicks on the "o" work the practice mode. It carries no affordance
-       on purpose, and the field that appears the first time says nothing about
-       itself — no placeholder, no label, no message when it is wrong. Anybody
-       who has not been told is looking at the word Home.
+  <div class="sh-fit pv-fit" id="sh-fit">
 
-       There are no separate practice links any more. Once the mode is on, the
-       ordinary Analysis and Pipvana AI tools below simply open the practice
-       pages instead; nothing on the dashboard reads differently. -->
-  <div class="app-head">
-    <h1 class="app-t" id="app-t"><span>H<span class="door" id="door">o</span>me</span><input class="door-key" id="door-key" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" hidden /></h1>
-  </div>
-
-  <div class="app-grid">
-    <div class="app-col">
-
-      <!-- ══ Tools ══════════════════════════════════════════════════════ -->
-      <div class="dash-tools">
-        <a class="tool" href="/analysis.html">
-          <span class="tool-icon i-violet" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-          </span>
-          <span class="tool-h"><span class="tool-t">Analysis</span><span class="tag">Bots</span></span>
-          <span class="tool-p">Read the market before you commit.</span>
-          <span class="tool-go" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </span>
-        </a>
-
-        <a class="tool" href="/automatic-ai.html">
-          <span class="tool-icon i-amber" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m14.5-6.5-2.1 2.1M8.6 15.4l-2.1 2.1m0-11.9 2.1 2.1m6.8 6.8 2.1 2.1"/><circle cx="12" cy="12" r="3.4"/></svg>
-          </span>
-          <span class="tool-h"><span class="tool-t">Pipvana AI</span><span class="tag">Bots</span></span>
-          <span class="tool-p">Hand it the account and let it trade.</span>
-          <span class="tool-go" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </span>
-        </a>
-
-        <a class="tool tool--logo" href="/mt5.html">
-          <span class="tool-icon" aria-hidden="true">
-            <img src="/logos/metatrader5-ink.svg" alt="" class="tool-logo tool-logo--ink" />
-            <img src="/logos/metatrader5.svg" alt="" class="tool-logo tool-logo--pale" />
-          </span>
-          <span class="tool-h"><span class="tool-t">MT5 Bots</span><span class="tag">Bots</span></span>
-          <span class="tool-p">An Expert Advisor for your own MetaTrader 5.</span>
-          <span class="tool-go" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </span>
-        </a>
+    <!-- Just under the header: the page's name, the three tools as small links, and the
+         live prices behind a green dot. Three clicks on the "o" of Home work the practice
+         mode; it carries no affordance on purpose. -->
+    <div class="pv-bar">
+      <h1 class="app-t pv-title" id="app-t"><span>H<span class="door" id="door">o</span>me</span><input class="door-key" id="door-key" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" hidden /></h1>
+      <nav class="pv-pills" aria-label="Tools">
+        <a class="pv-pill" href="/analysis.html"><span>Analysis</span><span class="tag">Bots</span></a>
+        <a class="pv-pill" href="/automatic-ai.html"><span>Pipvana AI</span><span class="tag">Bots</span></a>
+        <a class="pv-pill" href="/mt5.html"><span>MT5 Bots</span><span class="tag">Bots</span></a>
+      </nav>
+      <!-- Price changes: only the dot; a click floats the list over the page, nothing moves. -->
+      <div class="mk-wrap">
+        <button class="mk-dot" id="mk-dot" type="button" aria-expanded="false" aria-controls="markets" title="Price changes (5 minutes)" aria-label="Price changes (5 minutes)"><span class="mk-live" id="mk-live" aria-hidden="true"></span></button>
+        <aside class="markets mk-pop" id="markets" hidden>
+          <h2 class="mk-head" id="mk-head"><span>Price changes (5 minutes)</span></h2>
+          <ul class="mk-list" id="mk-list"></ul>
+        </aside>
       </div>
+    </div>
 
-      <!-- ══ Account ════════════════════════════════════════════════════ -->
-      <section class="acctp" id="acctp">
-        <div class="acctp-head">
-          <div>
-            <p class="acctp-k">Account</p>
-            <h2 class="acctp-t">Your Deriv portfolio</h2>
+    <!-- Only shown when there is something to say: connecting, or Deriv not answering. -->
+    <section class="tstate" id="tState" aria-live="polite" hidden>
+      <div class="tstate-busy" id="tBusy" hidden>
+        <span class="tspin" aria-hidden="true"></span>
+        <p id="tBusyText">Connecting to Deriv…</p>
+      </div>
+      <div class="tnote" id="tNote" hidden>
+        <p id="tNoteText"></p>
+      </div>
+    </section>
+
+    <!-- Pipvana Radar: the Smart Scan bot in Pipvana's own design — a bento of panels: the
+         radar (the type, and what it is on right now), the controls, the session as Pipvana AI
+         counts it, and the trades as Analysis's Transactions down the right. Trading in
+         scan/bot.js on the connection in scan/deriv.js; this page's painting in scan/panel.js. -->
+    <section class="pv-grid" id="scan" hidden>
+
+      <!-- The radar: Live scan as the page's centrepiece. While a run goes the sweep turns and
+           the side it is on sits in the middle; beside it the market, the share and the last
+           ten ticks. -->
+      <section class="pv-card pv-radar sh-scan" aria-labelledby="botTitle" data-fit>
+        <div class="pv-scope" aria-hidden="true">
+          <i class="pv-ring pv-ring--1"></i><i class="pv-ring pv-ring--2"></i><i class="pv-ring pv-ring--3"></i>
+          <i class="pv-axis pv-axis--x"></i><i class="pv-axis pv-axis--y"></i>
+          <i class="pv-sweep"></i>
+          <i class="pv-blip pv-blip--1"></i><i class="pv-blip pv-blip--2"></i><i class="pv-blip pv-blip--3"></i>
+          <span class="pv-core"><b class="bot-now-side" id="nowSide"></b></span>
+        </div>
+        <div class="pv-hero">
+          <div class="pv-hero-h">
+            <div class="pv-id">
+              <h2 class="pv-name" id="botTitle">Pipvana Radar</h2>
+              <p class="pv-risk">Trading carries risk. Never risk more than you can afford to lose.</p>
+              <div class="pv-lede" id="botLede" hidden></div>
+            </div>
+            <div class="bot-state bot-state--idle" id="botState"><i aria-hidden="true"></i><strong id="botStateText">Ready</strong></div>
           </div>
-          <button class="btn btn--danger btn--sm" id="disconnect-inline" type="button">Disconnect</button>
-        </div>
 
-        <!-- Here before the portfolio is, so the panel is its own size from the
-             first paint and the accounts appear inside it rather than the whole
-             card appearing around them. -->
-        <div class="acctp-body" id="acctp-body">
-          <section class="grp"><h3 class="grp-t">Real</h3>
-            <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
-          </section>
-          <section class="grp"><h3 class="grp-t">Demo</h3>
-            <ul class="accts"><li class="acct acct--wait">Reading your accounts&hellip;</li></ul>
-          </section>
-        </div>
+          <div class="pv-types bot-types" id="botTypes" role="tablist" aria-label="Trade type">
+            <button class="pv-type bot-type" type="button" role="tab" data-type="evenodd">Even / Odd<i class="bot-watch" aria-hidden="true"><b></b><b></b><b></b></i></button>
+            <button class="pv-type bot-type" type="button" role="tab" data-type="risefall">Rise / Fall<i class="bot-watch" aria-hidden="true"><b></b><b></b><b></b></i></button>
+            <button class="pv-type bot-type" type="button" role="tab" data-type="overunder">Over / Under<i class="bot-watch" aria-hidden="true"><b></b><b></b><b></b></i></button>
+            <button class="pv-type bot-type" type="button" role="tab" data-type="matchdiff">Differs<i class="bot-watch" aria-hidden="true"><b></b><b></b><b></b></i></button>
+          </div>
 
-        <div class="acctp-foot">
-          <!-- Says why a number looks wrong and what to press about it, which
-               is the only thing anybody wants from this line. The button
-               beside it is the answer. -->
-          <p class="acctp-note">Balance missing? Transfer it to your <strong>options</strong> account to see all of it here.</p>
-          <a class="linkout" href="https://home.deriv.com/dashboard/portfolio?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored">
-            Transfer funds
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
-          </a>
-        </div>
-        <!-- Deposit and Withdraw on Deriv, small (Shalobot's two links). -->
-        <div class="fund-links">
-          <a class="fund-link fund-link--dep" href="https://home.deriv.com/dashboard/deposit?from=portfolio&amp;depositSheet=1&amp;currency=USD" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg><span>Deposit</span></a>
-          <a class="fund-link" href="https://home.deriv.com/dashboard/withdraw/verify?currency=USD&amp;from=portfolio&amp;openWithdraw=1" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></svg><span>Withdraw</span></a>
+          <div class="pv-read">
+            <div class="bot-now" id="botNow" hidden>
+              <span class="bot-now-k"><i aria-hidden="true"></i><span>Live scan</span></span>
+              <span class="bot-now-m" id="nowMarket" translate="no"></span>
+              <span class="bot-now-p"><b id="nowShare" data-i18n-skip></b><span>of the last 10 ticks</span></span>
+              <span class="bot-dots" id="nowDots" aria-hidden="true"></span>
+            </div>
+            <div class="sh-scan-idle">
+              <span class="bot-now-k"><i aria-hidden="true"></i><span>Live scan</span></span>
+              <span class="sh-scan-say">Starts with the bot: the best market right now, live.</span>
+              <span class="bot-dots sh-dots-idle" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+            </div>
+          </div>
         </div>
       </section>
 
-    </div>
+      <!-- The controls: the figures, the switches, Start and Stop. -->
+      <section class="pv-card pv-ctl" aria-labelledby="ctlT" data-fit>
+        <h2 class="grp-t" id="ctlT">Settings</h2>
+        <div class="sh-fields">
+          <div class="sh-fld sh-fld--wide" id="botVarWrap" hidden>
+            <label class="fld-k" for="botVar" id="botVarLabel">Prediction</label>
+            <div class="sh-select"><select class="fld-i" id="botVar"></select>
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></div>
+          </div>
+          <!-- Safe / High / Too high for the balance (bot.js paintRisk). -->
+          <div class="sh-fld">
+            <span class="fld-k sh-k"><label for="botStake">Stake</label><b class="bot-risk" id="botStakeRisk" data-i18n-skip hidden></b></span>
+            <input class="fld-i" type="text" id="botStake" inputmode="decimal" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="sh-fld">
+            <span class="fld-k sh-k"><label for="botTp">Take profit</label><b class="bot-risk" id="botTpRisk" data-i18n-skip hidden></b></span>
+            <input class="fld-i" type="text" id="botTp" inputmode="decimal" autocomplete="off" spellcheck="false" />
+          </div>
+          <!-- Shown while the Stop loss switch is on (off unless turned on: no stop loss). -->
+          <div class="sh-fld" id="botSlWrap" hidden>
+            <label class="fld-k" for="botSl">Stop loss</label>
+            <input class="fld-i" type="text" id="botSl" inputmode="decimal" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="sh-fld">
+            <label class="fld-k" for="botMult">Martingale</label>
+            <input class="fld-i" type="text" id="botMult" inputmode="decimal" autocomplete="off" spellcheck="false" />
+          </div>
+        </div>
+        <div class="bot-risk-note" id="botRisk" data-i18n-skip hidden></div>
 
-    <!-- ══ Prices ═══════════════════════════════════════════════════════ -->
-    <aside class="markets" id="markets">
-      <h2 class="mk-head" id="mk-head">
-        <span>Price changes (5 minutes)</span>
-        <span class="mk-live" id="mk-live" aria-hidden="true"></span>
-      </h2>
-      <ul class="mk-list" id="mk-list"></ul>
-    </aside>
+        <div class="sh-togs">
+          <!-- Safe (on unless turned off): a run whose type turns red pauses after a win and carries on when it is green again. -->
+          <label class="sh-tog bot-safe"><input type="checkbox" id="botSafe" role="switch" checked /><i aria-hidden="true"></i><span>Safe</span></label>
+          <!-- The risk guide (off unless turned on): Safe / High / Too high on the stake and the take profit, and the safe figure. -->
+          <label class="sh-tog"><input type="checkbox" id="botGuide" role="switch" /><i aria-hidden="true"></i><span>Risk guide</span></label>
+          <!-- The stop loss (off unless turned on): off, a run has none and its field is hidden. -->
+          <label class="sh-tog"><input type="checkbox" id="botSlOn" role="switch" /><i aria-hidden="true"></i><span>Stop loss</span></label>
+        </div>
 
+        <div class="sh-go">
+          <button class="btn btn--violet btn--lg" type="button" id="botStart">Start</button>
+          <button class="btn btn--lg" type="button" id="botStop" disabled><span class="bs-stop">Stop</span><span class="bs-stopping">Stopping…</span></button>
+        </div>
+        <p class="sh-min"><small id="botMin" data-i18n-skip>Smallest stake: $0.35</small></p>
+        <p class="bot-msg" id="botMsg" role="alert" hidden></p>
+      </section>
+
+      <!-- The session, as Pipvana AI counts it: six figures, each its own colour. -->
+      <section class="pv-card pv-ses" aria-labelledby="sesT" data-fit>
+        <h2 class="grp-t" id="sesT">Session</h2>
+        <dl class="pv-stats">
+          <div><dt>Profit</dt><dd><span id="botPl" data-i18n-skip>0.00</span></dd></div>
+          <div><dt>Trades</dt><dd class="stat--count" id="botN" data-i18n-skip>0</dd></div>
+          <div><dt>Win rate</dt><dd class="stat--rate" id="pRate" data-i18n-skip>0%</dd></div>
+          <div><dt>Next stake</dt><dd class="stat--stake" id="botNext" data-i18n-skip>—</dd></div>
+          <div><dt>Losses in a row</dt><dd class="stat--market" id="botStreak" data-i18n-skip>0</dd></div>
+          <div><dt>Running</dt><dd class="stat--time" id="pTime" data-i18n-skip>00:00:00</dd></div>
+        </dl>
+      </section>
+
+      <!-- Transactions: Analysis's own, here for the bot's trades — a rail down the right on a
+           wide screen; on a narrow one a sheet parked at the bottom, Run / Stop under its bar. -->
+      <aside class="txn pv-txn sh-txn" id="txn">
+        <button class="txn-handle" data-handle type="button" aria-expanded="false" aria-controls="txn-body">
+          <span class="txn-grip" aria-hidden="true"></span>
+          <span class="txn-handle-t">Transactions <span class="txn-count" data-count></span></span>
+          <svg class="txn-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+          <span class="txn-pl" id="txn-pl" data-i18n-skip title="Bot P/L" hidden></span>
+        </button>
+
+        <!-- Run / Stop: presses the bot's own button with the figures it holds. -->
+        <div class="txn-run">
+          <button class="txn-run-btn" id="txn-run" type="button">
+            <svg class="txn-run-go" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7.5 4.8v14.4a1 1 0 0 0 1.52.85l11.5-7.2a1 1 0 0 0 0-1.7L9.02 3.95A1 1 0 0 0 7.5 4.8z" fill="currentColor"/></svg>
+            <svg class="txn-run-stop" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5" fill="currentColor"/></svg>
+            <span id="txn-run-label">Run</span>
+          </button>
+        </div>
+
+        <div class="txn-body" id="txn-body">
+          <div class="txn-top">
+            <h2 class="grp-t">Transactions</h2>
+            <span class="txn-n" id="logN" data-i18n-skip></span>
+          </div>
+          <div class="txn-head">
+            <span>Type</span>
+            <span>Entry/Exit spot</span>
+            <span class="txn-head-r">Buy price and P/L</span>
+          </div>
+
+          <!-- A wait the run is in (bot.js waitOf): shown, moving, until it trades again. -->
+          <div class="bot-wait" id="botWait" role="status" aria-live="polite" hidden>
+            <span class="bot-wait-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+            <span class="bot-wait-t"><strong id="botWaitText" data-i18n-skip></strong><span>The bot carries on by itself — no need to do anything.</span></span>
+          </div>
+
+          <ul class="txn-rows" data-rows translate="no"><li class="tx-none">No transactions yet.</li></ul>
+
+          <div class="sum">
+            <div class="sum-c"><span class="sum-k">Total stake</span><span class="sum-v" data-stake>&mdash;</span></div>
+            <div class="sum-c"><span class="sum-k">Total payout</span><span class="sum-v" data-payout>&mdash;</span></div>
+            <div class="sum-c"><span class="sum-k">No. of runs</span><span class="sum-v" data-runs>0</span></div>
+            <div class="sum-c"><span class="sum-k">Contracts lost</span><span class="sum-v" data-lost>0</span></div>
+            <div class="sum-c"><span class="sum-k">Contracts won</span><span class="sum-v" data-won>0</span></div>
+            <div class="sum-c"><span class="sum-k">Total profit/loss</span><span class="sum-v" data-pl>&mdash;</span></div>
+          </div>
+
+          <button class="btn txn-reset" data-reset type="button">Reset</button>
+        </div>
+      </aside>
+
+      <!-- The bot's own controls and counters, driven by scan/bot.js; the page shows them (scan/panel.js). -->
+      <div class="bot-engine" hidden aria-hidden="true">
+        <button id="botGo" type="button" tabindex="-1"><span id="botGoText">Scan &amp; start</span></button>
+        <span id="botWon">0</span><span id="botLost">0</span><span id="botEmpty"></span>
+        <ul id="botLog"></ul>
+      </div>
+    </section>
+
+    <footer class="app-foot">
+      <p class="disclaimer">Trading carries risk. This is an automated tool, not financial
+        advice or a profit guarantee. Never risk more than you can afford to lose.</p>
+    </footer>
   </div>
-
-  <footer class="app-foot">
-    <p class="disclaimer">Trading carries risk. This is an automated tool, not financial
-      advice or a profit guarantee. Never risk more than you can afford to lose.</p>
-  </footer>
-
 </main>
 
-<!-- Full account detail, opened by double-clicking the badge. -->
-<div class="sheet" id="sheet" hidden>
-  <div class="sheet-back" data-close></div>
-  <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <div class="sheet-head">
-      <div>
-        <p class="acctp-k">Account details</p>
-        <h2 class="sheet-t" id="sheet-title">Your Deriv portfolio</h2>
+<!-- The bot's popups: the scan, its result, a scan that failed, take profit, stop loss, a
+     balance too small for the next stake, no real account yet and Safe's pause. One sheet,
+     eight views; scan/bot.js switches between them. -->
+<div class="bm-root" id="bmRoot" role="dialog" aria-modal="true" aria-labelledby="bmTitle" hidden>
+  <div class="bm-back" data-bm-close></div>
+  <div class="bm">
+    <button class="bm-x" type="button" data-bm-close aria-label="Close">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+
+    <div class="bm-view" id="bmScan">
+      <div class="bm-radar" aria-hidden="true"><i></i><i></i><i></i>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       </div>
-      <button class="sheet-x" type="button" data-close aria-label="Close">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
+      <h2 id="bmTitle">Scanning Even/Odd markets</h2>
+      <p class="bm-step" id="bmStep">Connecting to the markets…</p>
+      <div class="bm-bar"><i id="bmBar"></i></div>
+      <p class="bm-pct" id="bmPct" data-i18n-skip>0%</p>
     </div>
 
-    <div class="sheet-body" id="sheet-body"></div>
-
-    <div class="sheet-foot">
-      <!-- Deposit and Withdraw on Deriv, small (Shalobot's two links): on phones the account lives here. -->
-      <div class="fund-links">
-        <a class="fund-link fund-link--dep" href="https://home.deriv.com/dashboard/deposit?from=portfolio&amp;depositSheet=1&amp;currency=USD" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg><span>Deposit</span></a>
-        <a class="fund-link" href="https://home.deriv.com/dashboard/withdraw/verify?currency=USD&amp;from=portfolio&amp;openWithdraw=1" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></svg><span>Withdraw</span></a>
+    <div class="bm-view" id="bmDone" hidden>
+      <svg class="bm-tick" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M15 27.5l7 7 15-16"/></svg>
+      <h2>Best trade found</h2>
+      <div class="bm-pick">
+        <span class="bm-pick-m" id="bmMarket" translate="no"></span>
+        <b class="bm-pick-side" id="bmSide"></b>
+        <span class="bm-pick-s" id="bmShare" data-i18n-skip></span>
+        <div class="bot-dots bm-dots" id="bmDots" aria-hidden="true"></div>
       </div>
-      <button class="btn btn--danger" id="disconnect" type="button">Disconnect</button>
+      <dl class="bm-sum">
+        <div><dt>Stake</dt><dd id="bmStake" data-i18n-skip></dd></div>
+        <div><dt>Martingale</dt><dd id="bmMult" data-i18n-skip></dd></div>
+        <div><dt>Take profit</dt><dd id="bmTp" data-i18n-skip></dd></div>
+        <div><dt>Stop loss</dt><dd id="bmSl" data-i18n-skip></dd></div>
+      </dl>
+      <!-- The watch's reading for this type: ten cells lit to the figure, in its colour. -->
+      <div class="bm-watch" id="bmWatch" data-watch="off"><div class="bm-watch-bar"><i></i></div><b class="bm-watch-pct" data-i18n-skip>…</b></div>
+      <p class="bm-live"><i aria-hidden="true"></i><span>Trading started</span></p>
+    </div>
+
+    <div class="bm-view" id="bmErr" hidden>
+      <div class="bm-erricon" aria-hidden="true">!</div>
+      <h2>The scan did not finish</h2>
+      <p class="bm-step" id="bmErrText"></p>
+      <div class="bm-actions">
+        <button class="bm-btn" type="button" data-bm-close>Close</button>
+        <button class="bm-btn bm-btn--go btn-blue" type="button" id="bmRetry">Try again</button>
+      </div>
+    </div>
+
+    <div class="bm-view bm-result bm-result--win" id="bmWin" hidden>
+      <div class="bm-confetti" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="bm-ricon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path class="bm-ricon-tick" d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </div>
+      <h2>🎉 Take Profit Reached!</h2>
+      <p class="bm-msg">Congratulations! Your bot has successfully reached the take profit target.</p>
+      <div class="bm-details">
+        <div class="bm-drow"><span>Total Profit:</span><b class="bm-dv bm-dv--pl" id="bmWinAmt" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Total Trades:</span><b class="bm-dv bm-dv--n" id="bmWinN" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Won / Lost:</span><b class="bm-dv bm-dv--wl" id="bmWinWL" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Running Time:</span><b class="bm-dv bm-dv--time" id="bmWinTime" data-i18n-skip></b></div>
+      </div>
+      <p class="bm-sum-src" id="bmWinSum" hidden></p>
+      <button class="bm-rclose btn-blue" type="button" data-bm-close>Close</button>
+    </div>
+
+    <div class="bm-view bm-result bm-result--loss" id="bmLoss" hidden>
+      <div class="bm-ricon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2.4 17.6A2 2 0 0 0 4.1 20.6h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4.5"/><path d="M12 17.2h.01"/></svg>
+      </div>
+      <h2>⚠️ Stop Loss Hit</h2>
+      <p class="bm-msg">The bot has been stopped as the stop loss limit has been reached.</p>
+      <!-- What the run did past the risk guide (bot.js mistakes), when it did. -->
+      <div class="bm-why" id="bmLossWhy" data-i18n-skip hidden></div>
+      <div class="bm-details">
+        <div class="bm-drow"><span>Total Profit:</span><b class="bm-dv bm-dv--pl is-down" id="bmLossAmt" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Total Trades:</span><b class="bm-dv bm-dv--n" id="bmLossN" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Won / Lost:</span><b class="bm-dv bm-dv--wl" id="bmLossWL" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Running Time:</span><b class="bm-dv bm-dv--time" id="bmLossTime" data-i18n-skip></b></div>
+      </div>
+      <p class="bm-sum-src" id="bmLossSum" hidden></p>
+      <button class="bm-rclose btn-blue" type="button" data-bm-close>Close</button>
+    </div>
+
+    <div class="bm-view" id="bmFund" hidden>
+      <div class="bm-badge bm-badge--fund" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V5.5A1.5 1.5 0 0 0 17.5 4h-12A2.5 2.5 0 0 0 3 6.5v11A2.5 2.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/><path d="M3 6.5A2.5 2.5 0 0 0 5.5 9H20v6h-4a3 3 0 0 1 0-6"/><circle cx="16.5" cy="12" r=".6" fill="currentColor"/></svg>
+      </div>
+      <h2>Top up to keep trading</h2>
+      <p class="bm-step" id="bmFundText" data-i18n-skip></p>
+      <div class="bm-why" id="bmFundWhy" data-i18n-skip hidden></div>
+      <p class="bm-fund-note" id="bmFundNote" data-i18n-skip></p>
+      <div class="bm-actions">
+        <button class="bm-btn" type="button" data-bm-close>Close</button>
+        <a class="bm-btn bm-btn--fund btn-blue" id="bmFundGo" href="https://home.deriv.com/dashboard/portfolio" target="_blank" rel="noopener" data-bm-close data-i18n-skip>Deposit on Deriv</a>
+      </div>
+    </div>
+
+    <!-- No real account yet (scan/deriv.js): why the bot needs one, the three steps, and the
+         way to open it on Deriv. Once a visit by itself, and again on Start. -->
+    <div class="bm-view bm-real" id="bmReal" hidden>
+      <div class="bm-badge bm-badge--real" aria-hidden="true"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg></div>
+      <h2 id="bmRealTitle">Open your real account to start trading</h2>
+      <p class="bm-real-why" id="bmRealText"></p>
+      <p class="bm-step">Pipvana Radar trades on a real Deriv account. Setting one up on Deriv takes a few minutes, and the bot is ready the moment it appears here.</p>
+      <ol class="bm-real-steps">
+        <li>Open your real account on Deriv</li>
+        <li>Add funds to it</li>
+        <li>Come back here and start the bot</li>
+      </ol>
+      <div class="bm-actions bm-actions--real">
+        <a class="bm-btn bm-btn--real btn-blue" href="https://home.deriv.com/dashboard/home?t=8XPRHR2Y8SN8" target="_blank" rel="noopener noreferrer sponsored" data-bm-close><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg><span>Set up my real account</span></a>
+        <button class="bm-btn" type="button" data-bm-close>Later</button>
+      </div>
+    </div>
+
+    <!-- Safe: the run paused while its type reads red — the session as it stands, the reading
+         live, and two ways on. -->
+    <div class="bm-view bm-result bm-result--hold" id="bmHold" hidden>
+      <div class="bm-ricon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="5" width="3.5" height="14" rx="1.2"/><rect x="14" y="5" width="3.5" height="14" rx="1.2"/></svg>
+      </div>
+      <h2 id="bmHoldTitle">Unstable conditions detected</h2>
+      <p class="bm-msg" id="bmHoldText" data-i18n-skip></p>
+      <div class="bm-details">
+        <div class="bm-drow"><span>Total Profit:</span><b class="bm-dv bm-dv--pl" id="bmHoldPl" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Total Trades:</span><b class="bm-dv bm-dv--n" id="bmHoldN" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Win rate:</span><b class="bm-dv bm-dv--wl" id="bmHoldRate" data-i18n-skip></b></div>
+        <div class="bm-drow"><span>Running Time:</span><b class="bm-dv bm-dv--time" id="bmHoldTime" data-i18n-skip></b></div>
+      </div>
+      <div class="bm-watch" id="bmHoldWatch" data-watch="off"><div class="bm-watch-bar"><i></i></div><b class="bm-watch-pct" data-i18n-skip>…</b></div>
+      <div class="bm-actions">
+        <button class="bm-btn" type="button" id="bmHoldStop">Stop trading</button>
+        <button class="bm-btn bm-btn--go btn-blue" type="button" data-bm-close>Keep waiting</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script src="/alert/alert.js"></script>
-<script src="/real.js"></script>
 <script src="/currency.js"></script>
 <script src="/deriv.js"></script>
 <script src="/markets.js"></script>
 <script src="/unlock.js"></script>
+<script>
+/* Practice mode (unlock.js): the simulator takes Deriv's place under the bot before anything
+   connects, and three clicks on the balance's dot open its card. The taps are counted here, not
+   read from the click event: iPhone Safari reports every tap as a first click. */
+(function (g) {
+  g.PvrTaps = function (el, n, fn) {
+    var count = 0, last = 0;
+    el.addEventListener("click", function (e) {
+      var now = Date.now();
+      count = now - last <= 600 ? count + 1 : 1;
+      last = now;
+      if (count >= n) { count = 0; fn(e); }
+    });
+  };
+  if (g.EvieMode && g.EvieMode.on()) document.write('<link rel="stylesheet" href="/scan/sim.css" /><script src="/scan/sim.js"><\/script>');
+})(window);
+</script>
 <script src="/home.js"></script>
+<script src="/scan/deriv.js"></script>
+<script src="/scan/watch.js"></script>
+<script src="/scan/bot.js"></script>
+<script src="/analysis/txn.js"></script>
+<script src="/scan/panel.js"></script>
 <script src="/theme.js"></script>
 <script src="/install.js"></script>
 <script src="/support.js" defer></script>

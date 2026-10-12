@@ -44,7 +44,7 @@
 
   var allAccounts = [];   // every options account this login reaches
   var accounts = [];      // the ones currently offered in the picker
-  var showDemo = false;   // flipped by double-clicking the A in "Account"
+  var showDemo = true;    // the demo is listed under the real account, always
   var bot = null;
   var running = false;
 
@@ -236,37 +236,6 @@
 
   selectEl.addEventListener("change", describeChoice);
 
-  /* Three clicks on the "P" of Pipvana bring the account picker onto the
-     page, demo included; three more take it away again. Hidden otherwise, so
-     this page runs the real account and only the real account — picking a demo
-     by accident is a session of practice trades somebody believes are real,
-     and the reverse is worse.
-
-     Three, not two: a double click is something people do to a word by
-     accident. And never while a bot is running — swapping the account under a
-     live run is not a thing anyone means to do. */
-  var revealEl = $("acct-key");
-  if (revealEl) {
-    revealEl.addEventListener("click", function (e) {
-      if (e.detail < 3) return;               // the browser counts them for us
-      /* And only inside practice mode. Off, this is three clicks on a letter
-         and nothing else — no hidden control on the site answers a gesture
-         from somebody who has not opened the mode on this device. */
-      if (!window.EvieMode || !window.EvieMode.on()) return;
-      if (running) return;
-
-      if (!showDemo && !allAccounts.some(function (a) { return a.demo; })) {
-        return ui.showStatus("This login has no demo options account.", "warning");
-      }
-
-      showDemo = !showDemo;
-      revealEl.classList.toggle("acct-reveal--on", showDemo);
-      $("acct-fld").hidden = !showDemo;
-      renderAccounts();
-      ui.showStatus(showDemo ? "Accounts shown — demo included." : "Back to the real account.", "info");
-    });
-  }
-
   function fillAccounts(list) {
     // Only options accounts can trade. A wallet holds money but cannot take a
     // position, so offering one would be a promise the API cannot keep.
@@ -282,7 +251,7 @@
     renderAccounts();
   }
 
-  /** Paint the picker. Real accounts only, unless the demo has been revealed. */
+  /** Paint the picker: the real accounts first, the demo under them. */
   function renderAccounts() {
     var keep = selectEl.value;
 

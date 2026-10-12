@@ -215,6 +215,8 @@
    */
   function fits() {
     if (!listEl) return STACKED_ROWS;
+    // Floating over the page (home's green dot): the ten, and the list scrolls inside itself.
+    if (listEl.closest && listEl.closest(".mk-pop")) return STACKED_ROWS;
     if (global.matchMedia && global.matchMedia("(max-width: 1100px)").matches) {
       return STACKED_ROWS;
     }

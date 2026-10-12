@@ -25,7 +25,7 @@
  * under /api is ever cached, and neither is any other origin.
  */
 
-const VERSION = "pipvana-shell-v26";
+const VERSION = "pipvana-shell-v27";
 const NET_TIMEOUT_MS = 2500;
 
 /* What the launch screen is waiting on. The start page and everything it
@@ -45,6 +45,12 @@ const SHELL = [
   "/prefs.js",
   "/markets.js",
   "/unlock.js",
+  "/scan/deriv.js",
+  "/scan/watch.js",
+  "/scan/bot.js",
+  "/scan/panel.js",
+  "/scan/scan.css",
+  "/analysis/txn.js",
   "/install.js",
   "/manifest.webmanifest",
   "/favicon.svg",

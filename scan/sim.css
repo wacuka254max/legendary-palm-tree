@@ -1,0 +1,116 @@
+/* PIPVANA — Pipvana Radar — the simulation's own few styles: the setup card, the green
+   dot that opens it, the pill that says what the page is.
+   Everything on the page behind it is smart.css, unchanged — the point is
+   that it looks and behaves like the real page. */
+
+/* A grid with the card on margin: auto — centred when it fits, scrolling from
+   its top when a short phone cannot hold it (centring alone would cut it off). */
+.sim-setup {
+  position: fixed; inset: 0; z-index: 400;
+  display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center;
+  padding: 16px; overflow-y: auto; overscroll-behavior: contain;
+  background: rgba(8, 9, 10, 0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  --sim-raise: #171b24; --sim-surface: #101216; --sim-line: rgba(255, 255, 255, 0.16);
+  --sim-ink: #f3f6fb; --sim-muted: #99a2b6; --sim-faint: #6b7b91; --sim-accent: #00d2ff; --sim-on-accent: #04121f;
+  color: var(--sim-ink);
+}
+.sim-setup[hidden] { display: none; }
+
+/* The card's two buttons, in this page's colours. */
+.sim-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 999px; padding: 11px 20px;
+  background: transparent; color: var(--sim-ink);
+  font: inherit; font-size: 14.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
+}
+.sim-btn--line { border-color: var(--sim-line); }
+.sim-btn--line:hover { background: var(--sim-surface); }
+.sim-btn--go { padding: 14px 28px; font-size: 15.5px; background: var(--sim-accent); color: var(--sim-on-accent); }
+.sim-btn--go:hover { filter: brightness(1.08); }
+
+.sim-card {
+  width: 100%; max-width: 460px; margin: auto; padding: 22px;
+  border: 1px solid var(--sim-line); border-radius: 20px;
+  background: var(--sim-raise); color: var(--sim-ink);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.sim-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.sim-k { margin: 0 0 3px; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--sim-faint); }
+.sim-t { margin: 0; font-size: 19px; letter-spacing: -0.02em; }
+
+.sim-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin: 20px 0 14px; }
+.sim-body [hidden] { display: none; }
+.sim-f { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.sim-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sim-fk { font-size: 13px; font-weight: 600; color: var(--sim-muted); }
+.sim-with { display: flex; gap: 8px; }
+.sim-pair { display: flex; align-items: center; gap: 8px; }
+.sim-pair .sim-i { flex: 1 1 0; }
+.sim-to { flex: none; font-size: 13px; font-weight: 600; color: var(--sim-faint); }
+.sim-hint { margin: 2px 0 0; font-size: 12px; line-height: 1.45; color: var(--sim-faint); }
+.sim-i {
+  flex: 1; min-width: 0; height: 44px; padding: 0 13px;
+  border: 1px solid var(--sim-line); border-radius: 12px; background: var(--sim-surface); color: var(--sim-ink);
+  font: inherit; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.sim-i:focus { outline: none; border-color: var(--sim-accent); }
+.sim-rand { flex: none; padding: 0 14px; font-size: 13.5px; }
+
+.sim-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.sim-sb {
+  height: 40px; padding: 0 6px; border: 1px solid var(--sim-line); border-radius: 11px;
+  background: var(--sim-surface); color: var(--sim-muted); cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 700;
+}
+.sim-sb:hover { color: var(--sim-ink); }
+.sim-sb.is-on { border-color: var(--sim-accent); color: var(--sim-ink); background: color-mix(in srgb, var(--sim-accent) 12%, var(--sim-surface)); }
+
+.sim-tog {
+  position: relative; flex: none; width: 44px; height: 26px; padding: 0; border: 0; border-radius: 999px;
+  background: var(--sim-line); cursor: pointer; transition: background .18s ease;
+}
+.sim-tog i {
+  position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); transition: transform .18s ease;
+}
+.sim-tog[aria-checked="true"] { background: var(--sim-accent); }
+.sim-tog[aria-checked="true"] i { transform: translateX(18px); }
+
+.sim-say { margin: 0 0 16px; min-height: 40px; font-size: 13.5px; line-height: 1.5; color: var(--sim-ink); }
+.sim-go { width: 100%; justify-content: center; border-radius: 14px; }
+.sim-note { margin: 14px 0 0; font-size: 12px; line-height: 1.55; color: var(--sim-faint); }
+
+
+/* The balance's green dot opens the card: the dot keeps its size, its target is
+   wider so three taps land on a phone. */
+#acct .tbal-live { position: relative; touch-action: manipulation; }
+#acct .tbal-live::before { content: ""; position: absolute; inset: -9px; }
+
+/* An amber dot, SIMULATION, not real money: pinned at the foot of the screen,
+   centred (clear of the header and of the chat button), above every popup,
+   card and backdrop the page has (the highest is 1200), so it is in sight
+   whatever is open and however far the page has scrolled. It takes no taps:
+   whatever is under it still works. */
+.sim-badge {
+  position: fixed; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
+  z-index: 2147483000; pointer-events: none; user-select: none; -webkit-user-select: none;
+  display: inline-flex; align-items: center; gap: 6px; width: max-content; border-radius: 999px;
+  border: 1px solid rgba(246, 173, 85, 0.55); background: #2b2520;
+  background: color-mix(in srgb, #f6ad55 14%, #12151c);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  padding: 3px 10px; font-size: 11px; line-height: 1.5; white-space: nowrap;
+}
+.sim-badge i { width: 7px; height: 7px; border-radius: 50%; flex: none; background: #f6ad55; }
+.sim-badge b { font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #f6ad55; }
+.sim-badge span { font-weight: 600; color: #99a2b6; }
+/* Too narrow for the words beside the chat button: the badge says SIMULATION. */
+@media (max-width: 359px) { .sim-badge span { display: none; } }
+
+@media (max-width: 420px) {
+  .sim-card { padding: 18px 16px; border-radius: 18px; }
+  .sim-t { font-size: 17px; }
+  .sim-body { gap: 12px; margin: 16px 0 12px; }
+  .sim-i { height: 42px; }
+  .sim-sb { height: 38px; font-size: 13px; }
+  .sim-note { font-size: 11.5px; }
+}

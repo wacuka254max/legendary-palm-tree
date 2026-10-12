@@ -872,17 +872,13 @@
   $("account").addEventListener("change", function () { describeAccount(); openSession($("account").value); });
 
   /* ── the account picker ─────────────────────────────────────────────────
-     Real accounts only, and the picker is not on the page at all until the
-     "a" of "analysis" is clicked three times. Trading the wrong account is the
-     one mistake this page cannot take back, and a dropdown sitting open with a
-     demo one line below the real one is how that mistake gets made.
+     Every options account this login has, the real ones first and the demo under them —
+     on the page from the start, as on the other sites. The real account is the one picked
+     when the page opens. */
 
-     Three clicks, not two: a double click is something a person does to a word
-     by accident. */
+  var showDemo = true;
 
-  var showDemo = false;
-
-  /** Paint the picker. Real accounts only, unless the demo has been revealed. */
+  /** Paint the picker: the real accounts first, the demo under them. */
   function renderAccounts() {
     var keep = $("account").value;
 
@@ -904,71 +900,6 @@
     }).join("");
 
     if (keep && accounts.some(function (a) { return a.id === keep; })) $("account").value = keep;
-  }
-
-  var key = $("acct-key");
-  if (key) {
-    key.addEventListener("click", function (e) {
-      if (e.detail < 3) return;               // the browser counts them for us
-      /* And only inside practice mode. Off, this is three clicks on a letter
-         and nothing else — no hidden control on the site answers a gesture
-         from somebody who has not opened the mode on this device. */
-      if (!window.EvieMode || !window.EvieMode.on()) return;
-      if (inFlight) return;                   // not mid-trade
-
-      if (!showDemo && !allAccounts.some(function (a) { return a.demo; })) {
-        return status("This login has no demo options account.", "warning");
-      }
-
-      showDemo = !showDemo;
-      key.classList.toggle("acct-reveal--on", showDemo);
-      $("acct-fld").hidden = !showDemo;
-      renderAccounts();
-
-      if (showDemo && accounts.length) {
-        /* Revealing the demo is the moment a login with no real account
-           finally has something to trade on. The header has to say so —
-           without this the badge went on reading Real over a demo, and the
-           risk line went on saying trading was off while it was back on. */
-        var pick = accounts.some(function (a) { return a.id === $("account").value; })
-          ? $("account").value
-          : accounts[0].id;
-        $("account").value = pick;
-        describeAccount();
-
-        /* The socket may already be open on this very account: in
-           analysis-only it is the price feed the cards are drawn from. */
-        if (session.accountId !== pick) openSession(pick);
-      }
-
-      if (!showDemo) {
-        /* Coming back out, the real account is the one that must be live.
-           Re-rendering the picker already drops the demo option and leaves the
-           real one selected — which looked like nothing to do, and was the bug:
-           the badge still said Demo and the SOCKET was still the demo one, with
-           the picker now hidden. A hidden mismatch is the exact failure this
-           arrangement exists to prevent, so the check is against the session,
-           not against the dropdown. */
-        var real = accounts.filter(function (a) { return !a.demo; })[0];
-        if (real) {
-          $("account").value = real.id;
-          describeAccount();
-          if (session.accountId !== real.id) openSession(real.id);
-        } else {
-          /* Nothing real to fall back to. The session stays open on the demo
-             — it is the price feed the cards are drawn from, and closing it
-             left the page dead behind a hidden picker. Only trading goes,
-             and renderAccounts has already taken it. */
-          $("balance").textContent = "—";
-          $("acct-badge").textContent = "Real";
-          $("acct-badge").classList.remove("badge--demo");
-          $("risk").textContent = "No real options account yet — the analysis is live, trading is not.";
-          $("risk").className = "risk";
-        }
-      }
-
-      status(showDemo ? "Accounts shown — demo included." : "Back to the real account.", "info");
-    });
   }
 
   /* ── go ─────────────────────────────────────────────────────────────── */
