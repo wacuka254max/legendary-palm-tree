@@ -682,26 +682,41 @@
   .bot { width: calc(100vw - 24px); }
 }
 
-/* Run / Stop under the Transactions bar (analysis/bot.js): the bot's own Start/Stop without
-   opening it. On a narrow screen it stays in view with the sheet parked (the sheet shows its
-   bar and this) and with it open; on a wide one it heads the rail. */
+/* Run / Stop (analysis/bot.js): the bot's own Start/Stop without opening it. With the sheet
+   parked it runs end to end under the Transactions bar; with the transactions open (the raised
+   sheet, or the rail on a wide screen) it sits just above Reset, both a size smaller. */
 :root { --txn-run-h: 0px; }
-.txn-run { flex: none; padding: 14px 16px 2px; }
+.txn-run { flex: none; padding: 0 12px 10px; }
 .txn-run-btn {
-  display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; height: 46px; padding: 0 18px;
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 16px;
   font: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.01em; color: #fff;
   background: #3aa9a5; border: 0; border-radius: 12px; cursor: pointer;
-  box-shadow: 0 8px 20px -12px rgba(58, 169, 165, 0.9);
+  box-shadow: 0 6px 16px -10px rgba(58, 169, 165, 0.9);
   transition: background-color .15s ease, transform .1s ease, filter .15s ease;
 }
 .txn-run-btn:hover { filter: brightness(1.06); }
 .txn-run-btn:active { transform: translateY(1px); }
 .txn-run-btn:focus-visible { outline: 2px solid #3aa9a5; outline-offset: 2px; }
-.txn-run-btn.is-running { background: #e5484d; box-shadow: 0 8px 20px -12px rgba(229, 72, 77, 0.9); }
+.txn-run-btn.is-running { background: #e5484d; box-shadow: 0 6px 16px -10px rgba(229, 72, 77, 0.9); }
 .txn-run-stop, .txn-run-btn.is-running .txn-run-go { display: none; }
 .txn-run-btn.is-running .txn-run-stop { display: block; }
+/* Above Reset: the pair a size smaller, the same shape. */
+.txn-run.is-in { padding: 0; margin-top: 12px; }
+.txn-run.is-in .txn-run-btn { height: 38px; font-size: 14px; border-radius: 999px; box-shadow: none; }
+.txn-run.is-in .txn-run-btn svg { width: 15px; height: 15px; }
+.txn-run.is-in + .txn-reset { margin-top: 8px; padding-top: 8px; padding-bottom: 8px; font-size: 13px; }
 @media (max-width: 1199px) {
-  :root { --txn-run-h: 56px; }
-  /* Room on the right for the chat button that sits over the sheet's corner. */
-  .txn-run { height: var(--txn-run-h); padding: 0 84px 10px 16px; }
+  :root { --txn-run-h: 54px; }
+  .txn-run:not(.is-in) { height: var(--txn-run-h); }
+  /* The bar keeps its height on a short screen: the transactions scroll instead. */
+  .txn-handle { flex: none; }
+  /* Parked: the chat button sits on the free left end of the Transactions bar, clear of
+     Run / Stop, and its panel opens above them. */
+  html:not(.txn-open) .sup-btn { bottom: calc(var(--txn-run-h) + 3px); left: 12px; width: 46px; height: 46px; }
+  html:not(.txn-open) .sup { bottom: calc(var(--txn-run-h) + 60px); }
+  /* Raised: the sheet keeps a strip at its foot, and the chat and Open bot buttons float in it,
+     so nothing in the transactions is under them. */
+  html.txn-open .txn-body { padding-bottom: 68px; }
+  html.txn-open .sup-btn { bottom: 11px; left: 12px; width: 46px; height: 46px; }
+  html.txn-open .bot-open { bottom: 14px; right: 16px; }
 }

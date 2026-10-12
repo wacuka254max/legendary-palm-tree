@@ -116,6 +116,21 @@
     figures();
   }
 
+  /* Run / Stop sits under the Transactions bar while the sheet is parked, and just above Reset
+     while the transactions are open: the raised sheet, or the rail on a wide screen. html gets
+     "txn-open" while the sheet is raised, so the floating buttons keep to its foot. */
+  function placeRun() {
+    var box = el("txn-run") && el("txn-run").parentNode, txn = el("txn");
+    if (!box || !txn) return;
+    var wide = !!(global.matchMedia && global.matchMedia("(min-width: 1200px)").matches);
+    var raised = txn.classList.contains("is-open");
+    var reset = txn.querySelector("[data-reset]"), handle = txn.querySelector("[data-handle]");
+    if (wide || raised) { if (reset && box.nextElementSibling !== reset) reset.parentNode.insertBefore(box, reset); }
+    else if (handle && handle.nextElementSibling !== box) handle.parentNode.insertBefore(box, handle.nextSibling);
+    box.classList.toggle("is-in", !!(wide || raised));
+    document.documentElement.classList.toggle("txn-open", !wide && raised);
+  }
+
   /* The button that stands in for a closed card has to say whether the bot is
      still working — closing it hides the card, it does not stop the run. */
   function paintOpener() {
@@ -610,7 +625,13 @@
     }
 
     // Run / Stop under the Transactions bar: the bot's own Start/Stop, without opening it.
-    if (el("txn-run")) el("txn-run").addEventListener("click", function () { el("bot-run").click(); });
+    if (el("txn-run")) {
+      el("txn-run").addEventListener("click", function () { el("bot-run").click(); });
+      placeRun();
+      if (global.MutationObserver && el("txn")) new MutationObserver(placeRun).observe(el("txn"), { attributes: true, attributeFilter: ["class"] });
+      var wideQ = global.matchMedia && global.matchMedia("(min-width: 1200px)");
+      if (wideQ) { if (wideQ.addEventListener) wideQ.addEventListener("change", placeRun); else if (wideQ.addListener) wideQ.addListener(placeRun); }
+    }
 
     el("bot-run").addEventListener("click", function () {
       if (running) {
