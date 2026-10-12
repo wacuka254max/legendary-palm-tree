@@ -126,6 +126,16 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
     <svg class="txn-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
   </button>
 
+  <!-- Run / Stop for the bot without opening it: it presses the bot's own Start/Stop
+       (analysis/bot.js), with the figures the bot holds. Under the bar, open or parked. -->
+  <div class="txn-run">
+    <button class="txn-run-btn" id="txn-run" type="button" aria-controls="bot">
+      <svg class="txn-run-go" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7.5 4.8v14.4a1 1 0 0 0 1.52.85l11.5-7.2a1 1 0 0 0 0-1.7L9.02 3.95A1 1 0 0 0 7.5 4.8z" fill="currentColor"/></svg>
+      <svg class="txn-run-stop" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2.5" fill="currentColor"/></svg>
+      <span id="txn-run-label">Run</span>
+    </button>
+  </div>
+
   <div class="txn-body" id="txn-body">
     <div class="txn-head">
       <span>Type</span>

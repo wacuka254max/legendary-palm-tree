@@ -465,7 +465,7 @@
     border-radius: 16px 16px 0 0;
     /* Parked with only the handle showing. Translating the whole panel keeps
        the animation on the compositor, so it stays smooth on a phone. */
-    transform: translateY(calc(100% - 52px));
+    transform: translateY(calc(100% - 52px - var(--txn-run-h)));
     transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     max-height: min(82vh, 620px);
   }
@@ -517,7 +517,7 @@
   .txn-rows { max-height: 40vh; }
 
   /* The parked handle covers the page bottom, so the last card is not hidden. */
-  .dash-main { padding-bottom: 76px; }
+  .dash-main { padding-bottom: calc(76px + var(--txn-run-h)); }
 }
 
 /* ── Fitting a laptop ───────────────────────────────────────────────────
@@ -676,8 +676,32 @@
 }
 @media (max-width: 1199px) {
   /* Clear of the transactions sheet parked at the bottom. */
-  .bot-open { bottom: 66px; }
+  .bot-open { bottom: calc(66px + var(--txn-run-h)); }
 }
 @media (max-width: 420px) {
   .bot { width: calc(100vw - 24px); }
+}
+
+/* Run / Stop under the Transactions bar (analysis/bot.js): the bot's own Start/Stop without
+   opening it. On a narrow screen it stays in view with the sheet parked (the sheet shows its
+   bar and this) and with it open; on a wide one it heads the rail. */
+:root { --txn-run-h: 0px; }
+.txn-run { flex: none; padding: 14px 16px 2px; }
+.txn-run-btn {
+  display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; height: 46px; padding: 0 18px;
+  font: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.01em; color: #fff;
+  background: #3aa9a5; border: 0; border-radius: 12px; cursor: pointer;
+  box-shadow: 0 8px 20px -12px rgba(58, 169, 165, 0.9);
+  transition: background-color .15s ease, transform .1s ease, filter .15s ease;
+}
+.txn-run-btn:hover { filter: brightness(1.06); }
+.txn-run-btn:active { transform: translateY(1px); }
+.txn-run-btn:focus-visible { outline: 2px solid #3aa9a5; outline-offset: 2px; }
+.txn-run-btn.is-running { background: #e5484d; box-shadow: 0 8px 20px -12px rgba(229, 72, 77, 0.9); }
+.txn-run-stop, .txn-run-btn.is-running .txn-run-go { display: none; }
+.txn-run-btn.is-running .txn-run-stop { display: block; }
+@media (max-width: 1199px) {
+  :root { --txn-run-h: 56px; }
+  /* Room on the right for the chat button that sits over the sheet's corner. */
+  .txn-run { height: var(--txn-run-h); padding: 0 84px 10px 16px; }
 }

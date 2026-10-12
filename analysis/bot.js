@@ -105,6 +105,8 @@
     running = on;
     el("bot-run").textContent = on ? "Stop" : "Start";
     el("bot-run").classList.toggle("is-running", on);
+    // The Run / Stop under the Transactions bar says the same.
+    if (el("txn-run")) { el("txn-run").classList.toggle("is-running", on); el("txn-run-label").textContent = on ? "Stop" : "Run"; }
     ["bot-market", "bot-pair", "bot-tp", "bot-sl", "bot-tp-tog", "bot-sl-tog"].forEach(function (id) {
       var e = el(id);
       if (e) e.disabled = on;
@@ -606,6 +608,9 @@
       prefs.fields(["bot-market", "bot-pair", "bot-tp", "bot-sl"]);
       prefs.switches(["bot-tp-tog", "bot-sl-tog"]);
     }
+
+    // Run / Stop under the Transactions bar: the bot's own Start/Stop, without opening it.
+    if (el("txn-run")) el("txn-run").addEventListener("click", function () { el("bot-run").click(); });
 
     el("bot-run").addEventListener("click", function () {
       if (running) {
