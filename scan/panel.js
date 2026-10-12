@@ -158,11 +158,12 @@
   }
 
   /* A run that starts on a narrow screen raises the trades, where they arrive; the sheet stays
-     up until it is put away (Analysis does the same). */
+     up until it is put away (Analysis does the same). Not where Start and Stop stay on the page
+     (a phone on its side): there the sheet would cover them. */
   var wasActive = active();
   function onRunChange() {
     var now = active();
-    if (now && !wasActive && txn && sheet()) txn.open();
+    if (now && !wasActive && txn && sheet() && box && box.offsetParent) txn.open();
     wasActive = now;
   }
 
