@@ -276,6 +276,7 @@
        for ever is not persistence, it is a loop that never ends. */
     var fails = 0;
     var busyFor = 0;
+    var rateWait = 0;        // the wait after Deriv's rate limit, longer while it repeats
     var lastLost = false;    // did the trade before this one lose?
     var recoverWith = null;  // the type this recovery opened on, kept until it wins
     var MAX_FAILS = 8;
@@ -344,6 +345,16 @@
           }
           busyFor = 0;
 
+          /* Deriv's limit on how many trades an account asks for in a short time ("You have
+             reached the rate limit for buy."): refused, so nothing was bought. Not a refusal to
+             count: wait, longer while it repeats, then carry on as before. */
+          if (/rate limit/i.test((e && e.message) || "")) {
+            rateWait = Math.min(30000, (rateWait || 1000) * 2);
+            say("Rate limited. Waiting before retry...", "warning");
+            await sleep(rateWait);
+            continue;
+          }
+
           /* An account that cannot cover the stake will not start covering it
              by being asked eight times. Stop on the first refusal and say the
              one thing that fixes it. */
@@ -370,6 +381,7 @@
         if (!alive()) break;
 
         fails = 0;              // a trade got through; the counts start over
+        rateWait = 0;
         busyFor = 0;
         /* A win ends the recovery and frees the type; a loss keeps both, so
            the next trade is the same contract at the next rung. */

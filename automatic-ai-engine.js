@@ -281,6 +281,16 @@
           
           if (errorCode === 'RateLimit' || errorCode === 'TooManyRequests') {
             this.ui.showStatus('Rate limited. Waiting before retry...', 'warning');
+            /* Deriv's limit on how many trades an account asks for in a short time ("You have
+               reached the rate limit for buy."): refused, so nothing was bought, and the
+               connection is fine. Wait, longer while it repeats, then carry on as before. */
+            const rq = data.echo_req || {};
+            if (data.msg_type === 'proposal' || data.msg_type === 'buy' || rq.proposal !== undefined || rq.buy !== undefined) {
+              this.rateWait = Math.min(30000, (this.rateWait || 1000) * 2);
+              this.releaseTrade();
+              this.resumeTrading(this.rateWait);
+              return;
+            }
             setTimeout(() => {
               if (this.isRunning && !this.stopRequested) {
                 this.attemptReconnect('Retrying after rate limit...');
@@ -383,6 +393,9 @@
             break;
           case 'buy':
             if (data.buy?.contract_id) {
+              // Through again after Deriv's rate limit: the status says so, as after a reconnect.
+              if (this.rateWait) this.ui.showStatus('Connected. Pipvana AI is running.', 'success');
+              this.rateWait = 0;
               this.activeContractId = data.buy.contract_id;
               this.ownContracts.add(data.buy.contract_id);
 
