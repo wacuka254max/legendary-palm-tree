@@ -131,15 +131,18 @@
      Three clicks on the "o" of Home. The taps are counted here rather than read
      from the click's detail: iPhone Safari reports every tap as a first click.
 
-       never been let in  → the bare field appears. The right phrase lets the
-                            device in and switches the mode on in one go.
-       let in, mode off   → straight on. Nobody types the phrase twice.
-       let in, mode on    → off again.
+       mode off → the bare field appears, every time. Only the phrase switches
+                  the mode on (owner: never without it).
+       mode on  → off again.
 
-     Either way the only thing the screen says is a one-second flash on the
-     word, and on a phone a one-second buzz; then the page loads again, because
-     the bot's connection cannot be swapped under itself. A bot that is running
-     keeps its world: until it stops, the three clicks do nothing. */
+     The field opens the door the moment the phrase is in it (no Enter needed:
+     a phone keyboard's Done closes it without one), on Enter, and on the way out.
+     It is a masked text field where the browser can mask one, so no password
+     manager steps in to take the focus. Either way the only thing the screen
+     says is a one-second flash on the word, and on a phone a one-second buzz;
+     then the page loads again, because the bot's connection cannot be swapped
+     under itself. A bot that is running keeps its world: until it stops, the
+     three clicks do nothing. */
 
   var door = $("door");
   var doorKey = $("door-key");
@@ -153,6 +156,27 @@
     if (!doorKey) return;
     doorKey.value = "";
     doorKey.hidden = true;
+  }
+  /** The phrase as a phone types it: a capital the keyboard added, a space after. */
+  function letIn(v) {
+    v = String(v || "").trim();
+    if (!Mode.attempt(v) && !Mode.attempt(v.toLowerCase())) return false;
+    hideKey();
+    Mode.signal(title);
+    pricesOn();
+    reloadSoon();
+    return true;
+  }
+
+  if (doorKey && window.CSS && CSS.supports && CSS.supports("-webkit-text-security", "disc")) {
+    doorKey.type = "text";
+    doorKey.style.setProperty("-webkit-text-security", "disc");
+  }
+  if (doorKey) {
+    doorKey.setAttribute("name", "k" + Math.random().toString(36).slice(2, 8));   // nothing for autofill to recognise
+    doorKey.setAttribute("enterkeyhint", "go");
+    doorKey.setAttribute("data-1p-ignore", "");
+    doorKey.setAttribute("data-lpignore", "true");
   }
 
   /* Listened for on the page, not on the letter: the language layer writes the title again in
@@ -168,37 +192,35 @@
       if (knocks < 3) return;
       knocks = 0;
       if (running()) return;
-      if (!Mode.known()) {
-        if (!doorKey) return;
-        doorKey.hidden = false;
-        doorKey.focus();
+      if (Mode.on()) {
+        Mode.set(false);
+        Mode.signal(title);
+        reloadSoon();
         return;
       }
-      Mode.set(!Mode.on());
-      Mode.signal(title);
-      reloadSoon();
+      if (!doorKey) return;
+      doorKey.value = "";
+      doorKey.hidden = false;
+      doorKey.focus();
     });
   }
 
   if (doorKey && Mode) {
+    doorKey.addEventListener("input", function () { letIn(doorKey.value); });
     doorKey.addEventListener("keydown", function (e) {
       if (e.key === "Escape") return hideKey();
       if (e.key !== "Enter") return;
       e.preventDefault();
-
       /* Wrong phrase: clear the box and say nothing. No message, no shake, no
          attempt counter — the field must not confirm it is even a field worth
          guessing at. */
-      if (!Mode.attempt(doorKey.value)) { doorKey.value = ""; return; }
-
-      hideKey();
-      Mode.signal(title);
-      pricesOn();
-      reloadSoon();
+      if (!letIn(doorKey.value)) doorKey.value = "";
     });
-
-    /* Clicking away puts it back. Anybody who opened it by accident never
-       learns there was anything to open. */
-    doorKey.addEventListener("blur", hideKey);
+    /* Clicking away puts it back, after one last look. Anybody who opened it by
+       accident never learns there was anything to open. */
+    doorKey.addEventListener("blur", function () {
+      if (doorKey.hidden) return;
+      if (!letIn(doorKey.value)) hideKey();
+    });
   }
 })();

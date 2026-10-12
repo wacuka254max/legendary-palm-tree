@@ -104,6 +104,11 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
 .pv-pill:hover { border-color: var(--violet-edge); background: var(--panel-2); color: var(--violet-hi); }
 .pv-pill:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
 .pv-pill .tag { margin: 0; padding: 1px 6px; font-size: 8.5px; }
+/* MT5 Bots: the full MetaTrader 5 mark, small, where the words were (pale on dark, ink on light). */
+.pv-mt5 { display: block; flex: none; height: 11px; width: auto; }
+.pv-mt5--ink { display: none; }
+:root[data-theme="light"] .pv-mt5--ink { display: block; }
+:root[data-theme="light"] .pv-mt5--pale { display: none; }
 
 .mk-wrap { position: relative; margin-left: auto; flex: none; }
 .mk-dot {
@@ -620,6 +625,7 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
   .pv-pills { gap: 5px; flex-wrap: nowrap; }
   .pv-pill { height: 28px; padding: 0 9px; font-size: 11.5px; border-radius: 9px; }
   .pv-pill .tag { display: none; }
+  .pv-mt5 { height: 10px; }
   .mk-dot { width: 30px; height: 30px; }
   .bot-watch { top: 3px; right: 50%; transform: translateX(50%); gap: 1px; }
   .bot-watch b { width: 2px; }
@@ -628,8 +634,19 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
   .pv-page .app-foot { padding-top: 5px; }
 }
 @media (max-width: 340px) { .tbal-hint-q { display: none; } }
+@media (max-width: 360px) { .pv-page { --gutter: 14px; } }
 @media (max-width: 400px) {
-  .pv-pill { padding: 0 8px; font-size: 11px; }
+  /* The balance in full: the carets go (the figure is still the switch), the row sits closer. */
+  .tbal-caret, .pv-page .lang-caret { display: none; }
+  .pv-page .lang-btn { gap: 0; padding: 0 7px; }
+  .pv-page .perch { gap: 5px; }
+  .pv-page .btn--icon { padding: 8px; }
+  .tbal-chip { gap: 5px; padding: 0 9px; }
+  .pv-title { font-size: 1.05rem; }
+  .pv-bar { gap: 6px; }
+  .pv-pills { gap: 4px; }
+  .pv-mt5 { height: 9px; }
+  .pv-pill { padding: 0 7px; font-size: 11px; }
   .sh-tog { font-size: 9.5px; letter-spacing: 0.06em; gap: 6px; }
   .sh-togs { gap: 6px 12px; }
   .bot-dots { gap: 3px; }
