@@ -136,13 +136,12 @@
      card then says what it always said). Defaults are never a mistake: the smallest stake, a
      3 USD take profit. The martingale off is no ladder, and the guide says nothing about it. */
   var WHY = {
-    stake: "Stake too high: {stake} on a {bal} balance rides out {n} of the {d} losses in a row this type needs.",
-    stakeBal: "For this stake you needed a balance of {need}.",
-    mult: "Martingale too high: ×{m} instead of ×{def} — your stake rode out {n} of the {d} losses in a row this type needs.",
-    bal: "Balance too small for this type: {bal}.",
-    balNeed: "A {stake} stake needs at least {need} to ride out {d} losses in a row.",
-    tp: "Take profit too high: {tp} is {p}% of your {bal} balance on one run — that is overtrading.",
-    sl: "Stop loss too small: {sl} stopped the Martingale after {k} losses in a row — this type needs room for {d}: at least {need}.",
+    stake: "Stake too high ({stake}) — safe stake: {safe}.",
+    mult: "Martingale too high (×{m}) — use ×{def}.",
+    bal: "Balance too small for this type ({bal}) — recommended balance: {need}.",
+    balOnly: "Balance too small for this type ({bal}).",
+    tp: "Take profit too high ({tp}) — safe target: {safe}.",
+    sl: "Stop loss too small ({sl}) — set at least {need}.",
     note: "Raising the stake, aiming for too much profit in one run, overtrading and trading without enough balance are why most traders fail.",
   };
   /** o: { kind, balance (at the start), stake, mult, defMult (the page's own), tp (0: none set),
@@ -155,26 +154,20 @@
     var safeM = defaults(kind, B, m, min).stake, roomM = cycle(kind, B, safeM, m, min).depth >= d;
     var safeD = defaults(kind, B, def, min).stake, roomD = cycle(kind, B, safeD, def, min).depth >= d;
     if (c.depth < d) {
-      if (roomM && o.stake > safeM + 1e-9) {
-        var needBal = balanceFor(kind, o.stake, m, d, min);
-        out.push([T(WHY.stake, { stake: M(o.stake), bal: M(B), n: c.depth, d: d }), T("Safe stake: {v}.", { v: M(safeM) }),
-          needBal > 0 ? T(WHY.stakeBal, { need: M(needBal) }) : ""].join(" ").trim());
-      } else if (!roomM && roomD && m > def + 1e-9) {
-        out.push(T(WHY.mult, { m: m, def: def, n: c.depth, d: d }));
-      } else if (!roomM) {
-        var need = balanceFor(kind, o.stake, m, d, min), at = o.stake;
-        if (!(need > 0)) { need = balanceFor(kind, min, def, d, min); at = min; }
-        out.push((T(WHY.bal, { bal: M(B) }) + (need > 0 ? " " + T(WHY.balNeed, { stake: M(Math.max(min, at)), need: M(need), d: d }) : "")).trim());
+      if (roomM && o.stake > safeM + 1e-9) out.push(T(WHY.stake, { stake: M(o.stake), safe: M(safeM) }));
+      else if (!roomM && roomD && m > def + 1e-9) out.push(T(WHY.mult, { m: m, def: def }));
+      else if (!roomM) {
+        var need = balanceFor(kind, o.stake, m, d, min) || balanceFor(kind, min, def, d, min);
+        out.push(need > 0 ? T(WHY.bal, { bal: M(B), need: M(need) }) : T(WHY.balOnly, { bal: M(B) }));
       }
     }
     if (o.tp > TP_MIN + 1e-9 && o.tp > cents(B * TP_SHARE) + 1e-9) {
-      out.push(T(WHY.tp, { tp: M(o.tp), p: Math.round(100 * o.tp / B), bal: M(B) }) + " " + T("Safe target: {v}.", { v: M(Math.max(TP_MIN, cents(B * TP_SHARE))) }));
+      out.push(T(WHY.tp, { tp: M(o.tp), safe: M(Math.max(TP_MIN, cents(B * TP_SHARE))) }));
     }
     if (o.why === "sl" && o.sl > 0) {
-      // The losses in a row, from the starting stake, that reach the stop loss.
       for (var st = Math.max(min, o.stake), sum = 0, k = 0; k < 300 && sum < o.sl - 1e-9; k++) { sum = round2(sum + st); st = round2(st * m); }
       var needSl = balanceFor(kind, o.stake, m, d, min) || (roomM ? balanceFor(kind, safeM, m, d, min) : 0);
-      if (k < d && needSl > 0) out.push(T(WHY.sl, { sl: M(o.sl), k: k, d: d, need: M(needSl) }));
+      if (k < d && needSl > 0) out.push(T(WHY.sl, { sl: M(o.sl), need: M(needSl) }));
     }
     return out;
   }
