@@ -99,6 +99,7 @@
     var v = totals.profit || 0;
     p.textContent = (v >= 0 ? "+" : "") + bare(v);
     p.className = "bot-v " + (v > 0 ? "is-up" : v < 0 ? "is-down" : "");
+    paintTxnPl();
   }
 
   function setRunning(on) {
@@ -113,6 +114,7 @@
     });
 
     paintOpener();
+    paintTxnPl();
     figures();
   }
 
@@ -129,6 +131,27 @@
     else if (handle && handle.nextElementSibling !== box) handle.parentNode.insertBefore(box, handle.nextSibling);
     box.classList.toggle("is-in", !!(wide || raised));
     document.documentElement.classList.toggle("txn-open", !wide && raised);
+    // A small screen: the raised transactions and the bot card never cover each other. The card
+    // goes (the run carries on) and its button brings it back.
+    var card = el("bot");
+    if (!wide && raised && card && !card.hidden) {
+      card.hidden = true;
+      if (el("bot-open")) { el("bot-open").hidden = false; paintOpener(); }
+    }
+    paintTxnPl();
+  }
+
+  /* The run's P/L on the Transactions bar while the sheet is parked on a small screen (the bar is
+     only shown there): a small badge at its right end, green or red. */
+  function paintTxnPl() {
+    var b = el("txn-pl"), txn = el("txn");
+    if (!b || !txn) return;
+    var show = running && !txn.classList.contains("is-open");
+    b.hidden = !show;
+    if (!show) return;
+    var v = totals.profit || 0;
+    b.textContent = (v >= 0 ? "+" : "") + bare(v);
+    b.className = "txn-pl" + (v > 0 ? " is-up" : v < 0 ? " is-down" : "");
   }
 
   /* The button that stands in for a closed card has to say whether the bot is
@@ -683,6 +706,9 @@
       open.addEventListener("click", function () {
         card.hidden = false;
         open.hidden = true;
+        // A small screen: the card is not opened under the raised transactions — they go down.
+        var narrow = global.matchMedia && global.matchMedia("(max-width: 1199px)").matches;
+        if (narrow && el("txn") && el("txn").classList.contains("is-open") && host.hideTransactions) host.hideTransactions();
       });
     }
 

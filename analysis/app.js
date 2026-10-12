@@ -1089,6 +1089,8 @@
          parked at the bottom and the trades would otherwise land out of sight;
          on a wide screen the rail is already open and this does nothing. */
       showTransactions: function () { txn.open(); },
+      /* ...and puts them away when the bot card is opened on a phone, so neither covers the other. */
+      hideTransactions: function () { txn.close(); },
 
       /* Live, to the bot, means CAN TRADE — not merely that a socket is open.
          Analysis-only opens a socket for prices on whatever account the login
