@@ -117,7 +117,8 @@
     var safeStake = defaults(kind, balance, m, min).stake;
     return {
       stake: c.depth >= d ? "safe" : c.depth === d - 1 ? "high" : "over", depth: c.depth,
-      atMin: stake <= min + 1e-9, needBal: c.depth >= d ? 0 : balanceFor(kind, stake, m, d, min),
+      // The balance the kind needs at the smallest stake (0.35), with this martingale.
+      atMin: stake <= min + 1e-9, needBal: c.depth >= d ? 0 : balanceFor(kind, min, m, d, min),
       safeStake: cycle(kind, balance, safeStake, m, min).depth >= d ? safeStake : 0,
       // In whole cents, as the figures are typed: 10% of 1,036.67 is 103.66, and 103.67 is over it.
       tp: tp <= cents(balance * TP_SHARE) + 1e-9 ? "safe" : tp <= cents(balance * TP_HIGH) + 1e-9 ? "high" : "over", safeTp: cents(balance * TP_SHARE),
@@ -157,8 +158,11 @@
       if (roomM && o.stake > safeM + 1e-9) out.push(T(WHY.stake, { stake: M(o.stake), safe: M(safeM) }));
       else if (!roomM && roomD && m > def + 1e-9) out.push(T(WHY.mult, { m: m, def: def }));
       else if (!roomM) {
-        var need = balanceFor(kind, o.stake, m, d, min) || balanceFor(kind, min, def, d, min);
+        // The balance the kind needs at the smallest stake (0.35) and the page's own martingale,
+        // the guide's figures; a martingale above the page's is a point of its own.
+        var need = balanceFor(kind, min, def, d, min);
         out.push(need > 0 ? T(WHY.bal, { bal: M(B), need: M(need) }) : T(WHY.balOnly, { bal: M(B) }));
+        if (m > def + 1e-9) out.push(T(WHY.mult, { m: m, def: def }));
       }
     }
     if (o.tp > TP_MIN + 1e-9 && o.tp > cents(B * TP_SHARE) + 1e-9) {
@@ -166,7 +170,9 @@
     }
     if (o.why === "sl" && o.sl > 0) {
       for (var st = Math.max(min, o.stake), sum = 0, k = 0; k < 300 && sum < o.sl - 1e-9; k++) { sum = round2(sum + st); st = round2(st * m); }
-      var needSl = balanceFor(kind, o.stake, m, d, min) || (roomM ? balanceFor(kind, safeM, m, d, min) : 0);
+      // The room the ladder needs: the run's own when its stake was safe, else the guide's
+      // (its safe stake, or the smallest, 0.35, at the page's own martingale), as the other points say.
+      var needSl = c.depth >= d ? balanceFor(kind, o.stake, m, d, min) : roomM ? balanceFor(kind, safeM, m, d, min) : balanceFor(kind, min, def, d, min);
       if (k < d && needSl > 0) out.push(T(WHY.sl, { sl: M(o.sl), need: M(needSl) }));
     }
     return out;

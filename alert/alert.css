@@ -196,21 +196,31 @@ a.tpop-go { display: block; text-align: center; text-decoration: none; }
 }
 
 /* What went wrong (risk.js mistakes): what the run did past the risk guide, as points, on the
-   stop-loss and insufficient-balance cards — which keep their size: while the points show, the
-   mark sits smaller and the rest closer, and alert.js gives their box what is left of the card's
-   usual height (it scrolls for the rest, its foot fading while there is more). */
+   stop-loss and insufficient-balance cards, shown in full (the card grows to hold them, nothing
+   scrolls inside it), then the note as a green tip. While they show, the mark sits smaller and
+   the rest closer; on a short screen closer still, so all of the card shows at once. */
 .tpop-why[hidden] { display: none; }
-.tpop-why {
-  margin: 12px 0 0; padding: 10px 12px; text-align: left; border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--tpop) 30%, transparent); background: var(--panel-2);
-  max-height: 220px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
-}
-.tpop-why.is-more { -webkit-mask-image: linear-gradient(#000 calc(100% - 26px), rgba(0, 0, 0, 0.15)); mask-image: linear-gradient(#000 calc(100% - 26px), rgba(0, 0, 0, 0.15)); }
+.tpop-why { margin: 12px 0 0; display: grid; gap: 8px; text-align: left; }
+.tpop-why-box { padding: 10px 12px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--tpop) 30%, transparent); background: var(--panel-2); }
 .tpop-why-h { margin: 0 0 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tpop); }
 .tpop-why ul { margin: 0; padding: 0 0 0 15px; display: grid; gap: 4px; list-style: disc outside; }
-.tpop-why li { display: list-item; font-size: 12.5px; line-height: 1.42; color: var(--text); }
+.tpop-why li { display: list-item; font-size: 12.5px; line-height: 1.42; color: var(--text); overflow-wrap: anywhere; }
 .tpop-why li::marker { color: var(--tpop); }
-.tpop-why-note { margin: 6px 0 0; padding-top: 6px; border-top: 1px solid var(--line); font-size: 11.5px; line-height: 1.42; font-weight: 600; color: var(--text-2); }
+.tpop-why-tip { --tip: var(--mint, #0f9d63); display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--tip) 34%, transparent); background: color-mix(in srgb, var(--tip) 9%, var(--panel-2)); }
+.tpop-why-tip-i { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--tip) 16%, transparent); color: var(--tip); }
+.tpop-why-tip p { margin: 0; font-size: 11.5px; line-height: 1.42; font-weight: 600; color: var(--text); }
+.tpop-why-tip b { display: block; margin-bottom: 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tip); }
+/* Never past the screen: on the very smallest the card itself can be moved (no bar shows). */
+.tpop.has-why { padding: 12px; }
+.tpop.has-why .tpop-card { max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.tpop.has-why .tpop-card::-webkit-scrollbar { display: none; }
+/* While the points show: the mark beside its kicker and title, the room going to the points. */
+.tpop.has-why .tpop-card { display: grid; grid-template-columns: 1fr auto auto 1fr; column-gap: 12px; align-items: center; }
+.tpop.has-why .tpop-card > * { grid-column: 1 / -1; }
+.tpop.has-why .tpop-card > .tpop-mark { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
+.tpop.has-why .tpop-card > .tpop-k { grid-column: 3; grid-row: 1; margin: 0; text-align: left; align-self: end; }
+.tpop.has-why .tpop-card > .tpop-t { grid-column: 3; grid-row: 2; margin: 0; text-align: left; align-self: start; }
 .tpop.has-why .tpop-card { padding-top: 20px; padding-bottom: 20px; }
 .tpop.has-why .tpop-mark { width: 42px; height: 42px; border-radius: 13px; }
 .tpop.has-why .tpop-mark svg { width: 26px; height: 26px; }
@@ -222,3 +232,20 @@ a.tpop-go { display: block; text-align: center; text-decoration: none; }
 .tpop.has-why .tpop-actions, .tpop.has-why .tpop-card > .tpop-go { margin-top: 12px; }
 .tpop.has-why .tpop-actions { grid-template-columns: 1fr 1fr; }   /* side by side: the room goes to the points */
 @media (max-width: 480px) { .tpop.has-why .tpop-t { font-size: 1rem; } }
+@media (max-height: 680px) {
+  .tpop.has-why .tpop-card { padding-top: 16px; padding-bottom: 14px; }
+  .tpop-why { gap: 6px; margin-top: 8px; }
+  .tpop-why-box, .tpop-why-tip { padding: 8px 10px; }
+  .tpop-why-tip-i { width: 22px; height: 22px; }
+  .tpop.has-why .tpop-mark { width: 36px; height: 36px; }
+  .tpop.has-why .tpop-k { margin-top: 6px; }
+  .tpop.has-why .tpop-figs { margin-top: 8px; padding: 7px 10px; }
+  .tpop.has-why .tpop-actions, .tpop.has-why .tpop-card > .tpop-go { margin-top: 10px; }
+}
+@media (max-height: 600px) {
+  .tpop-why li { font-size: 11.5px; line-height: 1.38; }
+  .tpop-why-tip p { font-size: 11px; line-height: 1.38; }
+  .tpop.has-why .tpop-card { padding-top: 12px; padding-bottom: 12px; }
+  .tpop.has-why .tpop-p { margin-top: 4px; line-height: 1.35; }
+  .tpop.has-why .tpop-figs { padding: 6px 8px; }
+}

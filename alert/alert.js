@@ -53,21 +53,17 @@
   var WHY_NOTE = "Raising the stake, aiming for too much profit in one run, overtrading and trading without enough balance are why most traders fail.";
   function whyBox(list) {
     if (!list || !list.length) return "";
-    return '<div class="tpop-why" data-i18n-skip><p class="tpop-why-h">' + esc(tr("What went wrong")) + "</p><ul>" +
-      list.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ul><p class="tpop-why-note">' + esc(tr(WHY_NOTE)) + "</p></div>";
+    // The points, then the note as a tip of its own (green: advice, not a warning).
+    return '<div class="tpop-why" data-i18n-skip><div class="tpop-why-box"><p class="tpop-why-h">' + esc(tr("What went wrong")) + "</p><ul>" +
+      list.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ul></div><div class="tpop-why-tip"><span class="tpop-why-tip-i" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span><p><b>' +
+      esc(tr("Tip")) + "</b>" + esc(tr(WHY_NOTE)) + "</p></div></div>";
   }
-  /** The card no bigger than it always is: measured as it would be without the points, and
-   *  their box given what is left (it scrolls for the rest, its foot fading while there is more). */
+  /** The points show in full: the card grows to hold them, their box never scrolls. */
   function fitWhy() {
-    var el = open, box = el && el.querySelector(".tpop-why"), card = el && el.querySelector(".tpop-card");
-    if (!box || !card) return;
-    box.style.maxHeight = "";
-    el.classList.remove("has-why"); box.hidden = true;
-    var plain = card.offsetHeight;
-    el.classList.add("has-why"); box.hidden = false;
-    var over = card.offsetHeight - plain;
-    if (over > 0) box.style.maxHeight = Math.max(64, box.offsetHeight - over) + "px";
-    moreWhy();
+    var box = open && open.querySelector(".tpop-why");
+    if (!box) return;
+    open.classList.add("has-why");   // the card set closer while its points show
+    box.style.maxHeight = ""; box.classList.remove("is-more");
   }
   function moreWhy() {
     var box = open && open.querySelector(".tpop-why");
