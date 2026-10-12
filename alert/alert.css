@@ -194,3 +194,31 @@ a.tpop-go { display: block; text-align: center; text-decoration: none; }
   .tpop-back, .tpop-card { transition: none; }
   .tpop-card { transform: none; }
 }
+
+/* What went wrong (risk.js mistakes): what the run did past the risk guide, as points, on the
+   stop-loss and insufficient-balance cards — which keep their size: while the points show, the
+   mark sits smaller and the rest closer, and alert.js gives their box what is left of the card's
+   usual height (it scrolls for the rest, its foot fading while there is more). */
+.tpop-why[hidden] { display: none; }
+.tpop-why {
+  margin: 12px 0 0; padding: 10px 12px; text-align: left; border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--tpop) 30%, transparent); background: var(--panel-2);
+  max-height: 220px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
+}
+.tpop-why.is-more { -webkit-mask-image: linear-gradient(#000 calc(100% - 26px), rgba(0, 0, 0, 0.15)); mask-image: linear-gradient(#000 calc(100% - 26px), rgba(0, 0, 0, 0.15)); }
+.tpop-why-h { margin: 0 0 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tpop); }
+.tpop-why ul { margin: 0; padding: 0 0 0 15px; display: grid; gap: 4px; list-style: disc outside; }
+.tpop-why li { display: list-item; font-size: 12.5px; line-height: 1.42; color: var(--text); }
+.tpop-why li::marker { color: var(--tpop); }
+.tpop-why-note { margin: 6px 0 0; padding-top: 6px; border-top: 1px solid var(--line); font-size: 11.5px; line-height: 1.42; font-weight: 600; color: var(--text-2); }
+.tpop.has-why .tpop-card { padding-top: 20px; padding-bottom: 20px; }
+.tpop.has-why .tpop-mark { width: 42px; height: 42px; border-radius: 13px; }
+.tpop.has-why .tpop-mark svg { width: 26px; height: 26px; }
+.tpop.has-why .tpop-k { margin-top: 10px; }
+.tpop.has-why .tpop-t { margin-top: 3px; font-size: 1.12rem; }
+.tpop.has-why .tpop-p { margin-top: 5px; line-height: 1.45; max-width: none; }
+.tpop.has-why .tpop-figs { margin-top: 10px; padding: 9px 10px; }
+.tpop.has-why .tpop-fig dd { font-size: 14px; margin-top: 2px; }
+.tpop.has-why .tpop-actions, .tpop.has-why .tpop-card > .tpop-go { margin-top: 12px; }
+.tpop.has-why .tpop-actions { grid-template-columns: 1fr 1fr; }   /* side by side: the room goes to the points */
+@media (max-width: 480px) { .tpop.has-why .tpop-t { font-size: 1rem; } }

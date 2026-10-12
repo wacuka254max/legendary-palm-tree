@@ -100,6 +100,7 @@
       startBtn.disabled = running;
       stopBtn.disabled = !running;
       selectEl.disabled = running;
+      if ($("sl-tog")) $("sl-tog").disabled = running;
       startBtn.textContent = running ? "Running…" : "Start";
     },
 
@@ -321,6 +322,29 @@
     return isNaN(v) ? fallback : v;
   }
 
+  /* The stop loss has a switch, off unless turned on (as the Analysis bot's): off, a run has no
+     stop loss at all and the field is hidden, so the risk guide's figures carry it; on, the field
+     is back with its figure. Remembered for the tab (prefs.js), like the figures. */
+  function slOn() { return $("sl-tog") ? $("sl-tog").getAttribute("aria-checked") === "true" : true; }
+  if ($("sl-tog")) {
+    $("sl-tog").addEventListener("click", function () {
+      if (running) return;   // a run keeps the stop loss it started with
+      var on = !slOn();
+      $("sl-tog").setAttribute("aria-checked", String(on));
+      if ($("sl-row")) $("sl-row").hidden = !on;
+    });
+  }
+
+  /* What the run did past the risk guide, for its stop-loss or insufficient-balance card: its
+     figures at its start against the guide's for the balance it started on (risk.js). */
+  var runFig = null;
+  function whyFor(reason) {
+    var R = window.EvieRisk, f = runFig;
+    if (!R || !R.mistakes || !f || f.currency !== "USD") return [];
+    return R.mistakes(Object.assign({}, f, { sl: reason === "sl" ? f.sl : 0, why: reason === "sl" ? "sl" : "funds",
+      money: function (v) { return (window.EvieCurrency ? window.EvieCurrency.bare(v, f.currency) : Number(v).toFixed(2)) + " " + f.currency; } }));
+  }
+
   startBtn.addEventListener("click", function () {
     var account = chosen();
     if (running) return;
@@ -333,7 +357,8 @@
       initialStake: num($("stake"), 1),
       martingaleMultiplier: num($("mart"), 3.1),
       takeProfit: num($("tp"), 100),
-      stopLoss: num($("sl"), 1000)
+      // No stop loss while its switch is off (the engine reads 0 as none).
+      stopLoss: slOn() ? num($("sl"), 1000) : 0
     };
 
     /* The floor belongs to the account's currency. Where Deriv's moves with
@@ -345,6 +370,8 @@
       return ui.showStatus(T("Deriv's minimum stake is {min}.", { min: floor + " " + cur }), "error");
     }
 
+    runFig = { kind: "differ", balance: Number(account.balance), stake: config.initialStake, mult: config.martingaleMultiplier, defMult: 3.1,
+      tp: config.takeProfit, sl: config.stopLoss, min: floor != null ? floor : 0.35, currency: cur };
     startBtn.disabled = true;
     ui.showStatus(T("Opening a trading session on {account}…", { account: account.id }), "info");
 
@@ -363,7 +390,8 @@
           // resolve — but the engine checks for one before it starts, so this
           // stands in for it.
           resolveAuthToken: function () { return "otp"; },
-          otpAuthenticated: true
+          otpAuthenticated: true,
+          whyFor: whyFor
         });
         return bot.start(config);
       })
@@ -409,6 +437,9 @@
   /* Stake, martingale and the two limits survive a reload but not the tab —
      see prefs.js. Bound last so the page's own handlers hear the restore. */
   if (window.EviePrefs) {
-    window.EviePrefs.scope("automatic-ai").fields(["stake", "mart", "tp", "sl"]);
+    // One scope for both: each keeps its own copy of what is stored, and two would overwrite each other.
+    var prefs = window.EviePrefs.scope("automatic-ai");
+    prefs.fields(["stake", "mart", "tp", "sl"]);
+    if ($("sl-tog")) prefs.switches(["sl-tog"]);
   }
 })();

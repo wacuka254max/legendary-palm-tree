@@ -124,6 +124,61 @@
     };
   }
 
+  /* ── what went wrong: a run that ended on its stop loss or the balance ── */
+
+  /* Read against this guide's own figures for the balance the run started on, whether the
+     guide was on or not: a stake whose martingale ladder rides out fewer losses in a row than
+     the kind needs (and the safe stake, and the balance that stake needed), a martingale too
+     high for any stake to be safe when the page's own would have been, a balance too small for
+     the kind at any stake (and the balance it needed), a take profit over 10% of the balance on
+     one run, and, at a stop loss, one that ended the ladder before the losses the kind needs.
+     One point each, with the figure that keeps to the guide; none when the run kept to it (the
+     card then says what it always said). Defaults are never a mistake: the smallest stake, a
+     3 USD take profit. The martingale off is no ladder, and the guide says nothing about it. */
+  var WHY = {
+    stake: "Stake too high: {stake} on a {bal} balance rides out {n} of the {d} losses in a row this type needs.",
+    stakeBal: "For this stake you needed a balance of {need}.",
+    mult: "Martingale too high: ×{m} instead of ×{def} — your stake rode out {n} of the {d} losses in a row this type needs.",
+    bal: "Balance too small for this type: {bal}.",
+    balNeed: "A {stake} stake needs at least {need} to ride out {d} losses in a row.",
+    tp: "Take profit too high: {tp} is {p}% of your {bal} balance on one run — that is overtrading.",
+    sl: "Stop loss too small: {sl} stopped the Martingale after {k} losses in a row — this type needs room for {d}: at least {need}.",
+    note: "Raising the stake, aiming for too much profit in one run, overtrading and trading without enough balance are why most traders fail.",
+  };
+  /** o: { kind, balance (at the start), stake, mult, defMult (the page's own), tp (0: none set),
+   *  sl (0: none), why ("sl" or "funds"), min, money(v) }. The points, in the page's language. */
+  function mistakes(o) {
+    var B = o && o.balance, kind = o && o.kind, min = (o && o.min) || 0.35, m = o && o.mult, M = o && o.money;
+    if (!(B > 0) || !kind || !(o.stake > 0) || !(m > 1) || typeof M !== "function") return [];
+    var d = perKind(DEPTH, kind), out = [], c = cycle(kind, B, o.stake, m, min);
+    var def = o.defMult > 1 ? o.defMult : m;
+    var safeM = defaults(kind, B, m, min).stake, roomM = cycle(kind, B, safeM, m, min).depth >= d;
+    var safeD = defaults(kind, B, def, min).stake, roomD = cycle(kind, B, safeD, def, min).depth >= d;
+    if (c.depth < d) {
+      if (roomM && o.stake > safeM + 1e-9) {
+        var needBal = balanceFor(kind, o.stake, m, d, min);
+        out.push([T(WHY.stake, { stake: M(o.stake), bal: M(B), n: c.depth, d: d }), T("Safe stake: {v}.", { v: M(safeM) }),
+          needBal > 0 ? T(WHY.stakeBal, { need: M(needBal) }) : ""].join(" ").trim());
+      } else if (!roomM && roomD && m > def + 1e-9) {
+        out.push(T(WHY.mult, { m: m, def: def, n: c.depth, d: d }));
+      } else if (!roomM) {
+        var need = balanceFor(kind, o.stake, m, d, min), at = o.stake;
+        if (!(need > 0)) { need = balanceFor(kind, min, def, d, min); at = min; }
+        out.push((T(WHY.bal, { bal: M(B) }) + (need > 0 ? " " + T(WHY.balNeed, { stake: M(Math.max(min, at)), need: M(need), d: d }) : "")).trim());
+      }
+    }
+    if (o.tp > TP_MIN + 1e-9 && o.tp > cents(B * TP_SHARE) + 1e-9) {
+      out.push(T(WHY.tp, { tp: M(o.tp), p: Math.round(100 * o.tp / B), bal: M(B) }) + " " + T("Safe target: {v}.", { v: M(Math.max(TP_MIN, cents(B * TP_SHARE))) }));
+    }
+    if (o.why === "sl" && o.sl > 0) {
+      // The losses in a row, from the starting stake, that reach the stop loss.
+      for (var st = Math.max(min, o.stake), sum = 0, k = 0; k < 300 && sum < o.sl - 1e-9; k++) { sum = round2(sum + st); st = round2(st * m); }
+      var needSl = balanceFor(kind, o.stake, m, d, min) || (roomM ? balanceFor(kind, safeM, m, d, min) : 0);
+      if (k < d && needSl > 0) out.push(T(WHY.sl, { sl: M(o.sl), k: k, d: d, need: M(needSl) }));
+    }
+    return out;
+  }
+
   /* ── painting ───────────────────────────────────────────────────────── */
 
   var T = function (s, vars) {
@@ -199,5 +254,6 @@
     });
   }
 
-  global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, maxStake: maxStake, TP_MIN: TP_MIN, guide: guide, wireGuide: wireGuide };
+  global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, maxStake: maxStake, TP_MIN: TP_MIN, guide: guide, wireGuide: wireGuide,
+    mistakes: mistakes, WHY_NOTE: WHY.note };
 })(window);

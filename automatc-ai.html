@@ -158,10 +158,11 @@ location.replace("/home.html");})();
         <span class="fld-k"><span>Take profit</span><b class="fig-risk" id="tp-risk" data-i18n-skip hidden></b></span>
         <input class="fld-i" id="tp" type="number" min="0" step="1" value="100" inputmode="decimal" />
       </label>
-      <label class="fld">
-        <span class="fld-k">Stop loss</span>
-        <input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" />
-      </label>
+      <!-- The stop loss (off unless turned on): off, a run has none and its field is hidden. -->
+      <div class="fld">
+        <span class="fld-k fld-k--tog">Stop loss <button class="tog" id="sl-tog" type="button" role="switch" aria-checked="false" aria-label="Stop loss"><span class="tog-dot"></span></button></span>
+        <div id="sl-row" hidden><input class="fld-i" id="sl" type="number" min="0" step="1" value="1000" inputmode="decimal" aria-label="Stop loss" /></div>
+      </div>
       <div class="fig-note" id="fig-note" data-i18n-skip hidden></div>
       <!-- The risk guide (off unless turned on): Safe / High / Too high on the stake and the take
            profit, and the safe figure. On or off, the starting figures for the balance. -->

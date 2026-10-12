@@ -29,6 +29,8 @@
       // When using Deriv Options OTP-authenticated WebSocket URLs, the server already authorizes.
       // In that case we should skip sending an explicit `authorize` message.
       this.otpAuthenticated = !!options.otpAuthenticated;
+      // What the run did past the risk guide, for the stop-loss and insufficient-balance cards (the page's risk.js).
+      this.whyFor = typeof options.whyFor === 'function' ? options.whyFor : null;
 
       this.resetState();
     }
@@ -290,7 +292,10 @@
           /* An account that cannot cover the stake will not start covering it
              by being retried. Stop, and say the one thing that fixes it. */
           if (/insufficient/i.test(message)) {
-            if (window.PopupNotifications) window.PopupNotifications.showNeedsDeposit();
+            if (window.PopupNotifications) {
+              const why = this.whyFor ? this.whyFor('funds') : [];
+              window.PopupNotifications.showNeedsDeposit(why && why.length ? { why } : undefined);
+            }
             this.stop('Stopped — the account balance is insufficient.', 'error');
             return;
           }
@@ -902,11 +907,13 @@
       if (this.config.stopLoss > 0 && this.totalProfit <= -Math.abs(this.config.stopLoss)) {
         const stats = this.getStatsSnapshot();
         if (window.PopupNotifications) {
+          const why = this.whyFor ? this.whyFor('sl') : [];
           window.PopupNotifications.showStopLoss({
             profit: stats.totalProfit,
             trades: stats.totalTrades,
             time: stats.runningTime,
-            currency: stats.currency
+            currency: stats.currency,
+            why: why && why.length ? why : null
           });
         }
         this.stop('Stop loss hit. Bot stopped.', 'error');

@@ -209,6 +209,23 @@
     };
   }
 
+  /* What the run did past the risk guide, for its stop-loss or insufficient-balance card: its
+     own figures at its start against the guide's for the balance it started on (risk.js). The
+     page's own martingale is ×3.1 (analysis/app.js). */
+  var runFig = null;
+  function figuresAtStart() {
+    var st = host.settings, l = limits();
+    return { kind: kindOf(), balance: host.balance ? Number(host.balance()) : NaN, stake: st.stake, mult: st.martingale ? st.multiplier : 1, defMult: 3.1,
+      tp: l.tp > 0 ? l.tp : 0, min: host.minStake ? host.minStake() : 0.35, currency: host.currency ? host.currency() : "" };
+  }
+  function whyOf(hit) {
+    var R = global.EvieRisk, f = runFig;
+    if (!R || !R.mistakes || !f || f.currency !== "USD") return [];
+    var l = limits();
+    return R.mistakes(Object.assign({}, f, { sl: hit === "sl" && l.sl > 0 ? l.sl : 0, why: hit === "sl" ? "sl" : "funds",
+      money: function (v) { return bare(v) + " " + f.currency; } }));
+  }
+
   /** Why the run should end, or null to carry on. Judged on the ledger. */
   function stopReason(t) {
     var l = limits();
@@ -386,9 +403,10 @@
             trades: totals.trades,
             currency: host && host.currency && host.currency()
           };
+          var why = ended.hit === "tp" ? [] : whyOf(ended.hit);
           if (ended.hit === "tp") global.PopupNotifications.showTakeProfit(card);
-          else if (ended.hit === "funds") global.PopupNotifications.showNeedsDeposit();
-          else global.PopupNotifications.showStopLoss(card);
+          else if (ended.hit === "funds") global.PopupNotifications.showNeedsDeposit(why.length ? { why: why } : undefined);
+          else { if (why.length) card.why = why; global.PopupNotifications.showStopLoss(card); }
         }
       }
     }
@@ -594,6 +612,7 @@
          cleared. Nothing from the last run is carried into this one. */
       stopping = false;
       armStop();
+      runFig = figuresAtStart();
       runId = host.startRun();
       syncStats();
       setRunning(true);

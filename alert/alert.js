@@ -47,6 +47,34 @@
 
   var open = null;   // only ever one: a second card over the first says nothing
 
+  /* What went wrong (risk.js mistakes): the points come in the page's language already; the
+     heading and the closing note are put in it here. */
+  var tr = function (s) { return typeof global.t === "function" ? global.t(s) : s; };
+  var WHY_NOTE = "Raising the stake, aiming for too much profit in one run, overtrading and trading without enough balance are why most traders fail.";
+  function whyBox(list) {
+    if (!list || !list.length) return "";
+    return '<div class="tpop-why" data-i18n-skip><p class="tpop-why-h">' + esc(tr("What went wrong")) + "</p><ul>" +
+      list.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + '</ul><p class="tpop-why-note">' + esc(tr(WHY_NOTE)) + "</p></div>";
+  }
+  /** The card no bigger than it always is: measured as it would be without the points, and
+   *  their box given what is left (it scrolls for the rest, its foot fading while there is more). */
+  function fitWhy() {
+    var el = open, box = el && el.querySelector(".tpop-why"), card = el && el.querySelector(".tpop-card");
+    if (!box || !card) return;
+    box.style.maxHeight = "";
+    el.classList.remove("has-why"); box.hidden = true;
+    var plain = card.offsetHeight;
+    el.classList.add("has-why"); box.hidden = false;
+    var over = card.offsetHeight - plain;
+    if (over > 0) box.style.maxHeight = Math.max(64, box.offsetHeight - over) + "px";
+    moreWhy();
+  }
+  function moreWhy() {
+    var box = open && open.querySelector(".tpop-why");
+    if (box) box.classList.toggle("is-more", box.scrollTop + box.clientHeight < box.scrollHeight - 2);
+  }
+  global.addEventListener("resize", function () { if (open) fitWhy(); });
+
   function esc(v) {
     return String(v == null ? "" : v)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -109,6 +137,7 @@
         '<p class="tpop-p">' + esc(message) + "</p>" +
         (details.more ? '<p class="tpop-p tpop-p--more">' + esc(details.more) + "</p>" : "") +
         (details.steps ? '<ol class="tpop-steps">' + details.steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>" : "") +
+        whyBox(details.why) +
         (figs ? '<dl class="tpop-figs">' + figs + "</dl>" : "") +
         (action
           ? '<div class="tpop-actions">' +
@@ -127,6 +156,11 @@
     document.body.appendChild(el);
     open = el;
     document.addEventListener("keydown", onKey);
+    if (details.why && details.why.length) {
+      fitWhy();
+      var wb = el.querySelector(".tpop-why");
+      if (wb) wb.addEventListener("scroll", moreWhy, { passive: true });
+    }
 
     /* A timeout rather than requestAnimationFrame: rAF is throttled in a
        background tab, and a bot that finishes while the tab is in the
@@ -152,6 +186,7 @@
        the market allows: it is what survives a losing streak long enough for
        the recovery to work. */
     showStopLoss: function (details) {
+      // details.why: what the run did past the risk guide (risk.js), when it did.
       return show("loss", "Limit reached", "Stop loss hit",
         "Try the minimum stake on the next run — a smaller stake rides out more losing streaks.", details);
     },
@@ -161,9 +196,10 @@
        the one thing that does. The figures are left off: what the session made
        is beside the point when the answer is "top it up". */
     showNeedsDeposit: function (details) {
+      // Only the points (details.why), if any: the figures stay off this card.
       return show("loss", "Bot stopped", "Your account balance is insufficient",
         "There is not enough in the options account to place the next trade.",
-        details, { href: DEPOSIT_URL, label: "Deposit" });
+        details && details.why ? { why: details.why } : details, { href: DEPOSIT_URL, label: "Deposit" });
     },
 
     /* No real account yet (real.js): why it is needed, the three steps, and the way to
