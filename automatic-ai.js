@@ -88,14 +88,24 @@
      The engine calls these eight methods and nothing else; this object is the
      whole contract between it and the page. */
 
+  /* The waits the engine says it is in, by its own words: Deriv's rate limit, the line coming
+     back (each attempt), an authorisation renewed, a contract update asked for again. */
+  var WAITS = /^(Rate limited\. Waiting before retry\.\.\.|Authorization expired\. Reconnecting\.\.\.|Waiting on a contract update — re-asking Deriv\.\.\.)$|\(Attempt \d+\/10\)$/;
+  function waitShow(text) {
+    if (window.PopupNotifications && window.PopupNotifications.wait) window.PopupNotifications.wait(histEl, text);
+  }
+
   var ui = {
     showStatus: function (message, type) {
       statusEl.textContent = message || "";
       statusEl.className = "status" + (type ? " status--" + type : "");
+      // A wait while running (Deriv's rate limit, the line, a contract update): the trades show it.
+      waitShow(running && WAITS.test(message || "") ? message : "");
     },
 
     setRunningState: function (on) {
       running = !!on;
+      if (!running) waitShow("");
       if (!running) figures();
       startBtn.disabled = running;
       stopBtn.disabled = !running;
@@ -144,6 +154,7 @@
     },
 
     addHistoryEntry: function (e) {
+      waitShow("");   // a trade landed: the wait is over
       if (histEl.querySelector(".acct--none")) histEl.innerHTML = "";
       var li = document.createElement("li");
       li.className = "trade " + (e.win ? "trade--win" : "trade--loss");

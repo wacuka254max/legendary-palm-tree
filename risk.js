@@ -120,8 +120,9 @@
       // The balance the kind needs at the smallest stake (0.35), with this martingale.
       atMin: stake <= min + 1e-9, needBal: c.depth >= d ? 0 : balanceFor(kind, min, m, d, min),
       safeStake: cycle(kind, balance, safeStake, m, min).depth >= d ? safeStake : 0,
+      min: min,
       // In whole cents, as the figures are typed: 10% of 1,036.67 is 103.66, and 103.67 is over it.
-      tp: tp <= cents(balance * TP_SHARE) + 1e-9 ? "safe" : tp <= cents(balance * TP_HIGH) + 1e-9 ? "high" : "over", safeTp: cents(balance * TP_SHARE),
+      tp: tp <= cents(balance * TP_SHARE) + 1e-9 ? "safe" : tp <= cents(balance * TP_HIGH) + 1e-9 ? "high" : "over", safeTp: cents(balance * TP_SHARE), tpVal: tp,
     };
   }
 
@@ -156,11 +157,17 @@
     var safeD = defaults(kind, B, def, min).stake, roomD = cycle(kind, B, safeD, def, min).depth >= d;
     if (c.depth < d) {
       if (roomM && o.stake > safeM + 1e-9) out.push(T(WHY.stake, { stake: M(o.stake), safe: M(safeM) }));
-      else if (!roomM && roomD && m > def + 1e-9) out.push(T(WHY.mult, { m: m, def: def }));
+      else if (!roomM && roomD && m > def + 1e-9) {
+        // The page's martingale has a safe stake on this balance: a stake above it is a point too.
+        if (o.stake > safeD + 1e-9) out.push(T(WHY.stake, { stake: M(o.stake), safe: M(safeD) }));
+        out.push(T(WHY.mult, { m: m, def: def }));
+      }
       else if (!roomM) {
         // The balance the kind needs at the smallest stake (0.35) and the page's own martingale,
         // the guide's figures; a martingale above the page's is a point of its own.
         var need = balanceFor(kind, min, def, d, min);
+        // A stake above the smallest is a point of its own too: the smallest is the one to use.
+        if (o.stake > min + 1e-9) out.push(T(WHY.stake, { stake: M(o.stake), safe: M(min) }));
         out.push(need > 0 ? T(WHY.bal, { bal: M(B), need: M(need) }) : T(WHY.balOnly, { bal: M(B) }));
         if (m > def + 1e-9) out.push(T(WHY.mult, { m: m, def: def }));
       }
@@ -211,11 +218,16 @@
     if (!note) return;
     var USE = "\u0001", lines = [];
     // No stake safe on this balance: it says so, and the balance this one needs (at the smallest stake, in green — advice, not a warning).
+    // A figure to click whenever one is not safe: the safe stake, or the smallest when no stake is
+    // safe on this balance; the take profit's 10% of the balance, never under 3 USD.
+    var useStake = r ? (r.safeStake > 0 ? r.safeStake : !r.atMin && r.min > 0 ? r.min : 0) : 0;
+    var useTp = r && isFinite(r.safeTp) ? Math.max(TP_MIN, r.safeTp) : 0;
     if (r && r.stake && r.stake !== "safe") lines.push([r.atMin ? "safe" : r.stake, T("Stake"),
       (r.depth === 1 ? T("survives 1 loss in a row.") : r.depth ? T("survives {n} losses in a row.", { n: r.depth }) : T("is more than the balance.")) + " " +
       (r.safeStake > 0 ? T("Safe stake: {v}.", { v: USE }) : T("The balance is small for this type.") +
-        (r.needBal > 0 ? " " + T("Recommended balance: {v}.", { v: money(r.needBal) }) : "")), r.safeStake > 0 && ["stake", r.safeStake]]);
-    if (r && r.tp && r.tp !== "safe" && r.safeTp >= 1 && isFinite(r.safeTp)) lines.push([r.tp, T("Take profit"), T("Safe target: {v}.", { v: USE }), ["tp", r.safeTp]]);
+        (r.needBal > 0 ? " " + T("Recommended balance: {v}.", { v: money(r.needBal) }) : "") +
+        (useStake > 0 ? " " + T("Safe stake: {v}.", { v: USE }) : "")), useStake > 0 && ["stake", useStake]]);
+    if (r && r.tp && r.tp !== "safe" && useTp > 0 && r.tpVal > useTp + 1e-9) lines.push([r.tp, T("Take profit"), T("Safe target: {v}.", { v: USE }), ["tp", useTp]]);
     note.hidden = !lines.length;
     note.innerHTML = lines.map(function (l) {
       var text = esc(l[2]);

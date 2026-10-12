@@ -170,7 +170,34 @@
     return el;
   }
 
+  /* A wait a running bot is in — Deriv's rate limit, the line coming back, a contract update
+     asked for again, the last trade settling: a card that keeps moving, put just before
+     `anchor` (the trades list, or the bot's status line), until `text` is "" again. */
+  var WAIT_SUB = "The bot carries on by itself — no need to do anything.";
+  function waitCard(anchor, text) {
+    var box = anchor && anchor.parentNode;
+    if (!box) return;
+    var w = null;
+    for (var n = box.firstElementChild; n; n = n.nextElementSibling) if (n.classList.contains("bot-wait")) w = n;
+    if (!text) { if (w) w.hidden = true; return; }
+    if (!w) {
+      w = document.createElement("div");
+      w.className = "bot-wait";
+      w.setAttribute("role", "status");
+      w.setAttribute("aria-live", "polite");
+      w.setAttribute("data-i18n-skip", "");
+      w.innerHTML = '<span class="bot-wait-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="bot-wait-t"><strong></strong><span></span></span>';
+      box.insertBefore(w, anchor);
+    }
+    w.querySelector("strong").textContent = tr(text);
+    w.querySelector(".bot-wait-t > span").textContent = tr(WAIT_SUB);
+    w.hidden = false;
+  }
+
   global.PopupNotifications = {
+    /* A running bot's wait, shown moving before `anchor`; "" puts it away. */
+    wait: waitCard,
+
     /* Reached what they asked for. Say so and get out of the way. */
     showTakeProfit: function (details) {
       return show("win", "Target reached", "Congratulations!",

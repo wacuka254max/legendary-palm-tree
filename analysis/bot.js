@@ -80,7 +80,12 @@
     if (!s) return;
     s.textContent = msg || "";
     s.className = "bot-status" + (kind ? " bot-status--" + kind : "");
+    // A wait while running (Deriv's rate limit, the line, the last trade, the ticks): shown moving.
+    if (global.PopupNotifications && global.PopupNotifications.wait) {
+      global.PopupNotifications.wait(s, running && BOT_WAITS.indexOf(msg) >= 0 ? msg : "");
+    }
   }
+  var BOT_WAITS = ["Rate limited. Waiting before retry...", "Reconnecting to Deriv…", "Waiting for the last trade to settle…", "Waiting for enough ticks…"];
 
   /** Read this run's figures back off the ledger and show them. */
   function syncStats() {
