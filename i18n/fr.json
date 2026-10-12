@@ -693,5 +693,7 @@
 "Your Deriv accounts":"Vos comptes Deriv",
 "of the last 10 ticks":"des 10 derniers ticks",
 "⚠️ Stop Loss Hit":"⚠️ Stop loss atteint",
-"🎉 Take Profit Reached!":"🎉 Take profit atteint !"
+"🎉 Take Profit Reached!":"🎉 Take profit atteint !",
+"If your full balance is not visible, transfer funds to your Deriv options account.":"Si votre solde complet n'apparaît pas, transférez des fonds vers votre compte options Deriv.",
+"Full balance not visible?":"Solde complet non visible ?"
 }

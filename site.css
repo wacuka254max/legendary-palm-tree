@@ -628,3 +628,8 @@ a { color: inherit; text-decoration: none; }
   --differ: #64748b;
   --alt-tint: rgba(0, 0, 0, 0.035);
 }
+
+/* An installed app has nothing to install: the button never shows inside one (owner). */
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui), (display-mode: window-controls-overlay), (display-mode: tabbed) {
+  [data-install] { display: none !important; }
+}
