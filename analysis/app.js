@@ -1043,6 +1043,8 @@
          account to trade on), the floor, and the starting stake — set
          quietly, never over the user's own, mid-trade or mid-ladder. */
       balance: function () { return analysisOnly ? NaN : balanceNow; },
+      // A demo account picked: its take profit starts at a quarter of the usual one.
+      demo: function () { var a = accounts.filter(function (x) { return x.id === $("account").value; })[0]; return !analysisOnly && !!(a && a.demo); },
       minStake: minStake,
       stakeOwn: function () { return stakeOwn; },
       ladderIdle: function () { return !inFlight && nextStake === settings.stake; },

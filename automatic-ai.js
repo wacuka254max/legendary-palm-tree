@@ -209,6 +209,8 @@
     if (known && !running) {
       // The same starting figures, the guide on or off: it only says what they risk.
       var d = ok ? R.defaults("differ", bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
+      // On a demo account the take profit starts at a quarter of the usual one, so a test run ends quickly.
+      if (d && a && a.demo) d.tp = Math.floor(d.tp * 25 + 1e-9) / 100;
       if (d) {
         if (!own.stake && Math.abs(num($("stake"), 0) - d.stake) > 1e-9) $("stake").value = String(d.stake);
         if (!own.tp && Math.abs(num($("tp"), 0) - d.tp) > 1e-9) $("tp").value = String(d.tp);

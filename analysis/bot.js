@@ -566,6 +566,8 @@
     if (known && !running) {
       // The same starting figures, the guide on or off: it only says what they risk.
       var d = ok ? R.defaults(kind, bal, mult, min) : mult > 1 ? { stake: min, tp: R.TP_MIN } : null;
+      // On a demo account the take profit starts at a quarter of the usual one, so a test run ends quickly.
+      if (d && host.demo && host.demo()) d.tp = Math.floor(d.tp * 25 + 1e-9) / 100;
       if (d) {
         if (!host.stakeOwn() && host.ladderIdle() && Math.abs(d.stake - st.stake) > 1e-9) host.setStake(d.stake);
         if (!tpOwn && Math.abs(parseFloat(el("bot-tp").value) - d.tp) > 1e-9) el("bot-tp").value = String(d.tp);
