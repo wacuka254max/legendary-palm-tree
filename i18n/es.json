@@ -695,5 +695,20 @@
 "⚠️ Stop Loss Hit":"⚠️ Stop loss alcanzado",
 "🎉 Take Profit Reached!":"🎉 ¡Take profit alcanzado!",
 "If your full balance is not visible, transfer funds to your Deriv options account.":"Si no ves todo tu saldo, transfiere fondos a tu cuenta de opciones de Deriv.",
-"Full balance not visible?":"¿No ves todo tu saldo?"
+"Full balance not visible?":"¿No ves todo tu saldo?",
+"Welcome! Let's get you trading":"¡Bienvenido! Empecemos a operar",
+"Your real account balance":"Saldo de tu cuenta real",
+"You have not created a real account yet":"Aún no has creado una cuenta real",
+"Create your real Deriv account":"Crea tu cuenta real de Deriv",
+"Deposit, then transfer to your Options account":"Deposita y luego transfiere a tu cuenta de opciones",
+"Press Start: the bot does the rest":"Pulsa Iniciar: el bot hace el resto",
+"Create your real Deriv account in a few minutes, then come back here. The bot trades on it.":"Crea tu cuenta real de Deriv en unos minutos y luego vuelve aquí. El bot opera en ella.",
+"Your real account is ready. Deposit on Deriv, then transfer the money to your Options account: that is the balance the bot trades.":"Tu cuenta real está lista. Deposita en Deriv y luego transfiere el dinero a tu cuenta de opciones: ese es el saldo con el que opera el bot.",
+"You're all set. Press Start: the bot scans the markets, trades for you and stops by itself when your take profit is hit.":"Todo listo. Pulsa Iniciar: el bot analiza los mercados, opera por ti y se detiene solo cuando se alcanza tu take profit.",
+"Switch to real and start":"Cambiar a real y empezar",
+"Got it, let's start":"Entendido, empecemos",
+"Transfer to Options":"Transferir a opciones",
+"That was your demo. Ready to trade for real?":"Eso fue tu demo. ¿Listo para operar en real?",
+"Switch to real trading":"Cambiar a operar en real",
+"or try the demo":"o prueba la demo"
 }

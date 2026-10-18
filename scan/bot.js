@@ -2316,18 +2316,20 @@
     var v = welcomeView(); if (!v) return;
     var r = realAccount(), st = welcomeStage(), c = D.current();
     v.querySelector("h2").textContent = T("Welcome! Let's get you trading");
-    v.querySelector(".bmw-bal-k").textContent = T("Your real account balance");
-    v.querySelector(".bmw-bal-v").textContent = r ? money(Number(r.balance) || 0, r.currency || "USD") : T("Not opened yet");
+    v.querySelector(".bmw-bal-k").textContent = r ? T("Your real account balance") : T("Real account");
+    var bv = v.querySelector(".bmw-bal-v");
+    bv.textContent = r ? money(Number(r.balance) || 0, r.currency || "USD") : T("You have not created a real account yet");
+    bv.classList.toggle("bmw-bal-v--text", !r);
     var order = ["open", "fund", "start"], at = order.indexOf(st);
-    var words = { open: T("Open your real Deriv account"), fund: T("Add funds to your Options account"), start: T("Press Start: the bot does the rest") };
+    var words = { open: T("Create your real Deriv account"), fund: T("Deposit, then transfer to your Options account"), start: T("Press Start: the bot does the rest") };
     Array.prototype.forEach.call(v.querySelectorAll(".bmw-steps li"), function (li, i) {
       li.textContent = words[li.getAttribute("data-s")];
       li.className = i < at ? "is-done" : i === at ? "is-now" : "";
     });
     v.querySelector(".bmw-msg").textContent = st === "open"
-      ? T("The bot trades on a real Deriv account. Open yours in a few minutes, then come back here.")
+      ? T("Create your real Deriv account in a few minutes, then come back here. The bot trades on it.")
       : st === "fund"
-        ? T("Your real account is ready. Add funds to start: make a deposit, or move money you already have on Deriv to your Options account.")
+        ? T("Your real account is ready. Deposit on Deriv, then transfer the money to your Options account: that is the balance the bot trades.")
         : T("You're all set. Press Start: the bot scans the markets, trades for you and stops by itself when your take profit is hit.");
     var go = v.querySelector('[data-act="go"]'), move = v.querySelector('[data-act="move"]'), off = v.querySelector('[data-act="close"]');
     if (st === "start") {
@@ -2336,10 +2338,10 @@
     } else {
       go.removeAttribute("data-start"); go.target = "_blank"; go.rel = "noopener noreferrer";
       go.href = st === "open" ? createRealUrl() : pageLink("dashboard/deposit", DEPOSIT_URL);
-      go.textContent = st === "open" ? T("Open my real account") : T("Deposit");
+      go.textContent = st === "open" ? T("Create real account") : T("Deposit");
     }
     move.hidden = st !== "fund";
-    move.textContent = T("Move funds to Options");
+    move.textContent = T("Transfer to Options");
     off.textContent = T("Close");
     if (!v.hidden) welcomeAccent(v);
   }
@@ -2393,7 +2395,7 @@
   }
   /** No real account: the welcome says it (once a visit), or else the popup on opening one. */
   function offerRealOrWelcome() {
-    if (welcome.shown) return;
+    if (welcome.shown || welcomeResting()) return;   // the welcome said it this visit (closed: not again in other words)
     if (!welcome.done && !welcomeResting() && !simOpen() && !modal.view && openWelcome()) return;
     offerReal();
   }
@@ -2419,7 +2421,7 @@
       });
     }
     box.querySelector(".bmw-toreal-t").textContent = T("That was your demo. Ready to trade for real?");
-    box.querySelector("a").textContent = realAccount() ? T("Switch to real trading") : T("Open my real account");
+    box.querySelector("a").textContent = realAccount() ? T("Switch to real trading") : T("Create real account");
     box.hidden = false;
   }
   (function () {
@@ -2427,6 +2429,7 @@
       ".bm-welcome .bmw-bal{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 0 12px}" +
       ".bm-welcome .bmw-bal-k{font-size:12.5px;opacity:.72;letter-spacing:.02em}" +
       ".bm-welcome .bmw-bal-v{font-size:30px;font-weight:800;letter-spacing:-.01em;line-height:1.15}" +
+      ".bm-welcome .bmw-bal-v.bmw-bal-v--text{font-size:17px;font-weight:700;letter-spacing:0;line-height:1.3;max-width:320px;text-align:center}" +
       ".bm-welcome .bmw-steps{list-style:none;margin:0 auto;padding:0;display:grid;gap:8px;max-width:330px;text-align:left;counter-reset:bmw}" +
       ".bm-welcome .bmw-steps li{counter-increment:bmw;display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.3;opacity:.5}" +
       ".bm-welcome .bmw-steps li::before{content:counter(bmw);flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;border:2px solid currentColor;box-sizing:border-box}" +
@@ -2552,7 +2555,14 @@
   $("bmRoot").addEventListener("click", function (e) { if (e.target.closest("[data-bm-close]")) closeModal(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("bmRoot").hidden) closeModal(); });
   global.addEventListener("pvr:account", onAccount);
-  global.addEventListener("langchange", function () { paintRun(); paintButton(); paintMin(); paintNow(); paintType(); paintVariants(); if (dynamicMult(state.type, formVariant)) paintMult(state.type, formVariant); if (modal.view === "bmReal") realWords(); paintRisk(); if (whyShown && modal.view === whyShown.view) { paintWhy(whyShown.view, whyShown.box, whyShown.r, whyShown.why); fitWhy(); } });   // the word, in the new language; a typed figure stays
+  global.addEventListener("langchange", function () {
+    if (modal.view === "bmWelcome") paintWelcome();
+    var tr = $("bmWin") && $("bmWin").querySelector(".bmw-toreal");
+    if (tr && !tr.hidden) {
+      tr.querySelector(".bmw-toreal-t").textContent = T("That was your demo. Ready to trade for real?");
+      tr.querySelector("a").textContent = realAccount() ? T("Switch to real trading") : T("Create real account");
+    }
+    paintRun(); paintButton(); paintMin(); paintNow(); paintType(); paintVariants(); if (dynamicMult(state.type, formVariant)) paintMult(state.type, formVariant); if (modal.view === "bmReal") realWords(); paintRisk(); if (whyShown && modal.view === whyShown.view) { paintWhy(whyShown.view, whyShown.box, whyShown.r, whyShown.why); fitWhy(); } });   // the word, in the new language; a typed figure stays
   global.addEventListener("beforeunload", function (e) { if (run && run.active) { e.preventDefault(); e.returnValue = ""; } });
 
   // The column heads line up with the rows whatever the scrollbar takes.

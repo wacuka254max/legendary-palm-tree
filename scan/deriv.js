@@ -54,6 +54,36 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var T = function (s) { return typeof global.t === "function" ? global.t(s) : s; };
+
+  /* Real is the account every visit opens on (owner, Oct 18). A demo picked stays for this visit
+     only, or for a demo run a reload interrupted; a login with only a demo opens on the way to a
+     real account, its demo one tap away ("or try the demo"). */
+  function demoThisVisit(v) {
+    try {
+      if (v === true) sessionStorage.setItem(PICK + "_visit", "demo");
+      else if (v === false) sessionStorage.removeItem(PICK + "_visit");
+      return sessionStorage.getItem(PICK + "_visit") === "demo";
+    } catch (e) { return false; }
+  }
+  var tryDemoBack = null;
+  function demoOffer(on, back) {
+    if (back) tryDemoBack = back;
+    var btn = document.getElementById("acctTryDemo");
+    if (!btn) {
+      if (!on) return;
+      var real = document.getElementById("acctOpenReal") || document.querySelector("#acct .tbal-open-real, #acct .cs-open-real");
+      if (!real || !real.parentNode) return;
+      btn = document.createElement("button"); btn.type = "button"; btn.id = "acctTryDemo"; btn.className = "acct-try-demo";
+      real.parentNode.insertBefore(btn, real.nextSibling);
+      btn.addEventListener("click", function () { demoThisVisit(true); btn.hidden = true; if (tryDemoBack) tryDemoBack(); });
+      global.addEventListener("langchange", function () { btn.textContent = T("or try the demo"); });
+      var s = document.createElement("style");
+      s.textContent = ".acct-try-demo{display:inline-flex;align-items:center;margin-left:8px;padding:4px 2px;background:none;border:0;font:inherit;font-size:12px;font-weight:600;color:inherit;opacity:.85;text-decoration:underline;text-underline-offset:2px;cursor:pointer;white-space:nowrap}.acct-try-demo[hidden]{display:none!important}";
+      document.head.appendChild(s);
+    }
+    btn.textContent = T("or try the demo");
+    btn.hidden = !on;
+  }
   var store = {
     get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
@@ -177,11 +207,13 @@
     if (!accounts.length) return noReal("none");
     // A run on the demo that a reload interrupted resumes there: the chip shows the demo with it.
     var sv = savedRun(), on = sv && account(sv.account);
-    if (on && on.type === "demo") { showDemo = true; store.set(PICK, on.id); }
+    if (on && on.type === "demo") { showDemo = true; store.set(PICK, on.id); demoThisVisit(true); }
     picked = pickShown();
     if (!picked) return noReal("real");
     // Only a demo: it is in use, and the bot offers a real account (needsReal() "real").
     needReal = accounts.some(function (a) { return a.type === "real"; }) ? null : "real";
+    if (needReal === "real" && !demoThisVisit()) { var all = accounts; picked = null; demoOffer(true, function () { start(all); }); return noReal("real"); }
+    demoOffer(false);
     $("acct").classList.remove("is-noreal");
     clearState();
     $("acct").hidden = false;
@@ -239,7 +271,7 @@
    *  the first active real one (the demo, when revealed, if there is no real). */
   function pickShown() {
     var list = accounts.filter(shown), saved = store.get(PICK);
-    if (saved && list.some(function (a) { return a.id === saved; })) return saved;
+    if (saved && list.some(function (a) { return a.id === saved && (a.type === "real" || demoThisVisit()); })) return saved;
     var active = list.filter(function (a) { return a.status === "active"; });
     var a = active.filter(function (x) { return x.type === "real"; })[0] || active[0] || list[0];
     return a ? a.id : null;
@@ -280,6 +312,7 @@
       return { id: String(a.id), type: a.type === "real" ? "real" : "demo", currency: a.currency || "", balance: a.balance, status: a.status || "active", at: 0 };
     });
     picked = pickShown();
+    if (picked && account(picked) && account(picked).type !== "real" && !demoThisVisit()) picked = null;   // only a demo: start() shows the way to a real one
     if (!picked) return;
     $("acct").hidden = false;
     painted = true;
@@ -336,6 +369,7 @@
       if (!row || row.disabled) return;
       if (busy()) { openMenu(false); return; }          // a running bot keeps its account
       picked = row.getAttribute("data-id");
+      demoThisVisit(!!(account(picked) && account(picked).type === "demo"));
       var a = account(picked);
       store.set(PICK, picked);
       openMenu(false);
