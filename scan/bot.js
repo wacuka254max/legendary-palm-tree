@@ -1159,7 +1159,7 @@
 
   var modal = { view: null, onClose: null, lastFocus: null, glide: false };
   function openModal(view) {
-    ["bmScan", "bmDone", "bmErr", "bmWin", "bmLoss", "bmFund", "bmHold", "bmReal"].forEach(function (id) { if ($(id)) $(id).hidden = id !== view; });
+    ["bmScan", "bmDone", "bmErr", "bmWin", "bmLoss", "bmFund", "bmHold", "bmReal", "bmWelcome"].forEach(function (id) { if ($(id)) $(id).hidden = id !== view; });
     if ($("bmRoot").hidden) {
       modal.lastFocus = document.activeElement;
       $("bmRoot").hidden = false;
@@ -1174,6 +1174,7 @@
   function closeModal() {
     if ($("bmRoot").hidden) return;
     var was = modal.view;
+    if (was === "bmWelcome") { try { sessionStorage.setItem(WELCOME_KEY, "closed"); } catch (e) {} }   // closed: it rests for the visit
     $("bmRoot").hidden = true;
     document.documentElement.style.overflow = "";
     modal.view = null;
@@ -1633,6 +1634,7 @@
       }
       r.errors = 0;
       r.refused = 0;
+      if (isRealId(r.account)) welcomeDone();   // the first real trade: the welcome has done its work
       r.rateWait = 0;
       r.showStake = null;
       record(r, { market: pick.m.name, sym: pick.m.sym, side: pick.side, share: pick.share }, res);
@@ -2006,6 +2008,7 @@
     $("bmWinAmt").textContent = signed(r.pl, r.currency);
     $("bmWinSum").textContent = fill(T("Trades: {n} · Won: {w} · Lost: {l}"), { n: r.n, w: r.won, l: r.lost });
     result("bmWin");
+    toRealOffer(r);
   }
 
   /* ── the stop-loss popup ───────────────────────────────────────────── */
@@ -2199,6 +2202,250 @@
     el.hidden = !text;
   }
 
+  /* ── the welcome (owner, Oct 13) ───────────────────────────────────── */
+
+  /* A new trader is met with a welcome in this page's own take-profit popup (its background,
+     its icon place and, the first time only, its confetti): the real balance, and the one step
+     they are on — open a real account, add funds (deposit, or move money already on Deriv into
+     Options), or press Start. It follows them until their first real trade (Deriv's profit
+     table says whether there was one), never over another popup or during a run; closed, it
+     rests for the visit. On a demo's take profit the popup offers the switch to real trading. */
+  var WELCOME_KEY = PX_KEY.replace(/px$/, "welcome");
+  var welcome = { done: false, shown: false, busy: false, checked: null, empty: false, retryAt: 0, el: null, confetti: false };
+  try { welcome.done = localStorage.getItem(WELCOME_KEY) === "done"; } catch (e) {}
+  var DEPOSIT_URL = "https://home.deriv.com/dashboard/deposit?from=portfolio&depositSheet=1&currency=USD";
+  var MOVE_URL = "https://home.deriv.com/dashboard/portfolio";
+  function welcomeDone() {
+    if (welcome.done) return;
+    welcome.done = true;
+    try { localStorage.setItem(WELCOME_KEY, "done"); } catch (e) {}
+    if (modal.view === "bmWelcome") closeModal();
+  }
+  function welcomeResting() { try { return sessionStorage.getItem(WELCOME_KEY) === "closed"; } catch (e) { return false; } }
+  function simOpen() { var s = document.querySelector(".sim-card"); return !!(s && s.offsetParent !== null); }
+  function isRealId(id) { var a = id && D.accountOf(id); return !!(a && a.type === "real"); }
+  function realAccount() {
+    var list = (D.accounts && D.accounts()) || [];
+    for (var i = 0; i < list.length; i++) {
+      var x = list[i];
+      if (x && x.type === "real" && (x.status || "active") === "active") return D.accountOf(x.id) || x;
+    }
+    return null;
+  }
+  function createRealUrl() { var a = $("bmReal") && $("bmReal").querySelector("a[href]"); return a ? a.href : "https://home.deriv.com/dashboard/home"; }
+  function pageLink(part, fallback) { var a = document.querySelector('#scan a[href*="' + part + '"]') || document.querySelector('a[href*="' + part + '"]'); return a ? a.href : fallback; }
+  /** The real account picked in this page's own account switcher (no trade, nothing else). */
+  function toReal() {
+    var r = realAccount(); if (!r) return false;
+    var c = D.current(); if (c && c.id === r.id) return true;
+    var mode = document.querySelector('#acctModes [data-mode="real"]');
+    if (mode) { mode.click(); return true; }
+    var menu = $("acctMenu"), btn = $("acctBtn");
+    if (!menu || !btn) return false;
+    if (menu.hidden) btn.click();
+    var row = menu.querySelector('.tbal-row.is-real[data-id="' + r.id + '"]') || menu.querySelector(".tbal-row.is-real");
+    if (row) { row.click(); return true; }
+    if (!menu.hidden) btn.click();
+    return false;
+  }
+  var ROCKET = '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>';
+  function welcomeView() {
+    if (welcome.el) return welcome.el;
+    var win = $("bmWin"), real = $("bmReal");
+    if (!win || !real) return null;
+    var v = win.cloneNode(true);
+    v.id = "bmWelcome"; v.hidden = true; v.classList.add("bm-welcome");
+    Array.prototype.forEach.call(v.querySelectorAll("[id]"), function (n) { n.removeAttribute("id"); });
+    // The design's backdrop pieces stay (confetti, the icon), with the heading and its first line.
+    var seenH = false, msg = null;
+    Array.prototype.slice.call(v.children).forEach(function (n) {
+      if (n.tagName === "H2") { seenH = true; return; }
+      if (!seenH && (n.classList.contains("bm-confetti") || n.querySelector("svg"))) return;
+      if (seenH && !msg && n.tagName === "P") { msg = n; return; }
+      n.parentNode.removeChild(n);
+    });
+    var icon = v.querySelector(":scope > :not(.bm-confetti) svg");
+    if (icon) { icon.innerHTML = ROCKET; icon.setAttribute("fill", "none"); icon.setAttribute("stroke", "currentColor"); }
+    var h = v.querySelector("h2");
+    if (!msg) { msg = document.createElement("p"); h.parentNode.insertBefore(msg, h.nextSibling); }
+    msg.className = (msg.className ? msg.className + " " : "") + "bmw-msg";
+    var top = document.createElement("div"); top.className = "bmw-top";
+    top.innerHTML = '<div class="bmw-bal"><span class="bmw-bal-k"></span><b class="bmw-bal-v" data-i18n-skip></b></div>' +
+      '<ol class="bmw-steps"><li data-s="open"></li><li data-s="fund"></li><li data-s="start"></li></ol>';
+    h.parentNode.insertBefore(top, msg);
+    // Buttons in this page's own look: the real-account popup's two.
+    var srcGo = real.querySelector("a[href]"), srcOff = real.querySelector("button");
+    var acts = document.createElement("div"); acts.className = "bmw-acts";
+    // The main button is the take-profit popup's own (its green, this page's look); the others
+    // are the real-account popup's quiet ones.
+    var winBtn = win.querySelector("[data-bm-close]");
+    var go = document.createElement("a"); go.className = winBtn ? winBtn.className : srcGo ? srcGo.className : "btn btn-blue"; go.setAttribute("data-act", "go");
+    var move = document.createElement("a"); move.className = srcOff ? srcOff.className : "btn"; move.setAttribute("data-act", "move");
+    move.href = pageLink("dashboard/portfolio", MOVE_URL); move.target = "_blank"; move.rel = "noopener noreferrer";
+    var off = document.createElement("button"); off.type = "button"; off.className = srcOff ? srcOff.className : "btn"; off.setAttribute("data-act", "close");
+    acts.appendChild(go); acts.appendChild(move); acts.appendChild(off);
+    msg.parentNode.insertBefore(acts, msg.nextSibling);
+    acts.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-act]"); if (!b) return;
+      var act = b.getAttribute("data-act");
+      if (act === "close") { closeModal(); return; }
+      if (act === "go" && b.getAttribute("data-start") === "1") {
+        e.preventDefault();
+        toReal();
+        closeModal();
+        var s = $("botGo"); if (s) setTimeout(function () { try { s.focus(); s.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (x) {} }, 120);
+      }
+      // A link (open the real account, deposit, move to Options) opens Deriv in a new tab; the
+      // welcome stays, and follows them to the next step when they are back.
+    });
+    win.parentNode.insertBefore(v, win.nextSibling);
+    // The take-profit popup's own themed card (rules on #bmWin) dresses the welcome too.
+    try {
+      Array.prototype.forEach.call(document.styleSheets, function (sh) {
+        var rules; try { rules = sh.cssRules; } catch (x) { return; }
+        Array.prototype.slice.call(rules || []).forEach(function (ru) {
+          if (ru.selectorText && ru.selectorText.indexOf("#bmWin") >= 0) sh.insertRule(ru.cssText.split("#bmWin").join("#bmWelcome"), sh.cssRules.length);
+        });
+      });
+    } catch (x) {}
+    welcome.el = v;
+    return v;
+  }
+  function welcomeStage() { var r = realAccount(); return !r ? "open" : !(Number(r.balance) > 0) ? "fund" : "start"; }
+  function paintWelcome() {
+    var v = welcomeView(); if (!v) return;
+    var r = realAccount(), st = welcomeStage(), c = D.current();
+    v.querySelector("h2").textContent = T("Welcome! Let's get you trading");
+    v.querySelector(".bmw-bal-k").textContent = T("Your real account balance");
+    v.querySelector(".bmw-bal-v").textContent = r ? money(Number(r.balance) || 0, r.currency || "USD") : T("Not opened yet");
+    var order = ["open", "fund", "start"], at = order.indexOf(st);
+    var words = { open: T("Open your real Deriv account"), fund: T("Add funds to your Options account"), start: T("Press Start: the bot does the rest") };
+    Array.prototype.forEach.call(v.querySelectorAll(".bmw-steps li"), function (li, i) {
+      li.textContent = words[li.getAttribute("data-s")];
+      li.className = i < at ? "is-done" : i === at ? "is-now" : "";
+    });
+    v.querySelector(".bmw-msg").textContent = st === "open"
+      ? T("The bot trades on a real Deriv account. Open yours in a few minutes, then come back here.")
+      : st === "fund"
+        ? T("Your real account is ready. Add funds to start: make a deposit, or move money you already have on Deriv to your Options account.")
+        : T("You're all set. Press Start: the bot scans the markets, trades for you and stops by itself when your take profit is hit.");
+    var go = v.querySelector('[data-act="go"]'), move = v.querySelector('[data-act="move"]'), off = v.querySelector('[data-act="close"]');
+    if (st === "start") {
+      go.removeAttribute("target"); go.href = "#"; go.setAttribute("data-start", "1");
+      go.textContent = c && c.type !== "real" ? T("Switch to real and start") : T("Got it, let's start");
+    } else {
+      go.removeAttribute("data-start"); go.target = "_blank"; go.rel = "noopener noreferrer";
+      go.href = st === "open" ? createRealUrl() : pageLink("dashboard/deposit", DEPOSIT_URL);
+      go.textContent = st === "open" ? T("Open my real account") : T("Deposit");
+    }
+    move.hidden = st !== "fund";
+    move.textContent = T("Move funds to Options");
+    off.textContent = T("Close");
+    if (!v.hidden) welcomeAccent(v);
+  }
+  /** The step in hand wears the main button's colour (its fill, or its ink when the fill is a
+   *  tint) — read with the welcome on screen, where the popup's own colours apply. */
+  function welcomeAccent(v) {
+    try {
+      var go = v.querySelector('[data-act="go"]'), cs = getComputedStyle(go), bg = cs.backgroundColor;
+      var m = bg.match(/rgba?\(([^)]+)\)/), al = m ? m[1].split(",") : [];
+      v.style.setProperty("--bmw-acc", al.length < 4 || Number(al[3]) >= 0.6 ? bg : cs.color);
+    } catch (x) {}
+  }
+  function openWelcome() {
+    var v = welcomeView(); if (!v) return false;
+    paintWelcome();
+    var cf = v.querySelector(".bm-confetti");
+    if (cf && welcome.confetti) cf.parentNode.removeChild(cf);   // the confetti once
+    welcome.confetti = true;
+    welcome.shown = true;
+    openModal("bmWelcome");
+    welcomeAccent(v);
+    return true;
+  }
+  /** Shown once a visit when it applies: the profit table of the real account read first. */
+  function welcomeMaybe() {
+    if (welcome.done || welcome.shown || welcome.busy || welcomeResting()) return;
+    if (run || !resumeTried || modal.view || !$("bmRoot").hidden || simOpen()) return;
+    var r = realAccount();
+    if (r && !welcome.empty) {
+      if (welcome.checked === r.id || Date.now() < welcome.retryAt) return;
+      welcome.busy = true;
+      D.askOn(r.id, { profit_table: 1, limit: 1 }, 10000).then(function (pt) {
+        welcome.busy = false;
+        if (!pt || pt.error || !pt.profit_table) { welcomeRetry(); return; }
+        welcome.checked = r.id;
+        var n = Number(pt.profit_table.count) || (pt.profit_table.transactions || []).length;
+        if (n > 0) { welcomeDone(); return; }     // a trader already: no welcome
+        welcome.empty = true;
+        welcomeMaybe();
+      }, function () { welcome.busy = false; welcomeRetry(); });
+      return;
+    }
+    openWelcome();
+  }
+  /** The real account's line not open yet (or a moment's refusal): asked again shortly, a few times. */
+  function welcomeRetry() {
+    welcome.tries = (welcome.tries || 0) + 1;
+    if (welcome.tries > 8) return;
+    welcome.retryAt = Date.now() + 15000;
+    setTimeout(welcomeMaybe, 15500);
+  }
+  /** No real account: the welcome says it (once a visit), or else the popup on opening one. */
+  function offerRealOrWelcome() {
+    if (welcome.shown) return;
+    if (!welcome.done && !welcomeResting() && !simOpen() && !modal.view && openWelcome()) return;
+    offerReal();
+  }
+  /** On a demo's take profit: the switch to real trading, under the result. */
+  function toRealOffer(r) {
+    var w = $("bmWin"); if (!w) return;
+    var box = w.querySelector(".bmw-toreal");
+    var a = r && D.accountOf(r.account), demo = !!(a && a.type === "demo");
+    if (!demo) { if (box) box.hidden = true; return; }
+    if (!box) {
+      box = document.createElement("div"); box.className = "bmw-toreal";
+      var src = $("bmReal") && $("bmReal").querySelector("a[href]");
+      var t = document.createElement("p"); t.className = "bmw-toreal-t";
+      var b = document.createElement("a"); b.className = src ? src.className : "btn btn-blue"; b.href = "#";
+      box.appendChild(t); box.appendChild(b);
+      var host = w.querySelector("[data-bm-close]");
+      while (host && host.parentNode !== w) host = host.parentNode;
+      if (host) w.insertBefore(box, host); else w.appendChild(box);
+      b.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (!toReal()) global.open(createRealUrl(), "_blank", "noopener");
+        closeModal();
+      });
+    }
+    box.querySelector(".bmw-toreal-t").textContent = T("That was your demo. Ready to trade for real?");
+    box.querySelector("a").textContent = realAccount() ? T("Switch to real trading") : T("Open my real account");
+    box.hidden = false;
+  }
+  (function () {
+    var css = ".bm-welcome .bmw-top{margin:10px 0 2px}" +
+      ".bm-welcome .bmw-bal{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 0 12px}" +
+      ".bm-welcome .bmw-bal-k{font-size:12.5px;opacity:.72;letter-spacing:.02em}" +
+      ".bm-welcome .bmw-bal-v{font-size:30px;font-weight:800;letter-spacing:-.01em;line-height:1.15}" +
+      ".bm-welcome .bmw-steps{list-style:none;margin:0 auto;padding:0;display:grid;gap:8px;max-width:330px;text-align:left;counter-reset:bmw}" +
+      ".bm-welcome .bmw-steps li{counter-increment:bmw;display:flex;align-items:center;gap:10px;font-size:14px;line-height:1.3;opacity:.5}" +
+      ".bm-welcome .bmw-steps li::before{content:counter(bmw);flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;border:2px solid currentColor;box-sizing:border-box}" +
+      ".bm-welcome .bmw-steps li.is-now{opacity:1;font-weight:700}" +
+      ".bm-welcome .bmw-steps li.is-now::before{background:var(--bmw-acc,currentColor);border-color:var(--bmw-acc,currentColor);color:#fff}" +
+      ".bm-welcome .bmw-steps li.is-done{opacity:.85}" +
+      ".bm-welcome .bmw-steps li.is-done::before{content:'\\2713';background:#22c55e;border-color:#22c55e;color:#fff}" +
+      ".bm-welcome .bmw-msg{margin:12px auto 0;max-width:360px}" +
+      ".bm-welcome .bmw-acts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}" +
+      ".bm-welcome .bmw-acts [hidden]{display:none!important}" +
+      ".bm-welcome .bmw-acts>a,.bm-welcome .bmw-acts>button{display:flex;align-items:center;justify-content:center;text-decoration:none;box-sizing:border-box;margin:0;text-align:center}" +
+      ".bm-welcome .bmw-acts>[data-act=go]{flex:1 1 100%;width:100%}" +
+      ".bm-welcome .bmw-acts>[data-act=move],.bm-welcome .bmw-acts>[data-act=close]{flex:1 1 0;min-width:0;white-space:normal;line-height:1.2;padding-left:12px;padding-right:12px}" +
+      ".bmw-toreal{margin:14px 0 6px;display:flex;flex-direction:column;align-items:center;gap:8px}" +
+      ".bmw-toreal[hidden]{display:none}" +
+      ".bmw-toreal-t{margin:0;font-size:14px;font-weight:600}";
+    var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
+  })();
+
   /* ── wiring ────────────────────────────────────────────────────────── */
 
   function onAccount() {
@@ -2212,7 +2459,8 @@
       // The figures from no balance (a balance left from another login would set them otherwise).
       if (!(run && run.active)) paintFigures();
       if (modal.view === "bmReal") realWords();   // the login's kind changed with the popup up
-      if (on && !realOffered) { realOffered = true; offerReal(); }
+      if (on && !realOffered) { realOffered = true; offerRealOrWelcome(); }
+      if (modal.view === "bmWelcome") paintWelcome();
       return;
     }
     if (modal.view === "bmReal") {
@@ -2232,7 +2480,10 @@
     if (!resumeTried) resumeRun();
     // Only a demo: it stays in use; once a visit, with nothing else on screen and no run
     // going or coming back, the popup says how to open a real account.
-    if (on && !realOffered && D.needsReal && D.needsReal() === "real" && resumeTried && !run && !modal.view) { realOffered = true; offerReal(); }
+    if (on && !realOffered && D.needsReal && D.needsReal() === "real" && resumeTried && !run && !modal.view) { realOffered = true; offerRealOrWelcome(); }
+    // The welcome to a new trader: follows them step by step until their first real trade.
+    if (modal.view === "bmWelcome") paintWelcome();
+    else if (on) welcomeMaybe();
   }
 
   loadForm();
