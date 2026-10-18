@@ -85,7 +85,7 @@
       global.PopupNotifications.wait(s, running && BOT_WAITS.indexOf(msg) >= 0 ? msg : "");
     }
   }
-  var BOT_WAITS = ["Rate limited. Waiting before retry...", "Reconnecting to Deriv…", "Waiting for the last trade to settle…", "Waiting for enough ticks…"];
+  var BOT_WAITS = ["Analyzing the markets…", "Reconnecting to Deriv…", "Waiting for the last trade to settle…", "Waiting for enough ticks…"];
 
   /** Read this run's figures back off the ledger and show them. */
   function syncStats() {
@@ -395,7 +395,7 @@
              count: wait, longer while it repeats, then carry on as before. */
           if (/rate limit/i.test((e && e.message) || "")) {
             rateWait = Math.min(30000, (rateWait || 1000) * 2);
-            say("Rate limited. Waiting before retry...", "warning");
+            say("Analyzing the markets…", "info");
             await sleep(rateWait);
             continue;
           }

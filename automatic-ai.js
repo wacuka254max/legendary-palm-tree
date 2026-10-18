@@ -90,7 +90,7 @@
 
   /* The waits the engine says it is in, by its own words: Deriv's rate limit, the line coming
      back (each attempt), an authorisation renewed, a contract update asked for again. */
-  var WAITS = /^(Rate limited\. Waiting before retry\.\.\.|Authorization expired\. Reconnecting\.\.\.|Waiting on a contract update — re-asking Deriv\.\.\.)$|\(Attempt \d+\/10\)$/;
+  var WAITS = /^(Analyzing the markets…|Authorization expired\. Reconnecting\.\.\.|Waiting on a contract update — re-asking Deriv\.\.\.)$|\(Attempt \d+\/10\)$/;
   function waitShow(text) {
     if (window.PopupNotifications && window.PopupNotifications.wait) window.PopupNotifications.wait(histEl, text);
   }

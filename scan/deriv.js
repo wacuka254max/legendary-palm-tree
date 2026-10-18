@@ -413,6 +413,9 @@
     this.streams = {};       // req_id → function (message)
     this.waiting = false;    // a reconnect is scheduled
     this.fetching = false;   // a one-time URL is being asked for
+    this.spent = [];         // when each budgeted request went (see the budget below)
+    this.queue = [];         // requests waiting for room in it
+    this.qTimer = 0;
   }
   /** Resolves once the socket is open, or rejects after `ms`. */
   Feed.prototype.whenOpen = function (ms) {
@@ -430,9 +433,58 @@
   /** One request, one answer — resolved even when the answer carries an error,
    *  so the caller reads Deriv's own reason. Rejects only when no answer could
    *  come: not connected, the line dropped, or `ms` passed. */
-  Feed.prototype.ask = function (req, ms) {
+  /* ── Deriv's request budget on this line (owner, Oct 18) ─────────────────
+     Deriv counts proposal, proposal_open_contract, buy and sell together, per connection, and
+     refuses what goes past 80 in a minute, or past 50 sent at once — "You have reached the rate
+     limit for buy." when the refused one is a buy (measured on Deriv itself, Oct 18). So this
+     line stays under it: a buy goes while the last minute holds fewer than BUDGET_ALL; prices
+     only while it holds fewer than BUDGET_PRICE (BUDGET_BG for the background ones), so there
+     is always room left for the buys; never more than BURST in BURST_MS. A price that does not
+     fit waits its turn here — the most urgent first — and nothing is ever dropped. */
+  var BUDGET_MS = 60000, BUDGET_ALL = 72, BUDGET_PRICE = 54, BUDGET_BG = 36, BURST = 36, BURST_MS = 5000;
+  var BUDGETED = ["proposal", "proposal_open_contract", "buy", "sell"];
+  function budgeted(req) { return BUDGETED.some(function (k) { return req[k] !== undefined; }); }
+  /** What this line has sent of the budget: in the last minute, and in the last BURST_MS. */
+  Feed.prototype.spentNow = function () {
+    var s = this.spent, now = Date.now(), b = 0;
+    while (s.length && now - s[0] >= BUDGET_MS) s.shift();
+    for (var i = s.length - 1; i >= 0 && now - s[i] < BURST_MS; i--) b++;
+    return { minute: s.length, burst: b };
+  };
+  Feed.prototype.fits = function (cap) { var u = this.spentNow(); return u.minute < cap && u.burst < BURST; };
+  /** Resolves when one more request under `cap` fits, and counts it: at once when it fits and
+   *  nothing as urgent is waiting; otherwise in turn, the higher cap (the more urgent) first. */
+  Feed.prototype.turn = function (cap) {
     var self = this;
-    return this.whenOpen(10000).then(function () {
+    if (self.fits(cap) && !self.queue.some(function (q) { return q.cap >= cap; })) { self.spent.push(Date.now()); return Promise.resolve(); }
+    return new Promise(function (resolve) {
+      self.queue.push({ cap: cap, go: resolve });
+      self.queue.sort(function (a, b) { return b.cap - a.cap; });   // stable: in order within a cap
+      self.pump();
+    });
+  };
+  Feed.prototype.pump = function () {
+    var self = this;
+    clearTimeout(self.qTimer);
+    while (self.queue.length && self.fits(self.queue[0].cap)) { self.spent.push(Date.now()); self.queue.shift().go(); }
+    if (self.queue.length) self.qTimer = setTimeout(function () { self.pump(); }, 200);
+  };
+  /** Resolves once a buy fits the budget (at once, nearly always). Nothing is counted: the buy
+   *  itself is, when it is sent. */
+  Feed.prototype.room = function () {
+    var self = this;
+    return new Promise(function (resolve) {
+      (function check() { if (self.stopped || self.fits(BUDGET_ALL)) return resolve(); setTimeout(check, 150); })();
+    });
+  };
+
+  Feed.prototype.ask = function (req, ms, opts) {
+    var self = this;
+    var paced = budgeted(req) ? this.whenOpen(10000).then(function () {
+      // A price waits for room; one asked in the background waits longer (opts.background).
+      return self.turn(req.proposal === undefined ? BUDGET_ALL : opts && opts.background ? BUDGET_BG : BUDGET_PRICE);
+    }) : Promise.resolve();
+    return paced.then(function () { return self.whenOpen(10000); }).then(function () {
       return new Promise(function (resolve, reject) {
         var id = ++self.seq;
         var t = setTimeout(function () { delete self.pending[id]; reject(new Error("Deriv did not answer in time.")); }, ms || 15000);
@@ -451,6 +503,7 @@
     this.streams[id] = onMsg;
     try { this.ws.send(JSON.stringify(Object.assign({}, req, { req_id: id }))); }
     catch (e) { delete this.streams[id]; return 0; }
+    if (budgeted(req)) this.spent.push(Date.now());   // a buy: counted in the budget (room() was asked first)
     return id;
   };
   Feed.prototype.endStream = function (id) { delete this.streams[id]; };
@@ -683,9 +736,14 @@
       var a = account(id), f = a && feeds[a.id];
       return a ? { id: a.id, type: a.type, currency: a.currency, balance: a.balance, live: !!(f && f.live) } : null;
     },
-    askOn: function (id, req, ms) {
+    askOn: function (id, req, ms, opts) {
       var f = feeds[id];
-      return f ? f.ask(req, ms) : Promise.reject(new Error("No live connection for this account yet."));
+      return f ? f.ask(req, ms, opts) : Promise.reject(new Error("No live connection for this account yet."));
+    },
+    /** Resolves once a buy on this account fits Deriv's request budget (at once, nearly always). */
+    roomOn: function (id) {
+      var f = feeds[id];
+      return f ? f.room() : Promise.resolve();
     },
     streamOn: function (id, req, onMsg) {
       var f = feeds[id];

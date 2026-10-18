@@ -280,7 +280,7 @@
           }
           
           if (errorCode === 'RateLimit' || errorCode === 'TooManyRequests') {
-            this.ui.showStatus('Rate limited. Waiting before retry...', 'warning');
+            this.ui.showStatus('Analyzing the markets…', 'info');
             /* Deriv's limit on how many trades an account asks for in a short time ("You have
                reached the rate limit for buy."): refused, so nothing was bought, and the
                connection is fine. Wait, longer while it repeats, then carry on as before. */
@@ -293,7 +293,7 @@
             }
             setTimeout(() => {
               if (this.isRunning && !this.stopRequested) {
-                this.attemptReconnect('Retrying after rate limit...');
+                this.attemptReconnect('Reconnecting to Deriv…');
               }
             }, 5000);
             return;

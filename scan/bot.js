@@ -473,10 +473,23 @@
    *  at 0.35 every market rounds to the same cents, and a Martingale stake
    *  would then land on one that pays less. A refusal for rate keeps the
    *  last price; any other (a market that offers no return) clears it. */
+  /** A payout read under 5 minutes ago, at this amount — the run's own rule for fresh prices. */
+  function freshRatio(m, key, amount) {
+    var f = m && m.fresh && m.fresh[key];
+    return !!(f && f.amt === amount && Date.now() - f.at <= 5 * 60000 && m.ratio[key] != null);
+  }
+  function markFresh(m, key, amount) { (m.fresh || (m.fresh = {}))[key] = { at: Date.now(), amt: amount }; }
   async function price(accountId, stake, gen, onEach, spec) {
     var amount = Math.max(round2(stake) || 0, hub.minStake, PRICE_REF);
     var jobs = [];
     hub.order.forEach(function (sym) { spec.prices.forEach(function (p) { jobs.push([sym, p]); }); });
+    // A payout read under 5 minutes ago at this amount (by the watch, say) is not asked again:
+    // Deriv's request budget goes to what is not known yet (deriv.js).
+    jobs = jobs.filter(function (j) {
+      if (!freshRatio(hub.markets[j[0]], j[1].ct + (j[1].barrier != null ? ":" + j[1].barrier : ""), amount)) return true;
+      if (onEach) onEach();
+      return false;
+    });
     await Promise.all(jobs.map(async function (j) {
       var req = { proposal: 1, amount: amount, basis: "stake", currency: hub.currency, underlying_symbol: j[0], contract_type: j[1].ct, duration: 1, duration_unit: "t" };
       if (j[1].barrier != null) req.barrier = String(j[1].barrier);
@@ -484,7 +497,7 @@
       if (gen !== hub.gen) return;
       var key = j[1].ct + (j[1].barrier != null ? ":" + j[1].barrier : "");
       var m = hub.markets[j[0]];
-      if (!r.error) m.ratio[key] = Number(r.proposal.payout) / amount;
+      if (!r.error) { m.ratio[key] = Number(r.proposal.payout) / amount; markFresh(m, key, amount); }
       else if (r.error.code !== "RateLimit") m.ratio[key] = null;
       remember(j[0], key, m.ratio[key]);
       if (onEach) onEach();
@@ -1039,9 +1052,9 @@
       if (!m || m.ratio[key] !== undefined) return;
       var req = { proposal: 1, amount: amount, basis: "stake", currency: hub.currency, underlying_symbol: sym, contract_type: ct, duration: 1, duration_unit: "t" };
       if (barrier != null) req.barrier = String(barrier);
-      var r = await D.askOn(acc, req, 10000);
+      var r = await D.askOn(acc, req, 10000, { background: true });   // after the run's own requests (deriv.js budget)
       if (gen !== hub.gen) return;
-      if (!r.error) m.ratio[key] = Number(r.proposal.payout) / amount;
+      if (!r.error) { m.ratio[key] = Number(r.proposal.payout) / amount; markFresh(m, key, amount); }
       else if (r.error.code !== "RateLimit") m.ratio[key] = null;
       if (m.ratio[key] !== undefined) remember(sym, key, m.ratio[key]);
     };
@@ -1071,7 +1084,7 @@
   }
   setInterval(function () { if (!(run && run.active)) watchPrices(); }, 60000);
 
-  /* The reading, painted: each type's tab, the start popup and the pause popup carry
+  /* The reading, painted: each type's tab and the start popup carry
      data-watch (green / yellow / red, or warm while it reads, off with no markets) and
      --watch (0–1); the design lives in the page's CSS. No words, only colour and a figure. */
   var watchTimer = 0, pendingKey = null;
@@ -1101,7 +1114,6 @@
       mark.title = st && st.pct != null ? Math.round(st.pct) + "%" : "";
     });
     if (modal.view === "bmDone") meter($("bmWatch"));
-    if (modal.view === "bmHold") meter($("bmHoldWatch"));
   }
   if (watch) watch.on(function () { paintWatch(); });
   setInterval(function () { if (watch) drawWatch(); }, 3000);
@@ -1137,7 +1149,7 @@
 
   var modal = { view: null, onClose: null, lastFocus: null, glide: false };
   function openModal(view) {
-    ["bmScan", "bmDone", "bmErr", "bmWin", "bmLoss", "bmFund", "bmHold", "bmReal", "bmWelcome"].forEach(function (id) { if ($(id)) $(id).hidden = id !== view; });
+    ["bmScan", "bmDone", "bmErr", "bmWin", "bmLoss", "bmFund", "bmReal", "bmWelcome"].forEach(function (id) { if ($(id)) $(id).hidden = id !== view; });
     if ($("bmRoot").hidden) {
       modal.lastFocus = document.activeElement;
       $("bmRoot").hidden = false;
@@ -1217,7 +1229,10 @@
       if (token !== scanToken) return;
       var err = validate(s);
       if (err) throw new Error(err);
-      if (!fresh || hub.pricedSpec !== spec.key) {
+      // Priced already, for this type, at this amount, under 5 minutes ago (the run's own rule): not again.
+      var priced = hub.pricedSpec === spec.key && Date.now() - hub.pricedAt <= 5 * 60000 &&
+        hub.pricedStake === Math.max(round2(s.stake) || 0, hub.minStake, PRICE_REF);
+      if (!priced && (!fresh || hub.pricedSpec !== spec.key)) {
         // Already live (or started for another type): price this type at this stake and read the patterns now.
         setProgress(0.35, fill(spec.t.pricing(spec.variant), { n: hub.order.length }));
         var n = 0, total = hub.order.length * spec.prices.length;
@@ -1329,7 +1344,7 @@
   function saveRun(r) {
     if (!r || !r.active) return;
     session.set({
-      v: 1, account: r.account, type: r.spec.type, variant: r.spec.variant, stopping: !!r.stopping, held: !!r.held,
+      v: 1, account: r.account, type: r.spec.type, variant: r.spec.variant, stopping: !!r.stopping,
       safety: watch ? watch.realState(r.spec.key) : null,
       settings: { stake: r.stake0, tp: r.tp, sl: r.sl, mult: r.mult }, stake: r.stake,
       pl: r.pl, n: r.n, won: r.won, lost: r.lost, streak: r.streak, startedAt: r.startedAt, currency: r.currency, bal0: r.bal0,
@@ -1472,8 +1487,6 @@
     if (!r.active) return;
     r.active = false;
     r.ended = { reason: reason, detail: detail || "", at: Math.floor(Date.now() / 1000) + 1 };
-    r.held = null;
-    if (modal.view === "bmHold") closeModal();
     releaseRun();
     try { global.dispatchEvent(new CustomEvent("pvr:runend")); } catch (e) {}
     paintRun();
@@ -1519,7 +1532,13 @@
       }
 
       if (!rec && hub.ready && hub.account === r.account && (Date.now() - hub.pricedAt > 5 * 60000 || hub.pricedSpec !== r.spec.key)) {
-        try { await price(r.account, r.stake0, hub.gen, null, r.spec); } catch (e) {}
+        // Another type's prices (a resume, say) are needed before the pick. This type's own, only
+        // grown old, are read again while it trades on them: a refresh never holds a trade up.
+        if (hub.pricedSpec !== r.spec.key) { try { await price(r.account, r.stake0, hub.gen, null, r.spec); } catch (e) {} }
+        else if (!hub.repricing) {
+          hub.repricing = true;
+          price(r.account, r.stake0, hub.gen, null, r.spec).catch(function () {}).then(function () { hub.repricing = false; });
+        }
       }
 
       var pick = rec ? rec.pick : live ? (firstPick(r) || choose(r.spec)) : null;
@@ -1563,6 +1582,9 @@
 
       var res;
       if (rec) { r.showStake = rec.stake; paintRun(fill(T("Recovering with {side}"), { side: pick.side.label() })); }
+      // Deriv's request budget (deriv.js): the buy goes once it fits, so Deriv never refuses it for rate.
+      if (D.roomOn) await D.roomOn(r.account);
+      if (r.stopping) continue;
       try { res = await buyOnce(r, pick, amount); }
       catch (e) {
         r.showStake = null;
@@ -1577,8 +1599,10 @@
           // Deriv's limit on how many buys an account sends in a short time: refused, so nothing
           // was bought. Not an error: wait (longer while it repeats), then carry on as before.
           r.rateWait = Math.min(30000, (r.rateWait || 1000) * 2);
-          paintRun(T("Rate limited. Waiting before retry..."));
+          r.rateHeld = true;
+          paintRun(T("Analyzing the markets…"));
           for (var rw = 0; rw < r.rateWait && r.active && !r.stopping; rw += 250) await sleep(250);
+          r.rateHeld = false;
           continue;
         }
         if (e.code === "InsufficientBalance") {
@@ -2105,13 +2129,12 @@
   };
 
   /** The wait a running bot is in — Deriv's rate limit, a payout, the prices, the line, a check
-   *  with Deriv, Safe's pause — in the words its status shows, or "" (#botWait, the page's design). */
+   *  with Deriv — in the words its status shows, or "" (#botWait, the page's design). */
   function waitOf(r, note) {
     if (!r || !r.active || r.stopping) return "";
-    if (r.held) return T("Paused — waiting for stable conditions…");
     // Deriv's rate limit reads as what the bot is doing meanwhile (owner): analysing.
-    if (note && note === T("Rate limited. Waiting before retry...")) return T("Analyzing the markets…");
-    var waits = [T("Rate limited. Waiting before retry..."), T("Waiting for Deriv to pay out the last trade…"), T("Waiting for live prices…"), T("Reconnecting to Deriv…"), T("Checking the trade with Deriv…")];
+    if (r.rateHeld) return T("Analyzing the markets…");
+    var waits = [T("Waiting for Deriv to pay out the last trade…"), T("Waiting for live prices…"), T("Reconnecting to Deriv…"), T("Checking the trade with Deriv…")];
     return note && waits.indexOf(note) >= 0 ? note : "";
   }
   function paintRun(note) {
@@ -2133,7 +2156,6 @@
     var text, kind;
     if (!r) { text = T("Ready"); kind = "idle"; }
     else if (r.active && r.stopping) { text = T("Stopping after this trade…"); kind = "wait"; }
-    else if (r.active && r.held) { text = T("Paused — waiting for stable conditions…"); kind = "wait"; }
     else if (r.active) { text = note || (r.n ? T("Running") : T("Starting…")); kind = "run"; }
     else {
       text = T(REASONS[r.ended.reason] || "Stopped.");
@@ -2517,7 +2539,6 @@
       paintSl();
     });
   }
-  if ($("bmHoldStop")) $("bmHoldStop").addEventListener("click", function () { stop(); closeModal(); });
   $("botGo").addEventListener("click", function () {
     if (run && run.active) return stop();
     if (needsReal()) return offerReal();          // nothing to trade on until a real account is open

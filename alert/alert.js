@@ -181,7 +181,6 @@
     for (var n = box.firstElementChild; n; n = n.nextElementSibling) if (n.classList.contains("bot-wait")) w = n;
     if (!text) { if (w) w.hidden = true; return; }
     // Deriv's rate limit reads as what the bot is doing meanwhile (owner): analysing.
-    if (text === "Rate limited. Waiting before retry...") text = "Analyzing the markets…";
     if (!w) {
       w = document.createElement("div");
       w.className = "bot-wait";
