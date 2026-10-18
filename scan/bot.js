@@ -58,14 +58,14 @@
  * stake, Martingale, recovery, take profit and stop loss — and read, per type,
  * against its own odds. The type tabs and the start popup show the reading as
  * colour and a figure; nothing is bought for it. With SAFE on (the default), a
- * run whose type turns red pauses — only ever after a winning trade, never in
- * a losing streak — says so, and carries on by itself once its type is green
- * again, to the take profit. Stop works at any moment, paused or not. The run's
- * own trades count too, for the types that win at least half the time (Even/Odd,
- * Rise/Fall, Differs, Over 0–4): its first three trades all lost, four or more
- * losses in a row, or three losses, a win and three losses again turn its type
- * red at once, so the run pauses at its next win and goes on once that type has
- * been calm again (the watch's CALM paper trades, then green).
+ * run whose type turns red never pauses (owner, Oct 18): it moves to another
+ * market and trades on, at the same stake and Martingale, and every market is
+ * back once its type is green again. The run's own trades count too, for the
+ * types that win at least half the time (Even/Odd, Rise/Fall, Differs, Over
+ * 0–4): its first three trades all lost, four or more losses in a row, or three
+ * losses, a win and three losses again turn its type red at once, so the run
+ * moves market at once (and the type is green again once it has been calm: the
+ * watch's CALM paper trades, then green).
  *
  * EVERY TRADE IS LOGGED. Each buy is one `buy` with its parameters and
  * subscribe, settled from the contract stream; a line that drops with a trade
@@ -558,7 +558,7 @@
     var on = !!(run && run.active);
     $("botNow").hidden = !on;
     if (!on) return;
-    var p = choose(run.spec);
+    var p = (run.avoid && choose(run.spec, null, null, function (c) { return !avoided(run, c.m.sym); })) || choose(run.spec);
     if (!p) return;
     $("nowMarket").textContent = p.m.name;
     $("nowSide").textContent = p.side.label();
@@ -1106,53 +1106,32 @@
   if (watch) watch.on(function () { paintWatch(); });
   setInterval(function () { if (watch) drawWatch(); }, 3000);
 
-  /* ── Safe: a run pauses while its type reads red, and carries on when it is green ── */
+  /* ── Safe: when a type reads red, the run moves to another market and trades on ── */
 
-  /** True while the run waits (the loop goes round again). A pause starts only with no trade
-   *  in a losing streak — after a win, or before the first trade — so nothing is left to
-   *  win back; it ends when the type reads green again, or when Safe is turned off. */
-  async function holding(r) {
-    var st = watch && hub.ready ? watch.state(r.spec.key) : null;
-    if (!r.held) {
-      if (!safe || !st || st.state !== "red") return false;
-      var last = r.log[0];
-      if (last && !last.won) return false;
-      r.held = { at: Date.now(), start: !r.n };
-      saveRun(r);
-      showHold(r);
-    } else if (!safe || (st && st.state === "green")) {
-      r.held = null;
-      saveRun(r);
-      if (modal.view === "bmHold") closeModal();
-      paintRun(T("Stable again — trading resumed."));
-      return false;
-    }
-    paintRun();
-    if (Date.now() - (r.heldSaved || 0) > 30000) { r.heldSaved = Date.now(); saveRun(r); }   // a reload keeps the paused run
-    await sleep(600);
-    return true;
+  /** No pause (owner, Oct 18). While the run's type reads red, the market it was trading on is
+   *  passed over, and so is each market that loses a trade while the type stays red: the bot
+   *  trades on the best of the others, at the same stake and Martingale. Only the latest
+   *  AVOID_MAX are passed over, so a type that stays red keeps moving from market to market
+   *  and never runs out of them. Green again (or Safe turned off), every market is back. With
+   *  no other market to go to, the best one is traded as before: a run never waits for this. */
+  var AVOID_MAX = 5;
+  function steer(r) {
+    if (!safe || !watch) { r.avoid = null; r.avoidSeen = null; return; }
+    var st = hub.ready ? watch.state(r.spec.key) : null;
+    if (!st) return;
+    if (st.state === "green") { r.avoid = null; r.avoidSeen = null; return; }
+    if (st.state !== "red") return;                        // yellow: as it is, until green
+    var last = r.log[0] || null, syms = [];
+    if (!r.avoid) {
+      // Just turned red: the market it was on, and each market of the losing streak it is in.
+      r.avoid = [];
+      if (!last) { var now = choose(r.spec); if (now) syms.push(now.m.sym); }
+      for (var i = 0; i < r.log.length && (i === 0 || (!last.won && !r.log[i].won)); i++) syms.unshift(r.log[i].sym);
+    } else if (last && last !== r.avoidSeen && !last.won) syms.push(last.sym);
+    r.avoidSeen = last;
+    syms.forEach(function (sym) { if (sym) r.avoid = r.avoid.filter(function (s) { return s !== sym; }).concat([sym]).slice(-AVOID_MAX); });
   }
-  function showHold(r) {
-    var open = function () {
-      if (run !== r || !r.active || !r.held || !($("bmRoot").hidden || modal.view === "bmDone")) return;
-      var secs = Math.max(0, Math.floor(Date.now() / 1000 - r.startedAt));
-      $("bmHoldTitle").textContent = T("Unstable conditions detected");
-      $("bmHoldText").textContent = r.n
-        ? T("The bot paused after a winning trade, with your profit kept. It resumes by itself as soon as conditions are stable again, and carries on to your take profit.")
-        : T("The bot is waiting to place its first trade. It starts by itself as soon as conditions are stable again, and trades on to your take profit.");
-      $("bmHoldPl").textContent = signed(r.pl, r.currency);
-      // Up or down in the page's own colours (each page keeps its own classes on the figure).
-      $("bmHoldPl").classList.toggle("is-up", r.pl > 0);
-      $("bmHoldPl").classList.toggle("is-down", r.pl < 0);
-      $("bmHoldN").textContent = String(r.n);
-      $("bmHoldRate").textContent = r.n ? Math.round(100 * r.won / r.n) + "%" : "—";
-      $("bmHoldTime").textContent = [Math.floor(secs / 3600), Math.floor(secs / 60) % 60, secs % 60].map(function (v) { return (v < 10 ? "0" : "") + v; }).join(":");
-      openModal("bmHold");
-      meter($("bmHoldWatch"), r.spec.key);
-    };
-    // The start popup has the stage for a moment; the pause takes over as it steps aside.
-    if (modal.view === "bmDone") setTimeout(open, 2900); else open();
-  }
+  function avoided(r, sym) { return !!(r && r.avoid && r.avoid.indexOf(sym) >= 0); }
 
   /* ── the popup ─────────────────────────────────────────────────────── */
 
@@ -1356,7 +1335,7 @@
       pl: r.pl, n: r.n, won: r.won, lost: r.lost, streak: r.streak, startedAt: r.startedAt, currency: r.currency, bal0: r.bal0,
       ids: Object.keys(r.ids), savedAt: Date.now(),
       bought: r.bought ? Object.keys(r.bought).filter(function (id) { return !r.ids[id]; }) : null, pending: r.pending || null,
-      log: r.log.slice(0, 300).map(function (x) { return { id: x.id, at: x.at, market: x.market, label: x.label, tone: x.tone, share: x.share, stake: x.stake, pl: x.pl, won: x.won, total: x.total }; }),
+      log: r.log.slice(0, 300).map(function (x) { return { id: x.id, at: x.at, market: x.market, sym: x.sym || "", label: x.label, tone: x.tone, share: x.share, stake: x.stake, pl: x.pl, won: x.won, total: x.total }; }),
     });
   }
   function keepAwake(on) {
@@ -1418,7 +1397,6 @@
     r.bought = null;
     if (Array.isArray(sv.bought)) { r.bought = {}; sv.bought.forEach(function (id) { r.bought[String(id)] = 1; }); }
     r.pending = sv.pending || null;
-    if (sv.held) r.held = { at: Date.now(), start: !r.n };
     run = r;
     showRun(sv);
     syncLanes();
@@ -1459,7 +1437,6 @@
     }
     saveRun(r);
     say(T("Your session was resumed after the page reloaded."), "info");
-    if (r.held) showHold(r);
     loop(r);
   }
 
@@ -1527,7 +1504,7 @@
       if (r.stopping) return end(r, "user");
       if (r.pl >= r.tp - 1e-9) return end(r, "tp");
       if (r.sl > 0 && -r.pl >= r.sl - 1e-9) return end(r, "sl");
-      if ((r.held || safe) && await holding(r)) continue;
+      steer(r);                             // Safe: a red type moves the run to another market
       var acc = D.accountOf(r.account), rec = null, live = hub.ready && hub.account === r.account;
       if (acc && acc.balance != null && r.stake > acc.balance + 1e-9) {
         if (await covered(r) || r.stopping) continue;
@@ -1566,7 +1543,8 @@
          largest stake Deriv takes (the ladder keeps counting). */
       var amount = rec ? rec.stake : null;
       // A market that refused this contract a moment ago (shut for now, not offered) is passed over.
-      var usable = function (c) { return !shunned(c.m.sym, c.side.ct, c.side.barrier); };
+      // So is a market Safe moved the run away from (steer).
+      var usable = function (c) { return !shunned(c.m.sym, c.side.ct, c.side.barrier) && !avoided(r, c.m.sym); };
       if (!rec && live && !usable(pick)) pick = choose(r.spec, null, null, usable) || pick;
       if (!rec && pick.ratio > 1 && r.stake * pick.ratio > capOf(pick.m.sym, pick.side.ct)) {
         // Past this market's own limit: the best market whose limit takes the stake, the ladder as it is.
@@ -1754,7 +1732,7 @@
     if (watch && guarded(r.spec)) watch.real(r.spec.key, res.won, res.id);
     var label = what.side ? what.side.label() : what.label;
     var tone = what.side ? what.side.tone : "a";
-    var row = { id: res.id, at: res.at || Date.now(), market: what.market, side: what.side ? what.side.key : "", label: label, tone: tone, share: what.share, stake: res.stake, pl: res.pl, won: res.won, total: r.pl, late: !!what.late,
+    var row = { id: res.id, at: res.at || Date.now(), market: what.market, sym: what.sym || "", side: what.side ? what.side.key : "", label: label, tone: tone, share: what.share, stake: res.stake, pl: res.pl, won: res.won, total: r.pl, late: !!what.late,
       entry: res.entry != null ? String(res.entry) : "", exit: res.exit != null ? String(res.exit) : "" };
     r.log.unshift(row);
     if (run !== r) return;
