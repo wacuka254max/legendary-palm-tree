@@ -112,6 +112,12 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <!-- MT5 Bots: the full MetaTrader 5 mark in place of the words, the button its own size. -->
         <a class="pv-pill pv-pill--mt5" href="/mt5.html" aria-label="MT5 Bots" title="MT5 Bots"><img class="pv-mt5 pv-mt5--ink" src="/logos/metatrader5-ink.svg" alt="" width="186" height="32" /><img class="pv-mt5 pv-mt5--pale" src="/logos/metatrader5.svg" alt="" width="186" height="32" /><span class="tag">Bots</span></a>
       </nav>
+      <!-- Big screens: Deposit and Withdraw right beside the tools, so no row of their own
+           under the header (owner, Oct 18). Phones keep the row above (scan.css). -->
+      <nav class="money-row money-row--bar" aria-label="Deriv">
+        <a class="fund-link fund-link--dep" href="https://home.deriv.com/dashboard/deposit?from=portfolio&amp;depositSheet=1&amp;currency=USD" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg><span>Deposit</span></a>
+        <a class="fund-link" href="https://home.deriv.com/dashboard/withdraw/verify?currency=USD&amp;from=portfolio&amp;openWithdraw=1" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></svg><span>Withdraw</span></a>
+      </nav>
       <!-- Price changes: only the dot; a click floats the list over the page, nothing moves. -->
       <div class="mk-wrap">
         <button class="mk-dot" id="mk-dot" type="button" aria-expanded="false" aria-controls="markets" title="Price changes (5 minutes)" aria-label="Price changes (5 minutes)"><span class="mk-live" id="mk-live" aria-hidden="true"></span></button>

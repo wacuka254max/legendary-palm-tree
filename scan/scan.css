@@ -873,3 +873,11 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
 body:has(#acct:not([hidden]):not(.is-noreal)) .money-row { display: flex; }
 .money-row .fund-link { padding: 5px 12px; font-size: 12.5px; }
 @media (min-width: 900px) { .money-row { justify-content: flex-end; } }
+
+/* Big screens (900px and up): Deposit and Withdraw beside the tools in the bar under the header,
+   the same height as the tool buttons, and the row of their own goes (owner, Oct 18). Phones and
+   tablets keep that row just below the header. */
+.money-row--bar { margin: 0; flex: none; }
+.money-row--bar .fund-link { height: 30px; padding: 0 12px; }
+@media (min-width: 900px) { body:has(#acct:not([hidden]):not(.is-noreal)) .money-row:not(.money-row--bar) { display: none; } }
+@media (max-width: 899px) { body:has(#acct:not([hidden]):not(.is-noreal)) .money-row--bar { display: none; } }
