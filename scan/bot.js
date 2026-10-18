@@ -2207,6 +2207,17 @@
      transfer to Options, or press Start. Again whenever they come back after a long time away
      (AWAY, the page left open included). Never over another popup or during a run; closed, it
      rests for the visit. On a demo's take profit the popup offers the switch to real trading. */
+  /* The welcome's words in every language the site speaks, carried here as well: a slow network can
+     hand a phone the dictionary it cached before these words existed, and the popup must never be
+     English to a Spanish, French or Portuguese reader. The site's own dictionary wins when it has them. */
+  var WELCOME_WORDS = {"Welcome! Let's get you trading": ["¡Bienvenido! Empecemos a operar", "Bienvenue ! Commençons à trader", "Bem-vindo! Vamos começar a operar"], "Welcome back! Let's get you trading": ["¡Bienvenido de nuevo! Empecemos a operar", "Bon retour ! Commençons à trader", "Bem-vindo de volta! Vamos começar a operar"], "Your real account balance": ["Saldo de tu cuenta real", "Solde de votre compte réel", "Saldo da sua conta real"], "Real account": ["Cuenta real", "Compte réel", "Conta real"], "You have not created a real account yet": ["Aún no has creado una cuenta real", "Vous n'avez pas encore créé de compte réel", "Você ainda não criou uma conta real"], "Create your real Deriv account": ["Crea tu cuenta real de Deriv", "Créez votre compte réel Deriv", "Crie sua conta real na Deriv"], "Deposit, then transfer to your Options account": ["Deposita y luego transfiere a tu cuenta de opciones", "Déposez, puis transférez vers votre compte options", "Deposite e depois transfira para sua conta de opções"], "Press Start: the bot does the rest": ["Pulsa Iniciar: el bot hace el resto", "Appuyez sur Démarrer : le bot fait le reste", "Toque em Iniciar: o bot faz o resto"], "Create your real Deriv account in a few minutes, then come back here. The bot trades on it.": ["Crea tu cuenta real de Deriv en unos minutos y luego vuelve aquí. El bot opera en ella.", "Créez votre compte réel Deriv en quelques minutes, puis revenez ici. Le bot trade dessus.", "Crie sua conta real na Deriv em poucos minutos e depois volte aqui. O bot opera nela."], "Your real account is ready. Deposit on Deriv, then transfer the money to your Options account: that is the balance the bot trades.": ["Tu cuenta real está lista. Deposita en Deriv y luego transfiere el dinero a tu cuenta de opciones: ese es el saldo con el que opera el bot.", "Votre compte réel est prêt. Déposez sur Deriv, puis transférez l'argent vers votre compte options : c'est le solde avec lequel le bot trade.", "Sua conta real está pronta. Deposite na Deriv e depois transfira o dinheiro para sua conta de opções: esse é o saldo com que o bot opera."], "You're all set. Press Start: the bot scans the markets, trades for you and stops by itself when your take profit is hit.": ["Todo listo. Pulsa Iniciar: el bot analiza los mercados, opera por ti y se detiene solo cuando se alcanza tu take profit.", "Tout est prêt. Appuyez sur Démarrer : le bot analyse les marchés, trade pour vous et s'arrête tout seul quand votre take profit est atteint.", "Tudo pronto. Toque em Iniciar: o bot analisa os mercados, opera por você e para sozinho quando seu take profit é atingido."], "Switch to real and start": ["Cambiar a real y empezar", "Passer en réel et démarrer", "Mudar para real e começar"], "Got it, let's start": ["Entendido, empecemos", "Compris, c'est parti", "Entendi, vamos começar"], "Create real account": ["Crear cuenta real", "Créer un compte réel", "Criar conta real"], "Deposit": ["Depositar", "Déposer", "Depositar"], "Transfer to Options": ["Transferir a opciones", "Transférer vers options", "Transferir para opções"], "Close": ["Cerrar", "Fermer", "Fechar"], "That was your demo. Ready to trade for real?": ["Eso fue tu demo. ¿Listo para operar en real?", "C'était votre démo. Prêt à trader en réel ?", "Isso foi sua demo. Pronto para operar no real?"], "Switch to real trading": ["Cambiar a operar en real", "Passer au trading réel", "Mudar para operar no real"]};
+  function TW(s) {
+    var t = T(s);
+    if (t !== s) return t;
+    var i = { es: 0, fr: 1, pt: 2 }[String(document.documentElement.lang || "").slice(0, 2).toLowerCase()];
+    var row = WELCOME_WORDS[s];
+    return row && i != null ? row[i] : s;
+  }
   var WELCOME_KEY = PX_KEY.replace(/px$/, "welcome");
   var SEEN_KEY = WELCOME_KEY + "_seen", AWAY = 7 * 24 * 3600e3;    // a long time away: a week of no use (owner, Oct 18)
   var welcome = { shown: false, el: null, confetti: false, away: true, back: false };
@@ -2326,34 +2337,34 @@
   function paintWelcome() {
     var v = welcomeView(); if (!v) return;
     var r = realAccount(), st = welcomeStage(), c = D.current();
-    v.querySelector("h2").textContent = T(welcome.back ? "Welcome back! Let's get you trading" : "Welcome! Let's get you trading");
-    v.querySelector(".bmw-bal-k").textContent = r ? T("Your real account balance") : T("Real account");
+    v.querySelector("h2").textContent = TW(welcome.back ? "Welcome back! Let's get you trading" : "Welcome! Let's get you trading");
+    v.querySelector(".bmw-bal-k").textContent = r ? TW("Your real account balance") : TW("Real account");
     var bv = v.querySelector(".bmw-bal-v");
-    bv.textContent = r ? money(Number(r.balance) || 0, r.currency || "USD") : T("You have not created a real account yet");
+    bv.textContent = r ? money(Number(r.balance) || 0, r.currency || "USD") : TW("You have not created a real account yet");
     bv.classList.toggle("bmw-bal-v--text", !r);
     var order = ["open", "fund", "start"], at = order.indexOf(st);
-    var words = { open: T("Create your real Deriv account"), fund: T("Deposit, then transfer to your Options account"), start: T("Press Start: the bot does the rest") };
+    var words = { open: TW("Create your real Deriv account"), fund: TW("Deposit, then transfer to your Options account"), start: TW("Press Start: the bot does the rest") };
     Array.prototype.forEach.call(v.querySelectorAll(".bmw-steps li"), function (li, i) {
       li.textContent = words[li.getAttribute("data-s")];
       li.className = i < at ? "is-done" : i === at ? "is-now" : "";
     });
     v.querySelector(".bmw-msg").textContent = st === "open"
-      ? T("Create your real Deriv account in a few minutes, then come back here. The bot trades on it.")
+      ? TW("Create your real Deriv account in a few minutes, then come back here. The bot trades on it.")
       : st === "fund"
-        ? T("Your real account is ready. Deposit on Deriv, then transfer the money to your Options account: that is the balance the bot trades.")
-        : T("You're all set. Press Start: the bot scans the markets, trades for you and stops by itself when your take profit is hit.");
+        ? TW("Your real account is ready. Deposit on Deriv, then transfer the money to your Options account: that is the balance the bot trades.")
+        : TW("You're all set. Press Start: the bot scans the markets, trades for you and stops by itself when your take profit is hit.");
     var go = v.querySelector('[data-act="go"]'), move = v.querySelector('[data-act="move"]'), off = v.querySelector('[data-act="close"]');
     if (st === "start") {
       go.removeAttribute("target"); go.href = "#"; go.setAttribute("data-start", "1");
-      go.textContent = c && c.type !== "real" ? T("Switch to real and start") : T("Got it, let's start");
+      go.textContent = c && c.type !== "real" ? TW("Switch to real and start") : TW("Got it, let's start");
     } else {
       go.removeAttribute("data-start"); go.target = "_blank"; go.rel = "noopener noreferrer";
       go.href = st === "open" ? createRealUrl() : pageLink("dashboard/deposit", DEPOSIT_URL);
-      go.textContent = st === "open" ? T("Create real account") : T("Deposit");
+      go.textContent = st === "open" ? TW("Create real account") : TW("Deposit");
     }
     move.hidden = st !== "fund";
-    move.textContent = T("Transfer to Options");
-    off.textContent = T("Close");
+    move.textContent = TW("Transfer to Options");
+    off.textContent = TW("Close");
     if (!v.hidden) welcomeAccent(v);
   }
   /** The step in hand wears the main button's colour (its fill, or its ink when the fill is a
@@ -2409,8 +2420,8 @@
         closeModal();
       });
     }
-    box.querySelector(".bmw-toreal-t").textContent = T("That was your demo. Ready to trade for real?");
-    box.querySelector("a").textContent = realAccount() ? T("Switch to real trading") : T("Create real account");
+    box.querySelector(".bmw-toreal-t").textContent = TW("That was your demo. Ready to trade for real?");
+    box.querySelector("a").textContent = realAccount() ? TW("Switch to real trading") : TW("Create real account");
     box.hidden = false;
   }
   (function () {
@@ -2548,8 +2559,8 @@
     if (modal.view === "bmWelcome") paintWelcome();
     var tr = $("bmWin") && $("bmWin").querySelector(".bmw-toreal");
     if (tr && !tr.hidden) {
-      tr.querySelector(".bmw-toreal-t").textContent = T("That was your demo. Ready to trade for real?");
-      tr.querySelector("a").textContent = realAccount() ? T("Switch to real trading") : T("Create real account");
+      tr.querySelector(".bmw-toreal-t").textContent = TW("That was your demo. Ready to trade for real?");
+      tr.querySelector("a").textContent = realAccount() ? TW("Switch to real trading") : TW("Create real account");
     }
     paintRun(); paintButton(); paintMin(); paintNow(); paintType(); paintVariants(); if (dynamicMult(state.type, formVariant)) paintMult(state.type, formVariant); if (modal.view === "bmReal") realWords(); paintRisk(); if (whyShown && modal.view === whyShown.view) { paintWhy(whyShown.view, whyShown.box, whyShown.r, whyShown.why); fitWhy(); } });   // the word, in the new language; a typed figure stays
   global.addEventListener("beforeunload", function (e) { if (run && run.active) { e.preventDefault(); e.returnValue = ""; } });

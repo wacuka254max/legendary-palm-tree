@@ -65,6 +65,14 @@
       return sessionStorage.getItem(PICK + "_visit") === "demo";
     } catch (e) { return false; }
   }
+  /* "or try the demo" in every language the site speaks, carried here too (a dictionary cached before
+     it existed must not leave it English). */
+  function tryDemoWords() {
+    var t = T("or try the demo");
+    if (t !== "or try the demo") return t;
+    var i = { es: 0, fr: 1, pt: 2 }[String(document.documentElement.lang || "").slice(0, 2).toLowerCase()];
+    return i == null ? t : ["o prueba la demo", "ou essayez la démo", "ou experimente a demo"][i];
+  }
   var tryDemoBack = null;
   function demoOffer(on, back) {
     if (back) tryDemoBack = back;
@@ -76,12 +84,12 @@
       btn = document.createElement("button"); btn.type = "button"; btn.id = "acctTryDemo"; btn.className = "acct-try-demo";
       real.parentNode.insertBefore(btn, real.nextSibling);
       btn.addEventListener("click", function () { demoThisVisit(true); btn.hidden = true; if (tryDemoBack) tryDemoBack(); });
-      global.addEventListener("langchange", function () { btn.textContent = T("or try the demo"); });
+      global.addEventListener("langchange", function () { btn.textContent = tryDemoWords(); });
       var s = document.createElement("style");
       s.textContent = ".acct-try-demo{display:inline-flex;align-items:center;margin-left:8px;padding:4px 2px;background:none;border:0;font:inherit;font-size:12px;font-weight:600;color:inherit;opacity:.85;text-decoration:underline;text-underline-offset:2px;cursor:pointer;white-space:nowrap}.acct-try-demo[hidden]{display:none!important}";
       document.head.appendChild(s);
     }
-    btn.textContent = T("or try the demo");
+    btn.textContent = tryDemoWords();
     btn.hidden = !on;
   }
   var store = {
