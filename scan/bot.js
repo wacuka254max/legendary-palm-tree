@@ -1634,7 +1634,6 @@
       }
       r.errors = 0;
       r.refused = 0;
-      if (isRealId(r.account)) welcomeDone();   // the first real trade: the welcome has done its work
       r.rateWait = 0;
       r.showStake = null;
       record(r, { market: pick.m.name, sym: pick.m.sym, side: pick.side, share: pick.share }, res);
@@ -2202,25 +2201,39 @@
     el.hidden = !text;
   }
 
-  /* ── the welcome (owner, Oct 13) ───────────────────────────────────── */
+  /* ── the welcome (owner, Oct 13 / 18) ──────────────────────────────── */
 
-  /* A new trader is met with a welcome in this page's own take-profit popup (its background,
-     its icon place and, the first time only, its confetti): the real balance, and the one step
-     they are on — open a real account, add funds (deposit, or move money already on Deriv into
-     Options), or press Start. It follows them until their first real trade (Deriv's profit
-     table says whether there was one), never over another popup or during a run; closed, it
+  /* Everyone who opens the page is welcomed, new and existing traders alike, in this page's own
+     take-profit popup (its background, its icon place and, the first time only, its confetti):
+     the real balance, and the one step they are on — create a real account, deposit then
+     transfer to Options, or press Start. Again whenever they come back after a long time away
+     (AWAY, the page left open included). Never over another popup or during a run; closed, it
      rests for the visit. On a demo's take profit the popup offers the switch to real trading. */
   var WELCOME_KEY = PX_KEY.replace(/px$/, "welcome");
-  var welcome = { done: false, shown: false, busy: false, checked: null, empty: false, retryAt: 0, el: null, confetti: false };
-  try { welcome.done = localStorage.getItem(WELCOME_KEY) === "done"; } catch (e) {}
+  var SEEN_KEY = WELCOME_KEY + "_seen", AWAY = 12 * 3600e3;    // a long time away: twelve hours
+  var welcome = { shown: false, el: null, confetti: false, away: true, back: false };
+  (function () {
+    var last = 0;
+    try { last = Number(localStorage.getItem(SEEN_KEY)) || 0; } catch (e) {}
+    welcome.back = last > 0;                                   // been here before: "Welcome back"
+    welcome.away = !last || Date.now() - last > AWAY;
+    var seen = function () { try { localStorage.setItem(SEEN_KEY, String(Date.now())); } catch (e) {} };
+    seen();
+    setInterval(function () { if (document.visibilityState !== "hidden") seen(); }, 60000);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") { seen(); return; }
+      var then = 0;
+      try { then = Number(localStorage.getItem(SEEN_KEY)) || 0; } catch (e) {}
+      if (then && Date.now() - then > AWAY) {                  // the page left open, back after a long time
+        welcome.away = true; welcome.shown = false; welcome.back = true;
+        try { sessionStorage.removeItem(WELCOME_KEY); } catch (e) {}
+        setTimeout(welcomeMaybe, 600);
+      }
+      seen();
+    });
+  })();
   var DEPOSIT_URL = "https://home.deriv.com/dashboard/deposit?from=portfolio&depositSheet=1&currency=USD";
   var MOVE_URL = "https://home.deriv.com/dashboard/portfolio";
-  function welcomeDone() {
-    if (welcome.done) return;
-    welcome.done = true;
-    try { localStorage.setItem(WELCOME_KEY, "done"); } catch (e) {}
-    if (modal.view === "bmWelcome") closeModal();
-  }
   function welcomeResting() { try { return sessionStorage.getItem(WELCOME_KEY) === "closed"; } catch (e) { return false; } }
   function simOpen() { var s = document.querySelector(".sim-card"); return !!(s && s.offsetParent !== null); }
   function isRealId(id) { var a = id && D.accountOf(id); return !!(a && a.type === "real"); }
@@ -2315,7 +2328,7 @@
   function paintWelcome() {
     var v = welcomeView(); if (!v) return;
     var r = realAccount(), st = welcomeStage(), c = D.current();
-    v.querySelector("h2").textContent = T("Welcome! Let's get you trading");
+    v.querySelector("h2").textContent = T(welcome.back ? "Welcome back! Let's get you trading" : "Welcome! Let's get you trading");
     v.querySelector(".bmw-bal-k").textContent = r ? T("Your real account balance") : T("Real account");
     var bv = v.querySelector(".bmw-bal-v");
     bv.textContent = r ? money(Number(r.balance) || 0, r.currency || "USD") : T("You have not created a real account yet");
@@ -2365,38 +2378,16 @@
     welcomeAccent(v);
     return true;
   }
-  /** Shown once a visit when it applies: the profit table of the real account read first. */
+  /** Once a visit: when they arrive, or come back after a long time away. */
   function welcomeMaybe() {
-    if (welcome.done || welcome.shown || welcome.busy || welcomeResting()) return;
+    if (!welcome.away || welcome.shown || welcomeResting()) return;
     if (run || !resumeTried || modal.view || !$("bmRoot").hidden || simOpen()) return;
-    var r = realAccount();
-    if (r && !welcome.empty) {
-      if (welcome.checked === r.id || Date.now() < welcome.retryAt) return;
-      welcome.busy = true;
-      D.askOn(r.id, { profit_table: 1, limit: 1 }, 10000).then(function (pt) {
-        welcome.busy = false;
-        if (!pt || pt.error || !pt.profit_table) { welcomeRetry(); return; }
-        welcome.checked = r.id;
-        var n = Number(pt.profit_table.count) || (pt.profit_table.transactions || []).length;
-        if (n > 0) { welcomeDone(); return; }     // a trader already: no welcome
-        welcome.empty = true;
-        welcomeMaybe();
-      }, function () { welcome.busy = false; welcomeRetry(); });
-      return;
-    }
     openWelcome();
-  }
-  /** The real account's line not open yet (or a moment's refusal): asked again shortly, a few times. */
-  function welcomeRetry() {
-    welcome.tries = (welcome.tries || 0) + 1;
-    if (welcome.tries > 8) return;
-    welcome.retryAt = Date.now() + 15000;
-    setTimeout(welcomeMaybe, 15500);
   }
   /** No real account: the welcome says it (once a visit), or else the popup on opening one. */
   function offerRealOrWelcome() {
     if (welcome.shown || welcomeResting()) return;   // the welcome said it this visit (closed: not again in other words)
-    if (!welcome.done && !welcomeResting() && !simOpen() && !modal.view && openWelcome()) return;
+    if (welcome.away && !simOpen() && !modal.view && openWelcome()) return;
     offerReal();
   }
   /** On a demo's take profit: the switch to real trading, under the result. */
