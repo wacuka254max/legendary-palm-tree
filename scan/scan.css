@@ -866,3 +866,10 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
   .bm-tick circle, .bm-tick path { animation: none; stroke-dashoffset: 0; }
   .bm-confetti { display: none; }
 }
+
+/* Deriv's cashier just below the header, on every screen (owner, Oct 18): only with a connected
+   account, not on the way to a real one. Under the balance on big screens, a row on phones. */
+.money-row { display: none; gap: 6px; margin: 0 0 10px; }
+body:has(#acct:not([hidden]):not(.is-noreal)) .money-row { display: flex; }
+.money-row .fund-link { padding: 5px 12px; font-size: 12.5px; }
+@media (min-width: 900px) { .money-row { justify-content: flex-end; } }

@@ -93,6 +93,14 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
 
   <div class="sh-fit pv-fit" id="sh-fit">
 
+    <!-- Deriv's cashier in sight on every screen, just below the header (owner, Oct 18): Deposit
+         and Withdraw a tap away; "Transfer funds" stays beside the balance. Only with a
+         connected account (scan.css). -->
+    <nav class="money-row" aria-label="Deriv">
+      <a class="fund-link fund-link--dep" href="https://home.deriv.com/dashboard/deposit?from=portfolio&amp;depositSheet=1&amp;currency=USD" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></svg><span>Deposit</span></a>
+      <a class="fund-link" href="https://home.deriv.com/dashboard/withdraw/verify?currency=USD&amp;from=portfolio&amp;openWithdraw=1" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></svg><span>Withdraw</span></a>
+    </nav>
+
     <!-- Just under the header: the page's name, the three tools as small links, and the
          live prices behind a green dot. Three clicks on the "o" of Home work the practice
          mode; it carries no affordance on purpose. -->

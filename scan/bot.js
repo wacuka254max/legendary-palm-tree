@@ -2210,7 +2210,7 @@
      (AWAY, the page left open included). Never over another popup or during a run; closed, it
      rests for the visit. On a demo's take profit the popup offers the switch to real trading. */
   var WELCOME_KEY = PX_KEY.replace(/px$/, "welcome");
-  var SEEN_KEY = WELCOME_KEY + "_seen", AWAY = 12 * 3600e3;    // a long time away: twelve hours
+  var SEEN_KEY = WELCOME_KEY + "_seen", AWAY = 7 * 24 * 3600e3;    // a long time away: a week of no use (owner, Oct 18)
   var welcome = { shown: false, el: null, confetti: false, away: true, back: false };
   (function () {
     var last = 0;
