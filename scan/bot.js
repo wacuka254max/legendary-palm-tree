@@ -787,24 +787,23 @@
     // The smallest stake Deriv accepts cannot go lower: Safe, or no word on it.
     var atMin = r && stake <= (hub.minStake || FALLBACK_MIN) + 1e-9, stakeWord = r && (atMin && r.stake !== "safe" ? null : r.stake);
     // Keys of their own ("Safe" alone is the switch's word): the English is the part after "risk: ".
-    var WORD = { safe: "risk: Safe", high: "risk: High", over: "risk: Too high" }, lines = [];
+    // Only Safe or High (owner, Oct 18): a figure past High reads High too.
+    var WORD = { safe: "risk: Safe", high: "risk: High", over: "risk: High" }, lines = [];
     [["botStakeRisk", stakeWord], ["botTpRisk", r && r.tp]].forEach(function (b) {
       var el = $(b[0]), w = b[1] && T(WORD[b[1]]);
       el.hidden = !b[1];
-      if (b[1]) { el.setAttribute("data-risk", b[1]); el.textContent = w === WORD[b[1]] ? w.slice(6) : w; }
+      if (b[1]) { el.setAttribute("data-risk", b[1] === "over" ? "high" : b[1]); el.textContent = w === WORD[b[1]] ? w.slice(6) : w; }
     });
     // The safe figure is a button: a click puts it in its field (riskUse), as typing it would.
     // No safe target under 1 USD is offered: the take profit's word stands alone then.
     var USE = "\u0001";
-    // No stake safe on this balance: it says so, and the balance this one needs (at the smallest stake, in green — advice, not a warning).
     // A figure to click whenever one is not safe: the safe stake, or the smallest (0.35) when no
     // stake is safe on this balance; the take profit's 10% of the balance, never under 3 USD.
     var useStake = r ? (r.safeStake > 0 ? r.safeStake : !atMin ? (hub.minStake || FALLBACK_MIN) : 0) : 0;
     var useTp = r && isFinite(r.safeTp) ? Math.max(DEFAULT_TP_MIN, r.safeTp) : 0;
-    if (r && r.stake !== "safe") lines.push([atMin ? "safe" : r.stake, T("Stake"), ((r.depth === 1 ? T("survives 1 loss in a row.") : r.depth ? fill(T("survives {n} losses in a row."), { n: r.depth }) : T("is more than the balance.")) + " " +
-      (r.safeStake > 0 ? fill(T("Safe stake: {v}."), { v: USE }) : T("The balance is small for this type.") + (r.needBal > 0 ? " " + fill(T("Recommended balance: {v}."), { v: money(r.needBal, hub.currency) }) : "") +
-        (useStake > 0 ? " " + fill(T("Safe stake: {v}."), { v: USE }) : ""))).trim(), useStake > 0 && ["stake", useStake]]);
-    if (r && r.tp !== "safe" && useTp > 0 && tp > useTp + 1e-9) lines.push([r.tp, T("Take profit"), fill(T("Safe target: {v}."), { v: USE }), ["tp", useTp]]);
+    // The stake as simply as the take profit: the safe stake to click, nothing else (owner, Oct 18).
+    if (r && r.stake !== "safe" && useStake > 0) lines.push([atMin ? "safe" : r.stake === "over" ? "high" : r.stake, T("Stake"), fill(T("Safe stake: {v}."), { v: USE }), ["stake", useStake]]);
+    if (r && r.tp !== "safe" && useTp > 0 && tp > useTp + 1e-9) lines.push([r.tp === "over" ? "high" : r.tp, T("Take profit"), fill(T("Safe target: {v}."), { v: USE }), ["tp", useTp]]);
     $("botRisk").hidden = !lines.length;
     $("botRisk").innerHTML = lines.map(function (l) {
       var text = esc(l[2]);
@@ -2047,7 +2046,6 @@
         var need = balanceFor(spec, min, def, d);
         // A stake above the smallest is a point of its own too: the smallest is the one to use.
         if (r.stake0 > min + 1e-9) out.push(fill(T(WHY.stake), { stake: M(r.stake0), safe: M(min) }));
-        out.push(need > 0 ? fill(T(WHY.bal), { bal: M(B), need: M(need) }) : fill(T(WHY.balOnly), { bal: M(B) }));
         if (!dynamicMult(spec.type, spec.variant) && m > def + 1e-9) out.push(fill(T(WHY.mult), { m: m, def: def }));
       } else {
         if (r.stake0 > safe0 + 1e-9) out.push(fill(T(WHY.stake), { stake: M(r.stake0), safe: M(safe0) }));

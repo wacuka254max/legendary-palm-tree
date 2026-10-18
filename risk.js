@@ -168,7 +168,6 @@
         var need = balanceFor(kind, min, def, d, min);
         // A stake above the smallest is a point of its own too: the smallest is the one to use.
         if (o.stake > min + 1e-9) out.push(T(WHY.stake, { stake: M(o.stake), safe: M(min) }));
-        out.push(need > 0 ? T(WHY.bal, { bal: M(B), need: M(need) }) : T(WHY.balOnly, { bal: M(B) }));
         if (m > def + 1e-9) out.push(T(WHY.mult, { m: m, def: def }));
       }
     }
@@ -194,7 +193,8 @@
   };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   // Keys of their own ("Safe" may be another control's word): the English is the part after "risk: ".
-  var WORD = { safe: "risk: Safe", high: "risk: High", over: "risk: Too high" };
+  // Only Safe or High (owner, Oct 18): a figure past High reads High too.
+  var WORD = { safe: "risk: Safe", high: "risk: High", over: "risk: High" };
   function word(level) { var w = T(WORD[level]); return w === WORD[level] ? w.slice(6) : w; }
 
   /**
@@ -213,21 +213,17 @@
       var el = tags[x[0]];
       if (!el) return;
       el.hidden = !x[1];
-      if (x[1]) { el.setAttribute("data-risk", x[1]); el.textContent = word(x[1]); }
+      if (x[1]) { el.setAttribute("data-risk", x[1] === "over" ? "high" : x[1]); el.textContent = word(x[1]); }
     });
     if (!note) return;
     var USE = "\u0001", lines = [];
-    // No stake safe on this balance: it says so, and the balance this one needs (at the smallest stake, in green — advice, not a warning).
     // A figure to click whenever one is not safe: the safe stake, or the smallest when no stake is
     // safe on this balance; the take profit's 10% of the balance, never under 3 USD.
     var useStake = r ? (r.safeStake > 0 ? r.safeStake : !r.atMin && r.min > 0 ? r.min : 0) : 0;
     var useTp = r && isFinite(r.safeTp) ? Math.max(TP_MIN, r.safeTp) : 0;
-    if (r && r.stake && r.stake !== "safe") lines.push([r.atMin ? "safe" : r.stake, T("Stake"),
-      (r.depth === 1 ? T("survives 1 loss in a row.") : r.depth ? T("survives {n} losses in a row.", { n: r.depth }) : T("is more than the balance.")) + " " +
-      (r.safeStake > 0 ? T("Safe stake: {v}.", { v: USE }) : T("The balance is small for this type.") +
-        (r.needBal > 0 ? " " + T("Recommended balance: {v}.", { v: money(r.needBal) }) : "") +
-        (useStake > 0 ? " " + T("Safe stake: {v}.", { v: USE }) : "")), useStake > 0 && ["stake", useStake]]);
-    if (r && r.tp && r.tp !== "safe" && useTp > 0 && r.tpVal > useTp + 1e-9) lines.push([r.tp, T("Take profit"), T("Safe target: {v}.", { v: USE }), ["tp", useTp]]);
+    // The stake as simply as the take profit: the safe stake to click, nothing else (owner, Oct 18).
+    if (r && r.stake && r.stake !== "safe" && useStake > 0) lines.push([r.atMin ? "safe" : r.stake === "over" ? "high" : r.stake, T("Stake"), T("Safe stake: {v}.", { v: USE }), ["stake", useStake]]);
+    if (r && r.tp && r.tp !== "safe" && useTp > 0 && r.tpVal > useTp + 1e-9) lines.push([r.tp === "over" ? "high" : r.tp, T("Take profit"), T("Safe target: {v}.", { v: USE }), ["tp", useTp]]);
     note.hidden = !lines.length;
     note.innerHTML = lines.map(function (l) {
       var text = esc(l[2]);
