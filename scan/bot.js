@@ -92,6 +92,7 @@
   var LONG = 100;           // the tie-break: the last 100
   var TIER = 0.0025;        // "pays the most": within 0.25% of the best payout
   var MULT_MAX = 50;
+  var SCAN_WAIT = 3500;     // the most the start scan waits for prices Deriv is slow to give (its request budget)
   var PRICE_REF = 10;       // payouts are read at 10 or more: at 0.35 the cent rounding hides the gaps between markets
   var STATE_KEY = "pvr_smart_v1";
   var KEEP_KEY = "pvr_smart_keep";      // 1: "Save settings" is on
@@ -373,7 +374,7 @@
       if (gen !== hub.gen) return;
 
       // Deriv's own refusal names the smallest stake for this currency.
-      var probe = await D.askOn(accountId, { proposal: 1, amount: 0.01, basis: "stake", currency: hub.currency, underlying_symbol: list[0].underlying_symbol, contract_type: "DIGITEVEN", duration: 1, duration_unit: "t" });
+      var probe = await D.askOn(accountId, { proposal: 1, amount: 0.01, basis: "stake", currency: hub.currency, underlying_symbol: list[0].underlying_symbol, contract_type: "DIGITEVEN", duration: 1, duration_unit: "t" }, 15000, { urgent: true });
       var arg = probe.error && probe.error.code_args && Number(probe.error.code_args[0]);
       hub.minStake = isFinite(arg) && arg > 0 ? arg : FALLBACK_MIN;
 
@@ -402,7 +403,11 @@
       }));
       if (gen !== hub.gen) return;
       prog(done, total, fill(spec.t.pricing(spec.variant), { n: hub.order.length }));
-      await price(accountId, stake, gen, function () { prog(++done, total); }, spec);
+      // Deriv answers only so many prices a minute (deriv.js): the hub waits a moment for them; what
+      // has not come by then comes in while it runs (the prices seen before stand in meanwhile).
+      var reading = price(accountId, stake, gen, function () { prog(++done, total); }, spec);
+      reading.catch(function () {});
+      await Promise.race([reading, sleep(SCAN_WAIT)]);
       if (gen !== hub.gen) return;
 
       // Whatever this socket was still subscribed to goes first.
@@ -479,10 +484,12 @@
     return !!(f && f.amt === amount && Date.now() - f.at <= 5 * 60000 && m.ratio[key] != null);
   }
   function markFresh(m, key, amount) { (m.fresh || (m.fresh = {}))[key] = { at: Date.now(), amt: amount }; }
-  async function price(accountId, stake, gen, onEach, spec) {
+  async function price(accountId, stake, gen, onEach, spec, background) {
     var amount = Math.max(round2(stake) || 0, hub.minStake, PRICE_REF);
     var jobs = [];
     hub.order.forEach(function (sym) { spec.prices.forEach(function (p) { jobs.push([sym, p]); }); });
+    hub.pricingSpec = spec.key;
+    var settled; hub.reading = new Promise(function (r) { settled = r; });   // what a scan waits on
     // A payout read under 5 minutes ago at this amount (by the watch, say) is not asked again:
     // Deriv's request budget goes to what is not known yet (deriv.js).
     jobs = jobs.filter(function (j) {
@@ -490,10 +497,10 @@
       if (onEach) onEach();
       return false;
     });
-    await Promise.all(jobs.map(async function (j) {
+    try { await Promise.all(jobs.map(async function (j) {
       var req = { proposal: 1, amount: amount, basis: "stake", currency: hub.currency, underlying_symbol: j[0], contract_type: j[1].ct, duration: 1, duration_unit: "t" };
       if (j[1].barrier != null) req.barrier = String(j[1].barrier);
-      var r = await D.askOn(accountId, req);
+      var r = await D.askOn(accountId, req, 15000, background ? { background: true } : null);
       if (gen !== hub.gen) return;
       var key = j[1].ct + (j[1].barrier != null ? ":" + j[1].barrier : "");
       var m = hub.markets[j[0]];
@@ -501,7 +508,7 @@
       else if (r.error.code !== "RateLimit") m.ratio[key] = null;
       remember(j[0], key, m.ratio[key]);
       if (onEach) onEach();
-    }));
+    })); } finally { if (hub.pricingSpec === spec.key) hub.pricingSpec = null; settled(); }
     savePrices();
     hub.pricedAt = Date.now();
     hub.pricedStake = amount;
@@ -1232,11 +1239,16 @@
       // Priced already, for this type, at this amount, under 5 minutes ago (the run's own rule): not again.
       var priced = hub.pricedSpec === spec.key && Date.now() - hub.pricedAt <= 5 * 60000 &&
         hub.pricedStake === Math.max(round2(s.stake) || 0, hub.minStake, PRICE_REF);
-      if (!priced && (!fresh || hub.pricedSpec !== spec.key)) {
+      if (!priced && hub.pricingSpec === spec.key && hub.reading) await Promise.race([hub.reading, sleep(SCAN_WAIT)]);   // on its way already
+      else if (!priced && (!fresh || hub.pricedSpec !== spec.key)) {
         // Already live (or started for another type): price this type at this stake and read the patterns now.
         setProgress(0.35, fill(spec.t.pricing(spec.variant), { n: hub.order.length }));
         var n = 0, total = hub.order.length * spec.prices.length;
-        await price(c.id, s.stake, hub.gen, function () { if (token === scanToken) setProgress(0.35 + 0.45 * (++n / total)); }, spec);
+        // Deriv answers only so many prices a minute (deriv.js): when they come slowly, the pick is made
+        // from the markets priced by then and the rest come in while the bot trades.
+        var reading = price(c.id, s.stake, hub.gen, function () { if (token === scanToken) setProgress(0.35 + 0.45 * (++n / total)); }, spec);
+        reading.catch(function () {});
+        await Promise.race([reading, sleep(SCAN_WAIT)]);
       }
       if (token !== scanToken) return;
       setProgress(0.9, T("Finding the strongest pattern…"));
@@ -1534,10 +1546,10 @@
       if (!rec && hub.ready && hub.account === r.account && (Date.now() - hub.pricedAt > 5 * 60000 || hub.pricedSpec !== r.spec.key)) {
         // Another type's prices (a resume, say) are needed before the pick. This type's own, only
         // grown old, are read again while it trades on them: a refresh never holds a trade up.
-        if (hub.pricedSpec !== r.spec.key) { try { await price(r.account, r.stake0, hub.gen, null, r.spec); } catch (e) {} }
+        if (hub.pricedSpec !== r.spec.key) { if (hub.pricingSpec !== r.spec.key) { try { await price(r.account, r.stake0, hub.gen, null, r.spec); } catch (e) {} } }
         else if (!hub.repricing) {
           hub.repricing = true;
-          price(r.account, r.stake0, hub.gen, null, r.spec).catch(function () {}).then(function () { hub.repricing = false; });
+          price(r.account, r.stake0, hub.gen, null, r.spec, true).catch(function () {}).then(function () { hub.repricing = false; });
         }
       }
 

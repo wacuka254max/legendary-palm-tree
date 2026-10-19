@@ -441,7 +441,7 @@
      only while it holds fewer than BUDGET_PRICE (BUDGET_BG for the background ones), so there
      is always room left for the buys; never more than BURST in BURST_MS. A price that does not
      fit waits its turn here — the most urgent first — and nothing is ever dropped. */
-  var BUDGET_MS = 60000, BUDGET_ALL = 72, BUDGET_PRICE = 54, BUDGET_BG = 36, BURST = 36, BURST_MS = 5000;
+  var BUDGET_MS = 60000, BUDGET_ALL = 75, BUDGET_PRICE = 60, BUDGET_BG = 24, BURST = 36, BURST_MS = 5000;
   var BUDGETED = ["proposal", "proposal_open_contract", "buy", "sell"];
   function budgeted(req) { return BUDGETED.some(function (k) { return req[k] !== undefined; }); }
   /** What this line has sent of the budget: in the last minute, and in the last BURST_MS. */
@@ -482,7 +482,7 @@
     var self = this;
     var paced = budgeted(req) ? this.whenOpen(10000).then(function () {
       // A price waits for room; one asked in the background waits longer (opts.background).
-      return self.turn(req.proposal === undefined ? BUDGET_ALL : opts && opts.background ? BUDGET_BG : BUDGET_PRICE);
+      return self.turn(req.proposal === undefined || (opts && opts.urgent) ? BUDGET_ALL : opts && opts.background ? BUDGET_BG : BUDGET_PRICE);
     }) : Promise.resolve();
     return paced.then(function () { return self.whenOpen(10000); }).then(function () {
       return new Promise(function (resolve, reject) {
@@ -739,6 +739,13 @@
     askOn: function (id, req, ms, opts) {
       var f = feeds[id];
       return f ? f.ask(req, ms, opts) : Promise.reject(new Error("No live connection for this account yet."));
+    },
+    /** What this account's line has spent of Deriv's request budget (read only; for diagnosing). */
+    budgetOn: function (id) {
+      var f = feeds[id];
+      if (!f) return null;
+      var u = f.spentNow();
+      return { minute: u.minute, burst: u.burst, queued: f.queue.length, caps: f.queue.map(function (q) { return q.cap; }), open: !!(f.ws && f.ws.readyState === 1), stopped: !!f.stopped };
     },
     /** Resolves once a buy on this account fits Deriv's request budget (at once, nearly always). */
     roomOn: function (id) {
