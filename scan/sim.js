@@ -858,14 +858,6 @@
 
   /** The pill, for as long as the mode is on: pinned to the screen above
    *  everything (sim.css), so no scroll, popup or card ever takes it out of sight. */
-  function badge() {
-    var b = document.createElement("span");
-    b.className = "sim-badge";
-    b.setAttribute("data-i18n-skip", "");
-    b.setAttribute("role", "status");
-    b.innerHTML = '<i aria-hidden="true"></i><b>Simulation</b><span>not real money</span>';
-    document.body.appendChild(b);
-  }
 
   /* ── the card: three clicks on the green dot by the balance ────────── */
 
