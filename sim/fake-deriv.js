@@ -175,9 +175,24 @@
       this.runDone = true;
       this.runLeft = Math.max(0, (cfg.count || 0) - 1);
     }
+
+    /* A no-loss drill sim may still open with a stray loss or two inside the
+       first dozen trades — placed only on a normal differ trade (never a
+       recovery), so the engine clears each the ordinary way. Most runs: none. */
+    this.lossAt = [];
+    this.lossDone = [];
+    if (global.EVIE_SIM_DRILLS && cfg.mode === "none") {
+      var rr = Math.random(), kk = rr < 0.62 ? 0 : (rr < 0.93 ? 1 : 2);
+      if (kk) {
+        var a1 = 1 + Math.floor(Math.random() * 12);
+        if (kk === 2) { var b1; do { b1 = 1 + Math.floor(Math.random() * 12); } while (Math.abs(b1 - a1) < 2); this.lossAt = a1 < b1 ? [a1, b1] : [b1, a1]; }
+        else this.lossAt = [a1];
+        this.lossDone = this.lossAt.map(function () { return false; });
+      }
+    }
   }
 
-  Plan.prototype.loses = function () {
+  Plan.prototype.loses = function (contract) {
     var cfg = this.cfg;
     this.n++;
     var t = this.n;      // 1-based: t === 1 is the very first trade
@@ -185,7 +200,15 @@
     /* Asked for outright, and it outranks everything below. */
     if (t === 1 && cfg.firstLoss) return true;
 
-    if (cfg.mode === "none") return false;
+    if (cfg.mode === "none") {
+      /* A scheduled stray loss, only on a normal differ trade in the first
+         dozen (never a recovery, so the recovery always clears it). */
+      if (this.lossAt.length && contract === "DIGITDIFF" && t <= 12) {
+        var lk = this.lossAt.indexOf(t);
+        if (lk >= 0 && !this.lossDone[lk]) { this.lossDone[lk] = true; return true; }
+      }
+      return false;
+    }
 
     if (cfg.mode === "consecutive") {
       if (this.runLeft > 0) { this.runLeft--; return true; }
@@ -346,6 +369,9 @@
 
   function FakeSocket() {
     var self = this;
+    // Each drill run gets a fresh plan, so the stray-loss schedule applies to
+    // every run, not only the first one after the page loads.
+    if (global.EVIE_SIM_DRILLS) plan = new Plan(config());
     this.readyState = 0;
     this.subs = {};         // subscription id -> { sym }
     this.timers = [];
@@ -615,7 +641,7 @@
       started: false,
       entry: m.round(m.price),
       // Decided the moment it is bought, so what settles it is already known.
-      shouldWin: !plan.loses()
+      shouldWin: !plan.loses(p.contract)
     };
 
     this.contracts[id] = contract;

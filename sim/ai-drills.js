@@ -27,10 +27,10 @@
 (function (global) {
   "use strict";
 
-  var FIRST_MIN = 2;      // the first drill lands inside the first ten trades
-  var FIRST_MAX = 10;
-  var GAP_MIN = 3;        // and the ones after it, three to twenty-five apart
-  var GAP_MAX = 25;
+  var FIRST_MIN = 4;      // the first trigger lands four to twelve trades in
+  var FIRST_MAX = 12;
+  var GAP_MIN = 4;        // and the ones after it, four to twelve apart
+  var GAP_MAX = 12;
 
   var Real = global.EvieAutomaticAI;
   if (!Real) return;
@@ -87,6 +87,14 @@
     ui.addHistoryEntry = function (entry) {
       realAdd.call(ui, entry);
       trades++;
+
+      /* A real stray loss is being recovered by the engine itself — stand aside
+         until that is done, then pick the next trigger fresh. */
+      if (bot.consecutiveLosses > 0) {
+        rungsLeft = 0; rung = 0;
+        nextAt = trades + GAP_MIN + Math.floor(Math.random() * (GAP_MAX - GAP_MIN + 1));
+        return;
+      }
 
       // A drill still owes a rung: climb it.
       if (rungsLeft > 0) {

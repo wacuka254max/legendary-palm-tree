@@ -531,13 +531,18 @@
 
 @media (max-width: 700px) {
   .top-in { gap: 8px; height: 58px; }
-  .perch { gap: 6px; min-width: 0; }
+  .perch { gap: 5px; min-width: 0; }
+  /* The whole balance, always — never clipped to an ellipsis. It keeps its
+     natural width (so nothing overlaps it) and the figure scales down a little
+     with the screen so even a long one fits the bar on the narrowest phone. */
   .perch-v {
-    font-size: 13px;
+    font-size: clamp(10px, 3vw, 13px);
     letter-spacing: -0.03em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex: 0 0 auto;
+    min-width: 0;
+    overflow: visible;
+    text-overflow: clip;
   }
   .badge { padding: 4px 8px; font-size: 9.5px; letter-spacing: 0.06em; }
   .btn { padding: 9px 12px; font-size: 13px; }
@@ -547,6 +552,17 @@
 @media (max-width: 430px) {
   /* The mark carries the brand on its own at this width. */
   .brand span { display: none; }
+}
+
+/* The narrowest phones: tighten everything around the balance so even a long
+   figure and the buttons share the bar without it running over the edge. */
+@media (max-width: 360px) {
+  .top-in { gap: 6px; }
+  .perch { gap: 4px; }
+  .perch-v { font-size: clamp(8.5px, 2.7vw, 12px); }
+  .badge { padding: 3px 5px; font-size: 9px; }
+  .btn { padding: 6px 8px; font-size: 11.5px; }
+  .btn--icon { padding: 6px; }
 }
 
 /* Safe / High / Too high beside a figure's label, and the line on why (risk.js):

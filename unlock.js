@@ -21,12 +21,12 @@
  *
  * ── On the phrase check ─────────────────────────────────────────────────────
  *
- * The phrase is compared as a hash so it is not sitting in the bundle as a
- * readable word. Be clear about what that is worth: this runs in the browser,
- * so anyone who opens devtools and reads this file can work out how it is
- * checked. It keeps the door shut against somebody idly poking at the page. It
- * is NOT security, and nothing behind it is treated as if it were — practice
- * mode only ever swaps which page a tile opens.
+ * The phrase is never in the bundle. What is stored is a fingerprint derived
+ * from it the slow way — a salted key derivation (PBKDF2-SHA-256) run many
+ * times over — which the typed phrase is checked against. Deriving one takes a
+ * moment on purpose, so the phrase cannot be read back out of this file by
+ * trying candidates against it in any reasonable time. It is a door latch, not
+ * a vault — practice mode only ever swaps which page a tile opens.
  *
  * ── The naming ──────────────────────────────────────────────────────────────
  *
@@ -42,14 +42,21 @@
   var K_ON = "evie_ui_m";     // the mode is currently on
   var K_WHO = "evie_ui_a";    // the Deriv account ids that unlocked it here
 
-  /* djb2. Small, synchronous and dependency-free — the page must decide in the
-     same tick as the keypress, and a crypto digest is a promise. */
-  var PHRASE = 2088338501;
+  /* The phrase is checked by deriving a fingerprint from it with a salted key
+     derivation (PBKDF2-SHA-256, many rounds) and comparing to DIGEST. Deriving
+     one takes a moment on purpose: the real phrase pays it once, while reading
+     the phrase back out of this file would mean paying it for every guess. */
+  var SALT = "b8a7a124da76980846900be4", ROUNDS = 310000;
+  var DIGEST = "05eb08b1d415f124a159a80b5211be8a592ffa598cdbd893d30005709673821d";
 
-  function hash(s) {
-    var h = 5381;
-    for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
-    return h;
+  function derive(v) {
+    v = String(v || "").trim().toLowerCase();
+    if (!v || !global.crypto || !global.crypto.subtle || !global.TextEncoder) return Promise.resolve("");
+    var enc = new TextEncoder();
+    return global.crypto.subtle.importKey("raw", enc.encode(v), { name: "PBKDF2" }, false, ["deriveBits"])
+      .then(function (k) { return global.crypto.subtle.deriveBits({ name: "PBKDF2", salt: enc.encode(SALT), iterations: ROUNDS, hash: "SHA-256" }, k, 256); })
+      .then(function (bits) { var b = new Uint8Array(bits), h = ""; for (var i = 0; i < b.length; i++) h += (b[i] < 16 ? "0" : "") + b[i].toString(16); return h; })
+      .catch(function () { return ""; });
   }
 
   function get(k) {
@@ -80,18 +87,21 @@
   }
 
   /**
-   * Try a phrase. Right one: this device is remembered from now on and the mode
-   * comes on with it — somebody who has just typed it wants it on, and making
-   * them click again would be a second lock on the same door.
+   * Try a phrase; resolves true or false (deriving the fingerprint is async).
+   * Right one: this device is remembered from now on and the mode comes on with
+   * it — somebody who has just typed it wants it on, and making them click again
+   * would be a second lock on the same door.
    *
-   * Wrong one: false, and nothing else. No message, no shake, no count. The
-   * field gives away nothing about whether it is even the right field.
+   * Wrong one: resolves false, and nothing else. No message, no shake, no count.
+   * The field gives away nothing about whether it is even the right field.
    */
   function attempt(text) {
-    if (hash(String(text || "")) !== PHRASE) return false;
-    put(K_KNOWN, "1");
-    put(K_ON, "1");
-    return true;
+    return derive(text).then(function (hex) {
+      if (!hex || hex !== DIGEST) return false;
+      put(K_KNOWN, "1");
+      put(K_ON, "1");
+      return true;
+    });
   }
 
   /** Record which Deriv accounts were connected when this device was opened. */

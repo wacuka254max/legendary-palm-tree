@@ -169,9 +169,11 @@ select.fld-i { appearance: none; cursor: pointer; }
 }
 
 @media (max-width: 900px) {
-  /* Stacked, the card has no column opposite to take its height from, so the
-     list needs a limit of its own or a long session grows the page. */
-  .hist { flex: 0 1 auto; max-height: clamp(200px, 42vh, 440px); }
+  /* Stacked, there is no column opposite to lend the card its height, so the
+     trades keep a tall space of their own — more than half the screen even when
+     empty, like Magic Bots Lab, so they fill it from the top instead of a short
+     list hugging the bottom. A long session scrolls inside it. */
+  .hist { flex: 0 1 auto; min-height: 56vh; max-height: 78vh; }
 }
 
 .trade {

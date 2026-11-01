@@ -159,13 +159,14 @@
   }
   /** The phrase as a phone types it: a capital the keyboard added, a space after. */
   function letIn(v) {
-    v = String(v || "").trim();
-    if (!Mode.attempt(v) && !Mode.attempt(v.toLowerCase())) return false;
-    hideKey();
-    Mode.signal(title);
-    pricesOn();
-    reloadSoon();
-    return true;
+    return Mode.attempt(String(v || "").trim()).then(function (ok) {
+      if (!ok) return false;
+      hideKey();
+      Mode.signal(title);
+      pricesOn();
+      reloadSoon();
+      return true;
+    });
   }
 
   if (doorKey && window.CSS && CSS.supports && CSS.supports("-webkit-text-security", "disc")) {
@@ -206,7 +207,15 @@
   }
 
   if (doorKey && Mode) {
-    doorKey.addEventListener("input", function () { letIn(doorKey.value); });
+    /* Deriving the fingerprint takes a moment, so the field checks a short beat
+       after typing stops rather than on every keystroke — the phrase still opens
+       the door with no Enter needed. */
+    var checkTimer = null;
+    doorKey.addEventListener("input", function () {
+      if (checkTimer) clearTimeout(checkTimer);
+      var v = doorKey.value;
+      checkTimer = setTimeout(function () { if (!doorKey.hidden) letIn(v); }, 160);
+    });
     doorKey.addEventListener("keydown", function (e) {
       if (e.key === "Escape") return hideKey();
       if (e.key !== "Enter") return;
@@ -214,13 +223,15 @@
       /* Wrong phrase: clear the box and say nothing. No message, no shake, no
          attempt counter — the field must not confirm it is even a field worth
          guessing at. */
-      if (!letIn(doorKey.value)) doorKey.value = "";
+      var v = doorKey.value;
+      letIn(v).then(function (ok) { if (!ok) doorKey.value = ""; });
     });
     /* Clicking away puts it back, after one last look. Anybody who opened it by
        accident never learns there was anything to open. */
     doorKey.addEventListener("blur", function () {
       if (doorKey.hidden) return;
-      if (!letIn(doorKey.value)) hideKey();
+      var v = doorKey.value;
+      letIn(v).then(function (ok) { if (!ok) hideKey(); });
     });
   }
 })();
