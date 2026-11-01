@@ -532,11 +532,11 @@
 @media (max-width: 700px) {
   .top-in { gap: 8px; height: 58px; }
   .perch { gap: 5px; min-width: 0; }
-  /* The whole balance, always — never clipped to an ellipsis. It keeps its
-     natural width (so nothing overlaps it) and the figure scales down a little
-     with the screen so even a long one fits the bar on the narrowest phone. */
+  /* The whole balance, always — never clipped to an ellipsis, and at the size
+     Home's header shows it (13px). It keeps its natural width; the parts around
+     it give way instead (below). */
   .perch-v {
-    font-size: clamp(10px, 3vw, 13px);
+    font-size: 13px;
     letter-spacing: -0.03em;
     white-space: nowrap;
     flex: 0 0 auto;
@@ -554,15 +554,31 @@
   .brand span { display: none; }
 }
 
-/* The narrowest phones: tighten everything around the balance so even a long
-   figure and the buttons share the bar without it running over the edge. */
+/* As on Home: the caret goes from the language button and the row sits closer,
+   so the balance keeps its full size. */
+@media (max-width: 400px) {
+  .lang-caret { display: none; }
+  .lang-btn { gap: 0; padding: 0 7px; }
+  .badge { padding: 4px 6px; }
+  .btn { padding: 8px 10px; }
+  .btn--icon { padding: 8px; }
+}
+/* The narrowest phones: tighter still around the balance, which stays 13px. */
 @media (max-width: 360px) {
   .top-in { gap: 6px; }
   .perch { gap: 4px; }
-  .perch-v { font-size: clamp(8.5px, 2.7vw, 12px); }
   .badge { padding: 3px 5px; font-size: 9px; }
-  .btn { padding: 6px 8px; font-size: 11.5px; }
+  .btn { padding: 6px 8px; font-size: 12px; }
+  .btn--icon { padding: 7px; }
+}
+@media (max-width: 340px) {
+  .top { --gutter: 12px; }
+  .top-in { gap: 4px; }
+  .perch { gap: 3px; }
+  .badge { padding: 2px 4px; }
+  .btn { padding: 5px 6px; }
   .btn--icon { padding: 6px; }
+  .lang-btn { padding: 0 5px; }
 }
 
 /* Safe / High / Too high beside a figure's label, and the line on why (risk.js):

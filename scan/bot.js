@@ -589,8 +589,8 @@
 
   /* ── settings: one set per type, one multiplier per prediction ─────── */
 
-  /* Every visit starts from the defaults; what the user changes lives in this page only.
-     ("Save settings" gave way to the risk guide: what it kept in this browser is let go.) */
+  /* Every visit starts from the defaults, except the stake and the take profit the user set
+     (kept below). ("Save settings" gave way to the risk guide: what it kept is let go.) */
   var keep = false;
   store.del(KEEP_KEY);
   var state = null;
@@ -600,6 +600,22 @@
   if (!state || !state.t) state = { type: "evenodd", t: {} };   // Even/Odd first
   if (ENABLED.indexOf(state.type) < 0) state.type = "evenodd";
   function persist() { if (keep) store.set(STATE_KEY, state); }
+  /* The stake and the take profit the user set are theirs to keep: remembered in this browser
+     per type, through a reload or the app closed and opened again. Nothing set: the balance's
+     own starting figures, as before. With the risk guide on, its words and its safe figure to
+     click say what it would use; applying that is the user's call (and is kept the same way). */
+  var OWN_KEY = SAFE_KEY.replace(/safe$/, "own");
+  var mine = store.get(OWN_KEY) || {};
+  Object.keys(mine).forEach(function (type) {
+    if (!TYPES[type] || !mine[type]) return;
+    var ts = typeState(type);
+    ["stake", "tp"].forEach(function (k) { if (mine[type][k] > 0) { ts[k] = mine[type][k]; ts.own[k] = 1; } });
+  });
+  function keepOwn(type, k, v) {
+    if ((k !== "stake" && k !== "tp") || !(v > 0)) return;
+    (mine[type] || (mine[type] = {}))[k] = v;
+    store.set(OWN_KEY, mine);
+  }
   function typeState(type) {
     var ts = state.t[type] || (state.t[type] = {});
     if (!ts.mult) ts.mult = {};
@@ -849,6 +865,7 @@
     var k = FIGURES[e.target.id], v = round2(num(e.target.id)), ts = typeState(state.type);
     ts.own[k] = 1;
     if (v > 0) ts[k] = v;
+    keepOwn(state.type, k, v);
     persist();
     paintRisk();
   }
