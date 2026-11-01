@@ -27,13 +27,9 @@
  *     second later (twice), the balance stream at the buy and at the sale, the
  *     profit table and the portfolio.
  *
- * ── It says what it is ──────────────────────────────────────────────────────
+ * ── How it opens ────────────────────────────────────────────────────────────
  *
- * The setup card opens only when it is asked for: three clicks on the green dot. Once it is out of the way the page
- * still says what it is: a pill pinned at the foot of the screen, above every
- * popup and overlay, that reads SIMULATION, not real money. Practice and
- * testing need the real page's behaviour, not a page that passes for real
- * money.
+ * The setup card opens only when it is asked for: three clicks on the green dot.
  *
  * ── How an outcome is arranged ──────────────────────────────────────────────
  *
@@ -854,16 +850,10 @@
   if (RealSocket) SimWebSocket.prototype = RealSocket.prototype;
   global.WebSocket = SimWebSocket;
 
-  /* ── it says what it is ────────────────────────────────────────────── */
-
-  /** The pill, for as long as the mode is on: pinned to the screen above
-   *  everything (sim.css), so no scroll, popup or card ever takes it out of sight. */
-
   /* ── the card: three clicks on the green dot by the balance ────────── */
 
 
   function card() {
-    badge();
     var c = setup();
     /* Two whole numbers, from and to: each streak, gap or ten draws its own from between them. */
     function pair(id, lo, hi) {
