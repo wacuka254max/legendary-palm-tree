@@ -63,6 +63,7 @@
       this.wins = 0;
       this.consecutiveLosses = 0;
       this.balance = 0;
+      this.balanceSeen = false;           // this socket has said the balance
       this.accountCurrency = 'USD';
       this.startTime = null;
       this.runningTimer = null;
@@ -130,6 +131,7 @@
     connectWebSocket() {
       if (this.stopRequested) return;
 
+      this.balanceSeen = false;
       this.ws = new this.WebSocketImpl(this.wsUrl);
 
       this.ws.onopen = () => {
@@ -299,14 +301,14 @@
             return;
           }
           
-          /* An account that cannot cover the stake will not start covering it
-             by being retried. Stop, and say the one thing that fixes it. */
+          /* Deriv says the account cannot cover the stake, and says what it holds: the run carries
+             on from what that pays. Only under its smallest stake does it stop (restartFrom). */
           if (/insufficient/i.test(message)) {
-            if (window.PopupNotifications) {
-              const why = this.whyFor ? this.whyFor('funds') : [];
-              window.PopupNotifications.showNeedsDeposit(why && why.length ? { why } : undefined);
+            const said = /balance\s*\(\D*([\d.,]+)/i.exec(message);
+            if (this.restartFrom(said ? Number(said[1].replace(/,/g, '')) : this.balance, this.currentStake)) {
+              this.releaseTrade();
+              this.resumeTrading(300);
             }
-            this.stop('Stopped — the account balance is insufficient.', 'error');
             return;
           }
 
@@ -358,6 +360,7 @@
             if (typeof data.balance?.balance !== 'undefined') {
               this.accountCurrency = data.balance.currency || this.accountCurrency;
               this.balance = Number(data.balance.balance);
+              this.balanceSeen = true;
               this.ui.updateBalance(this.balance, data.balance.currency || this.accountCurrency);
             }
             break;
@@ -596,6 +599,30 @@
      * for good. These put it back on its feet without touching how it trades.
      */
 
+    /** The balance cannot pay the next stake (owner, Nov 4). While it pays Deriv's smallest, the
+     *  ladder starts again from the starting stake for this balance — not the run's first stake, not
+     *  the whole balance — and a win comes back to it; the take profit stays. False: no trade is
+     *  possible, and the run has ended on the card that says so. `refused`: a stake Deriv just
+     *  turned down, whatever the figure here said, so the next one is less. */
+    restartFrom(balance, refused) {
+      const R = window.EvieRisk;
+      const min = window.EvieCurrency ? window.EvieCurrency.min(this.accountCurrency) : 0.35;
+      if (!R || !R.restart || min == null || !(balance >= min - 1e-9) || (refused && refused <= min + 1e-9)) {
+        if (window.PopupNotifications) {
+          const why = this.whyFor ? this.whyFor('funds') : [];
+          window.PopupNotifications.showNeedsDeposit(why && why.length ? { why } : undefined);
+        }
+        this.stop('Stopped — the account balance is insufficient.', 'error');
+        return false;
+      }
+      let stake = R.restart('differ', balance, this.config.martingaleMultiplier, 3.1, min);
+      if (refused && stake >= refused) stake = min;
+      this.config.initialStake = stake;
+      this.currentStake = stake;
+      this.ui.updateStats(this.getStatsSnapshot());
+      return true;
+    }
+
     /** Clear the in-flight trade so the loop is allowed to run again. */
     releaseTrade() {
       this.tradeInProgress = false;
@@ -709,6 +736,9 @@
         }
         return;
       }
+
+      // (Only on the socket's own figure: the first trade goes before it has said the balance.)
+      if (this.balanceSeen && this.currentStake > this.balance + 1e-9 && !this.restartFrom(this.balance)) return;
 
       let market, digit, contractType, barrier, displayTarget;
 

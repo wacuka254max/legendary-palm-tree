@@ -30,6 +30,9 @@
  *                           martingale ladder does not get to overrule it.
  *   Neither set, in front → stop; the ladder has recovered.
  *   Neither set, behind   → keep going, staking up, until it is in front.
+ *   Under Deriv's smallest stake → stop, with the card on adding funds. A balance
+ *                           that only falls short of the next stake is no stop:
+ *                           the ladder starts again from what it pays (payable).
  */
 
 (function (global) {
@@ -104,6 +107,7 @@
 
   function setRunning(on) {
     running = on;
+    if (!on && host.endRun) host.endRun();
     el("bot-run").textContent = on ? "Stop" : "Start";
     el("bot-run").classList.toggle("is-running", on);
     // The Run / Stop under the Transactions bar says the same.
@@ -295,6 +299,21 @@
     return null;
   }
 
+  /** The stake to place, the balance being what it is (owner, Nov 4). One it covers stands. One it
+      cannot: the ladder starts again from the pair's starting stake for this balance — not the
+      run's first stake, not the whole balance — and the run trades on to the same take profit.
+      Null: under Deriv's smallest stake, so no trade is possible. `refused`: Deriv has just
+      turned this stake down, whatever the figure here said, so the next one is less. */
+  function payable(stake, balance, refused) {
+    var R = global.EvieRisk, min = host.minStake(), st = host.settings;
+    if (!R || !R.restart || min == null || !isFinite(balance) || (!refused && stake <= balance + 1e-9)) return stake;
+    if (balance < min - 1e-9 || (refused && stake <= min + 1e-9)) return null;
+    var next = R.restart(kindOf(), balance, st.martingale ? st.multiplier : 1, 3.1, min);
+    if (refused && next >= stake) next = min;
+    host.restartLadder(next);
+    return next;
+  }
+
   /* ── the loop ───────────────────────────────────────────────────────── */
 
   function armStop() {
@@ -353,7 +372,8 @@
         }
         waitedFor = 0;
 
-        var stake = host.nextStake();
+        var stake = payable(host.nextStake(), host.balance());
+        if (stake == null) { ended = { msg: "Stopped — the account balance is insufficient.", kind: "error", hit: "funds" }; break; }
 
         /* lastLost is the whole of the recovery rule: the trade after a loss
            may not be Matches or Differs. A win clears it and the pair returns. */
@@ -400,10 +420,13 @@
             continue;
           }
 
-          /* An account that cannot cover the stake will not start covering it
-             by being asked eight times. Stop on the first refusal and say the
-             one thing that fixes it. */
+          /* Deriv says the account cannot cover the stake, and says what it holds: the run carries
+             on from what that pays. Only under its smallest stake does it stop, on the first
+             refusal, saying the one thing that fixes it. */
           if (/insufficient/i.test((e && e.message) || "")) {
+            var said = /balance\s*\(\D*([\d.,]+)/i.exec(e.message);
+            var fit = payable(stake, said ? Number(said[1].replace(/,/g, "")) : host.balance(), true);
+            if (fit != null && fit !== stake) continue;
             ended = { msg: "Stopped — the account balance is insufficient.", kind: "error", hit: "funds" };
             break;
           }

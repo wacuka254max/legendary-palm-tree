@@ -98,6 +98,14 @@
     return { stake: Math.max(min, stake), tp: Math.max(TP_MIN, tp) };
   }
 
+  /** The stake a run carries on from when the balance cannot pay its next one (owner, Nov 4): this
+   *  kind's starting stake for that balance, at the martingale in use — or at the page's own (`own`)
+   *  with it off, a flat stake being no ladder to size. Never under the smallest stake. */
+  function restart(kind, balance, mult, own, min) {
+    var d = defaults(kind, balance, mult > 1 ? mult : own, min);
+    return d ? d.stake : min;
+  }
+
   /** The balance this stake's ladder needs to cover the kind's losses in a row (0: none —
    *  a step's payout would pass Deriv's maximum first). */
   function balanceFor(kind, stake, mult, d, min) {
@@ -261,6 +269,6 @@
     });
   }
 
-  global.EvieRisk = { ouFor: ouFor, defaults: defaults, assess: assess, paint: paint, maxStake: maxStake, TP_MIN: TP_MIN, guide: guide, wireGuide: wireGuide,
+  global.EvieRisk = { ouFor: ouFor, defaults: defaults, restart: restart, assess: assess, paint: paint, maxStake: maxStake, TP_MIN: TP_MIN, guide: guide, wireGuide: wireGuide,
     mistakes: mistakes, WHY_NOTE: WHY.note };
 })(window);

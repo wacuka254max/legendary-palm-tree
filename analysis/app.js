@@ -99,6 +99,10 @@
      while martingale is recovering a loss, and every win puts it back. */
   var nextStake = 1;
 
+  /* A bot run the balance could not pay carries on from a stake of its own (bot.js): a win comes
+     back to this one, not to the page's. Null the rest of the time. */
+  var runBase = null;
+
   /* The most recent quote per symbol, formatted the way Deriv displays it.
      Deriv does not always put entry/exit on the contract, and a blank spot in
      the transactions list is useless — the tick stream we are already reading
@@ -663,7 +667,7 @@
   /** Put a settled trade in the ledger and move the martingale on. */
   function record(r) {
     if (settings.martingale && !r.win) nextStake = nextStake * settings.multiplier;
-    else nextStake = settings.stake;
+    else nextStake = runBase != null ? runBase : settings.stake;
     showNextStake();
 
     var t = C.TYPES[r.type];
@@ -694,7 +698,7 @@
   function showNextStake() {
     var el = $("next-stake");
     if (!settings.martingale) { el.textContent = ""; return; }
-    var recovering = nextStake > settings.stake + 1e-9;
+    var recovering = nextStake > (runBase != null ? runBase : settings.stake) + 1e-9;
     el.textContent = T("Next stake {stake}", { stake: (window.EvieCurrency
       ? window.EvieCurrency.bare(nextStake, currencyOf())
       : nextStake.toFixed(2)) }) + (recovering ? " — " + T("recovering") : "");
@@ -734,6 +738,7 @@
     // Changing the base stake abandons any ladder in progress — continuing to
     // multiply an old number after the user has picked a new one is not
     // recovery, it is a stake nobody chose.
+    if (stakeChanged) runBase = null;
     if (stakeChanged || !settings.martingale) nextStake = stake;
 
     /* A longer window needs history we do not hold, so re-request it; a
@@ -774,6 +779,7 @@
     settings.martingale = $("mart-tog").getAttribute("aria-checked") !== "true";
     $("mart-tog").setAttribute("aria-checked", String(settings.martingale));
     $("mart").disabled = !settings.martingale;
+    runBase = null;
     nextStake = settings.stake;
     showNextStake();
     figuresChanged();
@@ -1053,7 +1059,11 @@
         clearTimeout(saveTimer);
         saveSettings(null, true);
       },
-      nextStake: function () { return settings.martingale ? nextStake : settings.stake; },
+      nextStake: function () { return settings.martingale ? nextStake : runBase != null ? runBase : settings.stake; },
+      /* The balance cannot pay the next stake: the ladder starts again from this one, for the rest
+         of the run. Its end hands the page back its own stake. */
+      restartLadder: function (v) { runBase = v; nextStake = v; showNextStake(); },
+      endRun: function () { if (runBase == null) return; runBase = null; nextStake = settings.stake; showNextStake(); },
       statsFor: function (sym) {
         return analysers[sym] ? analysers[sym].stats(settings.ref) : null;
       },
@@ -1080,6 +1090,7 @@
          can go on being the record of everything traded on this page. */
       startRun: function () {
         runSeq++;
+        runBase = null;
         nextStake = settings.stake;
         showNextStake();
         return runSeq;

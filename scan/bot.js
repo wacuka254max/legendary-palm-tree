@@ -6,16 +6,15 @@
  *   start → a popup scans every market live (progress bar), settles on the ONE
  *   best market and side (animated tick), and the bot starts on it by
  *   itself. The bot then trades one 1-tick contract at a time — re-scanning before
- *   every trade — until take profit, stop loss, Stop, or a balance that cannot
- *   cover the next stake. Take profit ends in a congratulations popup.
+ *   every trade — until take profit, stop loss, Stop, or a balance under Deriv's
+ *   smallest stake. Take profit ends in a congratulations popup.
  *
  * THE TYPES. Each is a set of sides the scan chooses between, all with the
  * same chance of winning, so the scan decides WHERE and WHICH, never how much
  * risk — that is the user's choice:
  *   Even/Odd         Even or Odd (50%).
- *   Rise/Fall        Rise or Fall over one tick (50%). The top payout tier is
- *                    the Step indices (1.845, prices move in fixed steps so a
- *                    tick never ties); Volatility indices pay 1.783.
+ *   Rise/Fall        Rise or Fall over one tick (50%). Volatility indices pay
+ *                    1.783 (the Step indices, left out for now, paid 1.845).
  *   Over/Under       the user picks a prediction pair, Over N / Under 9−N
  *                    (N 0–7) — mirror contracts with the same chance and the
  *                    same payout (measured on all 20 markets) — and the scan
@@ -24,8 +23,9 @@
  *                    Over 8 / Under 1 (10%) are not offered: never safe.
  *
  * THE SCAN, on the account's own socket (no extra connection; Deriv allows
- * five per person): which markets sell digit contracts or 1-tick Rise/Fall
- * now; what a win pays on each side through this app (markup included, read at
+ * five per person): which Volatility indices (the only markets for now) sell
+ * digit contracts or 1-tick Rise/Fall; what a win pays on each side through this
+ * app (markup included, read at
  * a stake of 10 so cent rounding does not hide the gaps between markets); and a
  * tick stream per market keeping its last LONG last digits — each written with
  * the decimals Deriv gives, so a trailing zero is a real 0 — and its last LONG
@@ -50,8 +50,10 @@
  * says in that popup what it did past the risk guide — the stake, the
  * Martingale, the balance, the take profit, the stop loss — with the figure that
  * keeps to it; one that kept to the guide gets the popup as it always was. A balance that cannot
- * cover the next trade ends the run with a popup pointing to Deriv to top up.
- * Each new run starts from nothing.
+ * pay the next stake does not end the run (owner, Nov 4): the Martingale starts again from the
+ * stake this type would start on with that balance, and the run trades on to its take profit,
+ * which stays as it was. Only a balance under Deriv's smallest stake ends it, with a popup
+ * pointing to Deriv to top up. Each new run starts from nothing.
  *
  * THE WATCH (scan/watch.js). From the moment an account shows, every type is
  * traded on paper — the same pick, the same next-tick entry, the user's own
@@ -113,6 +115,10 @@
   var FALLBACK_MIN = 0.35;
   var LOG_ROWS = 2000;
   var ENABLED = ["evenodd", "risefall", "overunder", "matchdiff"];
+  /* The markets the scan and the bot trade: the Volatility indices only for now (owner, Nov 4),
+     Volatility 10–100 and their 1-second kin. The Jump, Step and Bull/Bear indices are left out;
+     widening this one pattern brings them back. */
+  var MARKETS = /^(R_\d+|1HZ\d+V)$/;
 
   var store = {
     get: function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
@@ -345,11 +351,12 @@
     var gen = hub.gen;
     hub.starting = (async function () {
       prog(0, 1, T("Connecting to the markets…"));
-      for (var i = 0; ; i++) {
+      // (A page just opened may have no line yet at all: it gets as long as one that is still opening.)
+      for (var t0 = Date.now(); ;) {
         try { await D.whenOpenOn(accountId, 6000); break; }
         catch (e) {
           if (gen !== hub.gen) return;
-          if (i > 6) throw new Error(T("Not connected to Deriv yet. Try again in a moment."));
+          if (Date.now() - t0 > 45000) throw new Error(T("Not connected to Deriv yet. Try again in a moment."));
           await sleep(800);
         }
       }
@@ -360,10 +367,11 @@
       // The 20 digit markets (the same for every digit type, measured), and
       // the synthetic indices that sell Rise/Fall — in ticks, which adds the
       // 5 Step indices. Forex and the rest sell Rise/Fall only in minutes.
+      // Of all these, only MARKETS are taken.
       var a = await D.askOn(accountId, { active_symbols: "brief", contract_type: ["DIGITEVEN"] });
       if (a.error) throw new Error(a.error.message);
       var rf = await D.askOn(accountId, { active_symbols: "brief", contract_type: ["CALL"] });
-      var open = function (x) { return x.exchange_is_open && !x.is_trading_suspended; };
+      var open = function (x) { return x.exchange_is_open && !x.is_trading_suspended && MARKETS.test(x.underlying_symbol); };
       var list = (a.active_symbols || []).filter(open), seenSym = {};
       list.forEach(function (x) { seenSym[x.underlying_symbol] = 1; });
       ((rf && rf.active_symbols) || []).forEach(function (x) {
@@ -1278,11 +1286,16 @@
       setProgress(1, T("Done"));
       await sleep(350);
       if (token !== scanToken) return;
+      // The balance may have come in during the scan (a page just opened shows the last visit's
+      // until then): the form has followed it, and the run takes what it holds now.
+      s = readSettings();
+      if (tooLow(c.id)) return topUp(c.id, hub.minStake);
 
       pending = { account: c.id, settings: s, spec: spec, pick: null };
       showPick(choose(spec) || pick);
       if (watch) { watch.track(spec); meter($("bmWatch"), spec.key); }
-      $("bmStake").textContent = money(s.stake, hub.currency);
+      var bal = balanceOf(c.id);   // (a stake past the balance starts from what the balance pays: restart)
+      $("bmStake").textContent = money(s.stake > bal ? guidedDefaults(bal, s.type, s.variant).stake : s.stake, hub.currency);
       $("bmMult").textContent = dynamicMult(s.type, s.variant) ? T("Dynamic") : "×" + s.mult;
       $("bmTp").textContent = money(s.tp, hub.currency);
       $("bmSl").textContent = s.slOn ? money(s.sl, hub.currency) : T("Off");
@@ -1327,8 +1340,10 @@
   function newRun(account, s, spec) {
     return {
       account: account, active: true, stopping: false, ended: null, spec: spec,
-      stake0: s.stake, stake: s.stake, tp: s.tp, sl: s.slOn === false ? 0 : s.sl, mult: s.mult, bal0: balanceOf(account),
-      pl: 0, n: 0, won: 0, lost: 0, streak: 0, errors: 0, unpaid: 0, bookedAt: 0,
+      // stake0: the stake a win goes back to. stakeSet: the one the run was started with (stake0
+      // moves when the balance cannot pay the Martingale: restart).
+      stake0: s.stake, stakeSet: s.stake, stake: s.stake, tp: s.tp, sl: s.slOn === false ? 0 : s.sl, mult: s.mult, bal0: balanceOf(account),
+      pl: 0, n: 0, won: 0, lost: 0, streak: 0, errors: 0, unpaid: 0, bookedAt: 0, ladderAt: 0, going: false, unsure: !lineSaid(account),
       log: [], ids: {}, currency: hub.currency, startedAt: Math.floor(Date.now() / 1000) - 1,
       bought: {}, pending: null,
     };
@@ -1375,7 +1390,7 @@
     session.set({
       v: 1, account: r.account, type: r.spec.type, variant: r.spec.variant, stopping: !!r.stopping,
       safety: watch ? watch.realState(r.spec.key) : null,
-      settings: { stake: r.stake0, tp: r.tp, sl: r.sl, mult: r.mult }, stake: r.stake,
+      settings: { stake: r.stakeSet, tp: r.tp, sl: r.sl, mult: r.mult }, stake: r.stake, base: r.stake0, ladderAt: r.ladderAt,
       pl: r.pl, n: r.n, won: r.won, lost: r.lost, streak: r.streak, startedAt: r.startedAt, currency: r.currency, bal0: r.bal0,
       ids: Object.keys(r.ids), savedAt: Date.now(),
       bought: r.bought ? Object.keys(r.bought).filter(function (id) { return !r.ids[id]; }) : null, pending: r.pending || null,
@@ -1435,8 +1450,10 @@
     var spec = makeSpec(sv.type, sv.variant);
     var r = newRun(sv.account, sv.settings, spec);
     r.stake = sv.stake; r.pl = sv.pl; r.n = sv.n; r.won = sv.won; r.lost = sv.lost; r.streak = sv.streak;
-    r.startedAt = sv.startedAt; r.currency = sv.currency || r.currency; r.resumed = true;
+    r.startedAt = sv.startedAt; r.currency = sv.currency || r.currency; r.resumed = true; r.going = true; r.unsure = false;
     if (sv.bal0 > 0) r.bal0 = sv.bal0;
+    if (sv.base > 0) r.stake0 = sv.base;
+    r.ladderAt = sv.ladderAt || 0;
     sv.ids.forEach(function (id) { r.ids[id] = 1; });
     r.bought = null;
     if (Array.isArray(sv.bought)) { r.bought = {}; sv.bought.forEach(function (id) { r.bought[String(id)] = 1; }); }
@@ -1527,7 +1544,7 @@
       if (run !== r || !($("bmRoot").hidden || modal.view === "bmDone")) return;
       if (reason === "tp") celebrate(r);
       else if (reason === "sl") stopped(r);
-      else if (reason === "balance") topUp(r.account, r.stake, r);
+      else if (reason === "balance") topUp(r.account, hub.minStake, r);
     });
   }
 
@@ -1547,6 +1564,9 @@
       if (r.pl >= r.tp - 1e-9) return end(r, "tp");
       if (r.sl > 0 && -r.pl >= r.sl - 1e-9) return end(r, "sl");
       steer(r);                             // Safe: a red type moves the run to another market
+      // A page just opened shows the last visit's balance until Deriv's comes in: a moment for it
+      // before the first trade (at once when it is in, as nearly always). followBalance does the rest.
+      if (!r.looked) { r.looked = true; await balanceIn(r, 3000); if (r.stopping) continue; }
       var acc = D.accountOf(r.account), rec = null, live = hub.ready && hub.account === r.account;
       if (acc && acc.balance != null && r.stake > acc.balance + 1e-9) {
         if (await covered(r) || r.stopping) continue;
@@ -1557,7 +1577,22 @@
           try { rec = await recovery(r, Number(D.accountOf(r.account).balance)); } catch (e) { rec = null; }
           if (r.stopping) continue;
         }
-        if (!rec && (!canRecover || live)) return end(r, "balance");
+        if (!rec && (!canRecover || live)) {
+          // No recovery to make, or none the balance pays: the run carries on from the stake this
+          // balance would start on, to the same take profit. Only under Deriv's smallest stake is the
+          // next trade impossible. Both on Deriv's own figure: with the line down the one held may be old.
+          var line = D.accountOf(r.account);
+          if (!line || !line.live) {
+            paintRun(T("Reconnecting to Deriv…"));
+            if (D.revive) D.revive();
+            await balanceIn(r, 10000);
+            continue;
+          }
+          var left = Number(line.balance);
+          if (left < hub.minStake - 1e-9) return end(r, "balance");
+          if (r.stake <= left + 1e-9) continue;
+          restart(r, left);
+        }
       }
 
       if (!rec && hub.ready && hub.account === r.account && (Date.now() - hub.pricedAt > 5 * 60000 || hub.pricedSpec !== r.spec.key)) {
@@ -1614,6 +1649,7 @@
       // Deriv's request budget (deriv.js): the buy goes once it fits, so Deriv never refuses it for rate.
       if (D.roomOn) await D.roomOn(r.account);
       if (r.stopping) continue;
+      r.going = true;
       try { res = await buyOnce(r, pick, amount); }
       catch (e) {
         r.showStake = null;
@@ -1634,10 +1670,17 @@
           r.rateHeld = false;
           continue;
         }
-        if (e.code === "InsufficientBalance") {
+        if (e.code === "InsufficientBalance" || /insufficient/i.test(e.message || "")) {
           r.errors++;
           if (r.errors < 3 && (await covered(r) || r.stopping)) continue;
-          return end(r, "balance");
+          // Deriv knows the balance better than the figure held here, and says it: the run carries on
+          // from what that pays. Only the smallest stake refused means no trade is possible.
+          var held = refusedAt(e);
+          if (!isFinite(held)) held = balanceOf(r.account);
+          if (!(held >= hub.minStake - 1e-9) || stakeNow <= hub.minStake + 1e-9) return end(r, "balance");
+          restart(r, held, stakeNow);
+          r.errors = 0;
+          continue;
         }
         // The account itself (signed out, closed, its own limits) or a trade that could not be
         // confirmed: nothing on this page can trade past that.
@@ -1695,15 +1738,64 @@
     }
   }
 
-  /** What the losing streak has cost so far: the stakes since the last win. */
+  /** The balance cannot pay the stake the run has reached (owner, Nov 4), though it pays Deriv's
+   *  smallest: the Martingale starts again from the stake this type would start on with this
+   *  balance — never the run's first stake, never the whole balance — and a win comes back to it.
+   *  The take profit stays as it was. `below`: a stake Deriv just refused, so the next must be less. */
+  function restart(r, balance, below) {
+    var stake = guidedDefaults(balance, r.spec.type, r.spec.variant).stake;
+    if (below && stake >= below) stake = hub.minStake;
+    r.stake0 = r.stake = stake;
+    r.ladderAt = r.n;
+    saveRun(r);
+    paintRun();
+  }
+  /** The balance from Deriv's own line, once it has said it: waits up to `ms` while it has not. */
+  async function balanceIn(r, ms) {
+    for (var t0 = Date.now(); r.active && !r.stopping && Date.now() - t0 < ms; await sleep(100)) {
+      var a = D.accountOf(r.account);
+      if (!a || a.live) break;
+    }
+    return balanceOf(r.account);
+  }
+  /** The balance a refusal states ("Your account balance (USD 2.12) is insufficient…"), else NaN. */
+  function refusedAt(e) {
+    var m = /balance\s*\(\D*([\d.,]+)\)/i.exec(String(e.message || ""));
+    return m ? Number(m[1].replace(/,/g, "")) : NaN;
+  }
+  /** Has this account's line said the balance? Until then the figure held may be the last visit's. */
+  function lineSaid(id) { var a = D.accountOf(id); return !!(a && a.live && a.balance != null); }
+  /** Deriv's own figure says no trade is possible on this account: under the smallest stake. */
+  function tooLow(id) { return lineSaid(id) && Number(D.accountOf(id).balance) < hub.minStake - 1e-9; }
+  /** A run started before the balance came in (the page just opened, the figure on screen the last
+   *  visit's) follows it, and nothing stops: until its first trade goes, or past that when the line
+   *  had not said the balance yet. The balance it counts from, the figures that were the balance's
+   *  own — the user's stay theirs, a Martingale under way keeps its step — and their risk words. */
+  function followBalance(r) {
+    var a = D.accountOf(r.account);
+    if (!a || a.balance == null || (r.going && !(r.unsure && a.live))) return;
+    if (a.live) r.unsure = false;
+    var bal = round2(Number(a.balance) - r.pl);
+    if (bal === r.bal0) return;
+    var ts = typeState(r.spec.type), d = defaultsFor(bal, r.spec.type, r.spec.variant);
+    r.bal0 = bal;
+    if (!ts.own.stake) { if (r.stake === r.stake0) r.stake = d.stake; r.stakeSet = r.stake0 = d.stake; }
+    if (!ts.own.tp) r.tp = d.tp;
+    paintFigures();
+    if (modal.view === "bmDone") { $("bmStake").textContent = money(r.stake, hub.currency); $("bmTp").textContent = money(r.tp, hub.currency); }
+    saveRun(r);
+    paintRun();
+  }
+
+  /** What the losing streak has cost so far: the stakes since the last win, on this ladder. */
   function owed(r) {
     var s = 0;
-    for (var i = 0; i < r.log.length && !r.log[i].won; i++) s += Number(r.log[i].stake) || 0;
+    for (var i = 0; i < r.log.length && i < r.n - r.ladderAt && !r.log[i].won; i++) s += Number(r.log[i].stake) || 0;
     return round2(s);
   }
   async function payoutOf(account, sym, ct, barrier, amount) {
     var q = await D.askOn(account, { proposal: 1, amount: amount, basis: "stake", currency: hub.currency, underlying_symbol: sym,
-      contract_type: ct, duration: 1, duration_unit: "t", barrier: String(barrier) }, 10000);
+      contract_type: ct, duration: 1, duration_unit: "t", barrier: String(barrier) }, 10000, { urgent: true });   // a run is waiting on it
     if (q.error) { learnCap(sym, ct, q.error.message, amount, null); return null; }   // a limit it states is kept
     return Number(q.proposal.payout);
   }
@@ -1716,6 +1808,9 @@
     if (!(debt > 0) || !recovers(r.spec) || !(balance >= hub.minStake)) return null;
     var main = choose(r.spec);
     var need = round2(debt + (main ? Math.max(0, r.stake0 * (main.ratio - 1)) : 0));
+    // A recovery wins less than its stake (Over 4, which pays the most of them, pays under 2 per 1
+    // staked), so a debt past the balance has none: no need to ask Deriv, market after market.
+    if (need > balance + 1e-9) return null;
     var from = Math.round(9 - 10 * winChance(r.spec)) + 1;     // less likely than the type's own: pays more
     var syms = main ? [main.m.sym] : [];
     hub.order.forEach(function (s) { if (syms.indexOf(s) < 0) syms.push(s); });
@@ -2063,10 +2158,10 @@
   };
   function mistakes(r, why) {
     var B = r && r.bal0, spec = r && r.spec;
-    if (!(B > 0) || !spec || !TYPES[spec.type] || !(r.stake0 > 0) || !(r.mult >= 1)) return [];
+    if (!(B > 0) || !spec || !TYPES[spec.type] || !(r.stakeSet > 0) || !(r.mult >= 1)) return [];
     var min = hub.minStake || FALLBACK_MIN, d = perType(SAFE_DEPTH, spec.type, spec.variant), m = r.mult, out = [];
     var M = function (v) { return money(v, r.currency); };
-    var risk = riskOf(spec, B, r.stake0, m, r.tp), def = TYPES[spec.type].defMult(spec.variant);
+    var risk = riskOf(spec, B, r.stakeSet, m, r.tp), def = TYPES[spec.type].defMult(spec.variant);
     // The guide's own figures on this balance: its stake, at the type's own Martingale.
     var safe0 = guidedDefaults(B, spec.type, spec.variant).stake, room = cycleOf(spec, B, safe0, def).depth >= d;
     if (risk.stake !== "safe") {
@@ -2076,10 +2171,10 @@
         // Martingale above the type's is a point of its own.
         var need = balanceFor(spec, min, def, d);
         // A stake above the smallest is a point of its own too: the smallest is the one to use.
-        if (r.stake0 > min + 1e-9) out.push(fill(T(WHY.stake), { stake: M(r.stake0), safe: M(min) }));
+        if (r.stakeSet > min + 1e-9) out.push(fill(T(WHY.stake), { stake: M(r.stakeSet), safe: M(min) }));
         if (!dynamicMult(spec.type, spec.variant) && m > def + 1e-9) out.push(fill(T(WHY.mult), { m: m, def: def }));
       } else {
-        if (r.stake0 > safe0 + 1e-9) out.push(fill(T(WHY.stake), { stake: M(r.stake0), safe: M(safe0) }));
+        if (r.stakeSet > safe0 + 1e-9) out.push(fill(T(WHY.stake), { stake: M(r.stakeSet), safe: M(safe0) }));
         if (!dynamicMult(spec.type, spec.variant) && m > def + 1e-9) out.push(fill(T(WHY.mult), { m: m, def: def }));
       }
     }
@@ -2088,10 +2183,10 @@
     }
     if (why === "sl" && r.sl > 0) {
       // The losses in a row, from the starting stake, that reach the stop loss: fewer than the type needs is too small.
-      for (var st = Math.max(min, r.stake0), sum = 0, k = 0; k < 300 && sum < r.sl - 1e-9; k++) { sum = round2(sum + st); st = round2(st * m); }
+      for (var st = Math.max(min, r.stakeSet), sum = 0, k = 0; k < 300 && sum < r.sl - 1e-9; k++) { sum = round2(sum + st); st = round2(st * m); }
       // The room the ladder needs: the run's own when its stake was safe, else the guide's
       // (its safe stake, or the smallest, 0.35, at the type's Martingale), as the other points say.
-      var needSl = risk.stake === "safe" ? balanceFor(spec, r.stake0, m, d) : balanceFor(spec, room ? safe0 : min, def, d);
+      var needSl = risk.stake === "safe" ? balanceFor(spec, r.stakeSet, m, d) : balanceFor(spec, room ? safe0 : min, def, d);
       if (k < d && needSl > 0) out.push(fill(T(WHY.sl), { sl: M(r.sl), need: M(needSl) }));
     }
     return out;
@@ -2509,6 +2604,7 @@
       if (acc && acc.currency && acc.currency !== hub.currency) { hub.currency = acc.currency; paintMin(); }
     }
     if (on && !(run && run.active)) paintFigures();
+    else if (run && run.active) followBalance(run);
     if (!resumeTried) resumeRun();
     // Only a demo: it stays in use; once a visit, with nothing else on screen and no run
     // going or coming back, the popup says how to open a real account.
@@ -2575,8 +2671,10 @@
     var s = readSettings();
     var err = validate(s);
     if (err) return say(err, "bad");
-    var c = D.current(), acc = c && D.accountOf(c.id);
-    if (acc && acc.balance != null && s.stake > Number(acc.balance) + 1e-9) return topUp(c.id, s.stake);
+    // Only a balance under Deriv's smallest stake keeps a run from starting. Any other trades on
+    // what it pays (the loop), and one not read on its line yet is looked at again after the scan.
+    var c = D.current();
+    if (c && tooLow(c.id)) return topUp(c.id, hub.minStake);
     scanAndOffer();
   });
   $("bmRetry").addEventListener("click", scanAndOffer);
