@@ -170,8 +170,8 @@
       title: "Scanning Rise/Fall markets",
       lede: "Finds the best market and direction, Rise or Fall, then trades it one 1-tick contract at a time until your take profit or stop loss.",
       variants: null, defVariant: "x",
-      // Step indices pay 1.845 and never tie: 1.845 / 0.845, rounded up.
-      defMult: function () { return 2.2; },
+      // Volatility indices pay 1.783: 1.783 / 0.783, rounded up.
+      defMult: function () { return 2.3; },
       contracts: function () { return ["CALL", "PUT"]; },
       sides: function () {
         return [
