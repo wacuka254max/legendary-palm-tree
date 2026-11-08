@@ -254,6 +254,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <button class="txn-handle" data-handle type="button" aria-expanded="false" aria-controls="txn-body">
           <span class="txn-grip" aria-hidden="true"></span>
           <span class="txn-handle-t">Transactions <span class="txn-count" data-count></span></span>
+          <b class="txn-big-pl" id="txnBigPl" data-i18n-skip hidden></b>
           <svg class="txn-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
           <span class="txn-pl" id="txn-pl" data-i18n-skip title="Bot P/L" hidden></span>
         </button>
@@ -270,6 +271,7 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
         <div class="txn-body" id="txn-body">
           <div class="txn-top">
             <h2 class="grp-t">Transactions</h2>
+            <b class="txn-top-pl" id="txnTopPl" data-i18n-skip hidden></b>
             <span class="txn-n" id="logN" data-i18n-skip></span>
           </div>
           <div class="txn-head">
@@ -331,6 +333,8 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
       <p class="bm-step" id="bmStep">Connecting to the markets…</p>
       <div class="bm-bar"><i id="bmBar"></i></div>
       <p class="bm-pct" id="bmPct" data-i18n-skip>0%</p>
+      <!-- Scan done: the watch's reading for this type takes the bar's place (bot.js liveScan). -->
+      <div class="bm-watch bm-watch--scan" id="bmScanWatch" data-watch="off" hidden><div class="bm-watch-bar"><i></i></div><b class="bm-watch-pct" data-i18n-skip>…</b></div>
     </div>
 
     <div class="bm-view" id="bmDone" hidden>
@@ -370,11 +374,14 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
       </div>
       <h2>🎉 Take Profit Reached!</h2>
       <p class="bm-msg">Congratulations! Your bot has successfully reached the take profit target.</p>
-      <div class="bm-details">
-        <div class="bm-drow"><span>Total Profit:</span><b class="bm-dv bm-dv--pl" id="bmWinAmt" data-i18n-skip></b></div>
-        <div class="bm-drow"><span>Total Trades:</span><b class="bm-dv bm-dv--n" id="bmWinN" data-i18n-skip></b></div>
-        <div class="bm-drow"><span>Won / Lost:</span><b class="bm-dv bm-dv--wl" id="bmWinWL" data-i18n-skip></b></div>
-        <div class="bm-drow"><span>Running Time:</span><b class="bm-dv bm-dv--time" id="bmWinTime" data-i18n-skip></b></div>
+      <!-- The amount big in the middle, the other figures small below it. -->
+      <div class="bm-details bm-details--big">
+        <div class="bm-big"><span>Total Profit</span><b class="bm-dv bm-dv--pl" id="bmWinAmt" data-i18n-skip></b></div>
+        <div class="bm-mini">
+          <div><span>Total Trades</span><b class="bm-dv bm-dv--n" id="bmWinN" data-i18n-skip></b></div>
+          <div><span>Won / Lost</span><b class="bm-dv bm-dv--wl" id="bmWinWL" data-i18n-skip></b></div>
+          <div><span>Running Time</span><b class="bm-dv bm-dv--time" id="bmWinTime" data-i18n-skip></b></div>
+        </div>
       </div>
       <p class="bm-sum-src" id="bmWinSum" hidden></p>
       <button class="bm-rclose btn-blue" type="button" data-bm-close>Close</button>

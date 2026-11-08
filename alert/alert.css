@@ -142,6 +142,17 @@
   overflow-wrap: anywhere;
 }
 .tpop-fig--profit dd { color: var(--tpop); }
+/* Take profit: the amount big in the middle, the other figures small below it (owner, Nov 8). */
+.tpop--win .tpop-figs { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; background: none; }
+.tpop--win .tpop-fig { flex: 1 1 0; padding: 8px 4px; border-radius: 10px; background: var(--panel-2); }
+.tpop--win .tpop-fig dd { font-size: 13px; }
+.tpop--win .tpop-fig--profit {
+  flex: 1 0 100%; padding: 12px 10px 14px; border-radius: 12px;
+  background: color-mix(in srgb, var(--tpop) 9%, var(--panel-2));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tpop) 26%, transparent);
+}
+.tpop--win .tpop-fig--profit dt { font-size: 10.5px; }
+.tpop--win .tpop-fig--profit dd { font-size: 34px; line-height: 1.05; letter-spacing: -0.01em; }
 
 /* Two buttons when the card has somewhere to send them: the way out on top,
    and a plain dismissal under it. */

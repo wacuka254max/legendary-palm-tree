@@ -46,6 +46,7 @@
   var OPEN_REAL_URL = "https://home.deriv.com/dashboard/home?t=8XPRHR2Y8SN8";
 
   var open = null;   // only ever one: a second card over the first says nothing
+  var tpLater = 0;   // a take-profit card on its way (showTakeProfit)
 
   /* What went wrong (risk.js mistakes): the points come in the page's language already; the
      heading and the closing note are put in it here. */
@@ -112,6 +113,7 @@
 
     // A run cannot hit two targets, but a stray second call must not stack.
     close();
+    if (kind !== "win") { clearTimeout(tpLater); tpLater = 0; }
 
     details = details || {};
     var figs = "";
@@ -199,10 +201,16 @@
     /* A running bot's wait, shown moving before `anchor`; "" puts it away. */
     wait: waitCard,
 
-    /* Reached what they asked for. Say so and get out of the way. */
+    /* Reached what they asked for. Say so and get out of the way — a moment after the last
+       trade lands in the trades, so that is seen first (owner, Nov 8). */
     showTakeProfit: function (details) {
-      return show("win", "Target reached", "Congratulations!",
-        "Your take profit was hit and the bot stopped itself.", details);
+      clearTimeout(tpLater);
+      tpLater = setTimeout(function () {
+        tpLater = 0;
+        show("win", "Target reached", "Congratulations!",
+          "Your take profit was hit and the bot stopped itself.", details);
+      }, 1500);
+      return null;
     },
 
     /* Reached the limit instead. No congratulations, and no consolation
@@ -240,6 +248,6 @@
         { href: OPEN_REAL_URL, label: "Set up my real account" });
     },
 
-    close: function () { close(); }
+    close: function () { clearTimeout(tpLater); tpLater = 0; close(); }
   };
 })(window);

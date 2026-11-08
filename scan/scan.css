@@ -439,6 +439,10 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
 .txn-run.is-in .txn-run-btn { height: 38px; font-size: 14px; border-radius: 12px; box-shadow: none; }
 .txn-run.is-in .txn-run-btn svg { width: 15px; height: 15px; }
 .txn-pl { display: none; }
+/* The run's P/L beside "Transactions", big and bright, live (panel.js): small screens only, below. */
+.txn-big-pl, .txn-top-pl { display: none; color: var(--text); }
+.txn-big-pl.is-up, .txn-top-pl.is-up { color: var(--up); text-shadow: 0 0 16px color-mix(in srgb, var(--up) 45%, transparent); }
+.txn-big-pl.is-down, .txn-top-pl.is-down { color: var(--down); text-shadow: 0 0 16px color-mix(in srgb, var(--down) 40%, transparent); }
 
 /* The small print, and the chat button at its right end, over the free corner of the trades. */
 .pv-page .app-foot { flex: none; margin: 0; padding: 7px 64px 0 0; }
@@ -539,6 +543,7 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
 @media (min-width: 600px) and (max-width: 859px) and (min-height: 760px) {
   .pv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); grid-template-areas: "radar radar" "ctl ses" "txn txn"; }
   .sh-txn .txn-run { display: none; }
+  .txn-top-pl:not([hidden]) { display: inline-block; font-size: 20px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
   .sh-go { margin-top: 12px; padding-top: 0; }
   .sh-min { display: none; }
   .pv-page .app-foot { padding-right: 64px; }
@@ -559,7 +564,9 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
     position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 80;
     border: 0; border-top: 1px solid var(--line-hi); border-radius: 18px 18px 0 0;
     box-shadow: 0 -12px 34px -22px rgba(0, 0, 0, 0.55);
-    max-height: min(84dvh, 660px); min-height: 0;
+    /* Up, nearly the whole screen (owner, Nov 8): the trades fill it, and the totals, Run / Stop
+       and Reset wait at its foot. */
+    height: 90vh; height: 90dvh; max-height: none; min-height: 0;
     transform: translateY(calc(100% - 46px - var(--txn-run-h)));
     transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -574,7 +581,10 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
   .txn-run:not(.is-in) .txn-run-btn { height: 40px; }
   .txn-top { display: none; }
   .txn-body { padding: 0 16px 14px; overflow-y: auto; }
-  .txn-rows { flex: 1 1 auto; min-height: 34dvh; max-height: 52dvh; }
+  /* The trades take all the room the sheet has when it is up, empty or not. */
+  .txn-rows { flex: 1 1 0; min-height: 34dvh; max-height: none; }
+  /* Up, the run's P/L beside "Transactions" on its bar. */
+  .sh-txn.is-open .txn-big-pl:not([hidden]) { display: inline-block; font-size: 21px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
   .txn-reset { position: static; width: 100%; margin-top: 8px; padding: 9px 16px; font-size: 13.5px; }
   .txn-pl {
     position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
@@ -743,6 +753,15 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
 .bm-dv--wl { color: var(--amber); }
 .bm-dv--time { color: #2dd4bf; }
 :root[data-theme="light"] .bm-dv--time { color: #0d9488; }
+/* Take profit: the amount big in the middle, the other figures small below it (owner, Nov 8). */
+.bm-details--big { gap: 10px; text-align: center; }
+.bm-big { padding: 12px 10px 14px; border-radius: 12px; border: 1px solid var(--mint-edge); background: var(--mint-tint); }
+.bm-big > span { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.bm-big > .bm-dv { display: block; margin-top: 4px; font-size: 34px; line-height: 1.05; letter-spacing: -0.01em; }
+.bm-mini { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.bm-mini > div { min-width: 0; padding: 8px 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+.bm-mini span { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-mini .bm-dv { display: block; margin-top: 3px; font-size: 13px; }
 .bm .bm-rclose { width: 100%; padding: 13px 24px; border-radius: 12px; border: 1px solid var(--r-ink); background: var(--r-ink); color: #fff; font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; transition: filter .15s ease, transform .15s ease; }
 .bm .bm-rclose:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .bm-confetti { position: absolute; inset: -30px -34px; overflow: hidden; pointer-events: none; border-radius: 20px; }
@@ -791,6 +810,13 @@ body.pv-page { height: 100%; min-height: 0; overflow: hidden; overscroll-behavio
 .bm-watch[data-watch="red"] .bm-watch-bar i { animation: pv-grow 1s cubic-bezier(.2, .8, .2, 1) both, pv-blink 1.4s 1s ease-in-out infinite; }
 .bm-watch[data-watch="warm"] .bm-watch-bar i { clip-path: inset(0 70% 0 0); animation: pv-blink 1.1s ease-in-out infinite; }
 .bm-watch-pct { min-width: 44px; font-size: 16px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; color: var(--wc); }
+/* Scan done (bot.js liveScan): the reading where the bar was, the popup the same size, and
+   "Trading started" lit as Pipvana's live pill (owner, Nov 8). */
+.bm-watch--scan { margin: 9px 4px 0; }
+.bm-watch--scan[hidden] { display: none; }
+.bm-step.is-live { display: flex; width: fit-content; align-items: center; gap: 8px; min-height: 0; padding: 0 12px; border-radius: 999px; border: 1px solid var(--mint-edge); background: var(--mint-tint); color: var(--mint); font-weight: 700; }
+.bm-step.is-live::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--mint); animation: pv-beat 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .bm-step.is-live::before { animation: none; } }
 @keyframes pv-grow { from { clip-path: inset(0 100% 0 0); } }
 
 .bm-why { margin: 0 0 10px; display: grid; gap: 8px; text-align: left; }

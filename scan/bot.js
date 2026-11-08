@@ -94,6 +94,8 @@
   var LONG = 100;           // the tie-break: the last 100
   var TIER = 0.0025;        // "pays the most": within 0.25% of the best payout
   var MULT_MAX = 50;
+  var SCAN_HOLD = 1800;     // the start popup, its scan done, shows the reading and "Trading started" this long
+  var TP_PAUSE = 1500;      // the last trade lands in Recent trades before the take-profit popup
   var SCAN_WAIT = 3500;     // the most the start scan waits for prices Deriv is slow to give (its request budget)
   var PRICE_REF = 10;       // payouts are read at 10 or more: at 0.35 the cent rounding hides the gaps between markets
   var STATE_KEY = "pvr_smart_v1";
@@ -1204,6 +1206,7 @@
     // session has already finished by now.
     if ((was === "bmDone" || modal.glide) && run) toTrades();
     modal.glide = false;
+    scanning = false;
     scanToken++;                         // a scan still running is abandoned
     if (modal.lastFocus && modal.lastFocus.focus) modal.lastFocus.focus();
   }
@@ -1238,7 +1241,7 @@
     if (bar.shown < bar.target) bar.raf = requestAnimationFrame(tickBar);
   }
 
-  var scanToken = 0, pending = null;
+  var scanToken = 0, pending = null, scanning = false;   // scanning: a start scan is on screen, not yet trading
 
   async function scanAndOffer() {
     var c = D.current();
@@ -1248,7 +1251,9 @@
     saveForm();
     say("");
     var token = ++scanToken;
+    scanning = true;
     bar.shown = 0; bar.target = 0;
+    liveScan(false);
     $("bmTitle").textContent = T(spec.t.title);
     setProgress(0, T("Connecting to the markets…"));
     openModal("bmScan");
@@ -1293,22 +1298,30 @@
 
       pending = { account: c.id, settings: s, spec: spec, pick: null };
       showPick(choose(spec) || pick);
-      if (watch) { watch.track(spec); meter($("bmWatch"), spec.key); }
-      var bal = balanceOf(c.id);   // (a stake past the balance starts from what the balance pays: restart)
-      $("bmStake").textContent = money(s.stake > bal ? guidedDefaults(bal, s.type, s.variant).stake : s.stake, hub.currency);
-      $("bmMult").textContent = dynamicMult(s.type, s.variant) ? T("Dynamic") : "×" + s.mult;
-      $("bmTp").textContent = money(s.tp, hub.currency);
-      $("bmSl").textContent = s.slOn ? money(s.sl, hub.currency) : T("Off");
-      openModal("bmDone");
-      // No button to press: the bot starts on what the popup shows, and the
-      // popup steps aside a moment later (x closes it sooner; trading goes on).
+      if (watch) { watch.track(spec); meter($("bmWatch"), spec.key); meter($("bmScanWatch"), spec.key); }
+      // One popup (owner, Nov 8): the scan's own popup shows the watch's reading and "Trading started",
+      // the same size, and steps aside a moment later (x closes it sooner; trading goes on).
+      // No second popup: the market changes as the bot trades, Live Scan shows it.
+      liveScan(true);
+      scanning = false;
+      modal.glide = true;
       startRun();
-      setTimeout(function () { if (modal.view === "bmDone") closeModal(); }, 2800);
+      setTimeout(function () { if (modal.view === "bmScan" && token === scanToken) closeModal(); }, SCAN_HOLD);
     } catch (e) {
       if (token !== scanToken) return;
       $("bmErrText").textContent = e.message || T("The scan did not finish. Try again.");
       openModal("bmErr");
     }
+  }
+
+  /** The start popup, its scan done: the reading in its place (when the watch has one). */
+  function liveScan(on) {
+    var w = $("bmScanWatch"), read = !!(on && w && watch && w.getAttribute("data-watch") !== "off");
+    $("bmBar").parentNode.hidden = read;
+    $("bmPct").hidden = read;
+    if (w) w.hidden = !read;
+    $("bmStep").classList.toggle("is-live", !!on);
+    if (on) $("bmStep").textContent = T("Trading started");
   }
 
   /** The popup's result: the first trade the bot places, while it is fresh. */
@@ -1541,8 +1554,10 @@
     syncLanes();
     finalSync(r).then(function () {
       // A popup for how it ended — taking over from the start popup, never over a new scan.
-      if (run !== r || !($("bmRoot").hidden || modal.view === "bmDone")) return;
-      if (reason === "tp") celebrate(r);
+      var free = function () { return run === r && !scanning && ($("bmRoot").hidden || modal.view === "bmScan"); };
+      if (!free()) return;
+      // Take profit: the last trade shows in Recent trades first, then the popup (owner, Nov 8).
+      if (reason === "tp") setTimeout(function () { if (free()) celebrate(r); }, TP_PAUSE);
       else if (reason === "sl") stopped(r);
       else if (reason === "balance") topUp(r.account, hub.minStake, r);
     });
@@ -2124,7 +2139,7 @@
 
   /** A result popup; one that takes over from the start popup still glides to the trades on a phone. */
   function result(view) {
-    var glide = modal.view === "bmDone";
+    var glide = modal.glide || modal.view === "bmDone";
     openModal(view);
     modal.glide = glide;
   }
@@ -2276,6 +2291,13 @@
     $("botEmpty").hidden = !!(r && r.n) || !!(waitText && w);
     if (w) { w.hidden = !waitText; if (waitText) $("botWaitText").textContent = waitText; }
     $("logN").textContent = r && r.n ? fill(T("{n} this run"), { n: r.n }) : "";
+    // Phones: the run's P/L beside "Recent trades", live (the stylesheet shows it on small screens).
+    var lp = $("logPl");
+    if (lp) {
+      lp.hidden = !r;
+      lp.textContent = signed(r ? r.pl : 0, cur);
+      lp.className = lp.className.replace(/ is-(up|down)/g, "") + (r && r.pl > 0 ? " is-up" : r && r.pl < 0 ? " is-down" : "");
+    }
 
     var text, kind;
     if (!r) { text = T("Ready"); kind = "idle"; }

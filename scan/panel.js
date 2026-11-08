@@ -143,6 +143,7 @@
   }
   /* The run's P/L on the parked bar (narrow screens only), at its right end: the bar keeps its size. */
   function paintBarPl() {
+    paintBigPl();
     var b = $("txn-pl");
     if (!b || !txnEl) return;
     var r = B(), show = !!(r && r.active) && sheet() && !txnEl.classList.contains("is-open");
@@ -152,6 +153,21 @@
     var d = global.EvieCurrency ? global.EvieCurrency.digits(cur) : 2;
     b.textContent = (v >= 0 ? "+" : "") + Number(v).toFixed(d);
     b.className = "txn-pl" + (v > 0 ? " is-up" : v < 0 ? " is-down" : "");
+  }
+  /* The run's P/L beside "Transactions", big (owner, Nov 8): on the sheet's bar while it is up on a
+     phone, beside the heading on a tablet (scan.css shows it there and nowhere else). */
+  function paintBigPl() {
+    var r = B(), v = r ? r.pl || 0 : 0, cur = (r && r.currency) || "USD";
+    var d = global.EvieCurrency ? global.EvieCurrency.digits(cur) : 2;
+    [["txnBigPl", "txn-big-pl"], ["txnTopPl", "txn-top-pl"]].forEach(function (x) {
+      var b = $(x[0]);
+      if (!b) return;
+      if (b.hidden !== !r) b.hidden = !r;
+      if (!r) return;
+      var text = (v >= 0 ? "+" : "") + Number(v).toFixed(d);
+      if (b.textContent !== text) b.textContent = text;
+      b.className = x[1] + (v > 0 ? " is-up" : v < 0 ? " is-down" : "");
+    });
   }
   if (txnEl && global.MutationObserver) {
     new MutationObserver(placeRun).observe(txnEl, { attributes: true, attributeFilter: ["class"] });
