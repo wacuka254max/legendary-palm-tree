@@ -7,16 +7,17 @@
  * sent stays on screen afterwards — a form that swallows your words and says
  * "thanks" leaves you unsure anything happened.
  *
- * A bare "hi" is not a question yet, so it is held back once with a request for
- * detail rather than spending a round trip each way. Held-back messages are not
- * marked as sent, because they were not.
+ * Every message goes out as it is typed, a one-word "hi" included: it reaches
+ * us and is answered like anything else (owner, 16 Nov 2026).
  *
  * It takes screenshots and documents, because "it looks wrong" and a picture of
  * it are two different amounts of help — and a set file or a log is exactly
  * what people get asked for and then have nowhere to put.
  *
  * Replies come back HERE, polled from the server, with the time they arrived, a
- * NEW mark until they are read, a badge on the launcher, and a two-note chime.
+ * NEW mark until they are read and a badge on the launcher. Every reply alerts,
+ * whether the panel is open or shut: a two-note chime, a short buzz on phones,
+ * and the unread count in the tab's title while the page is in the background.
  * Which replies have been read is remembered in this browser, so the badge
  * survives a reload and stands until the panel is actually opened.
  *
@@ -41,7 +42,6 @@
   var MAIL_KEY = "pipvana_support_email";
   var ID_KEY = "pipvana_support_id";
   var THREAD_KEY = "pipvana_support_thread";
-  var NUDGED_KEY = "pipvana_support_nudged";
   /* Which replies have been READ. Unread is derived from the stored thread
      minus these, both of which survive a reload — an event counter did not. */
   var READ_KEY = "pipvana_support_read";
@@ -103,40 +103,80 @@
   }
 
   /**
-   * The arrival sound: two soft notes a fifth apart — the shape every
-   * messaging app uses because it reads as "something for you" and not as an
-   * alarm. Built with WebAudio, so nothing to host. Browsers refuse audio until
-   * the person has interacted with the page; inside a widget they had to click
-   * and type into, that gesture has happened. Where it has not, this throws
-   * and is swallowed — a missing chime is not worth a broken bubble.
+   * The arrival alert, for EVERY reply, panel open or shut (owner, 16 Nov 2026:
+   * "if user receives anything on the support widget everything they get a
+   * notification sound"): a chime, a short buzz on phones that have one, and the
+   * unread count in the tab's title while the page is in the background
+   * (paintTitle) — what every messaging app does.
+   *
+   * The chime: two soft notes a fifth apart, the shape every messaging app uses
+   * because it reads as "something for you" and not as an alarm. Built with
+   * WebAudio, so nothing to host. Browsers only let a page make a sound once the
+   * person has touched it, and iPhones only from inside the touch itself, so ONE
+   * sound context is opened on a tap, click or key (only for someone talking to
+   * us) and kept for the visit: a reply that arrives minutes later, with no touch
+   * at that moment, still rings. A reply that lands before any touch at all (the
+   * page just opened) rings at the first one. Every step is guarded — a missing
+   * chime is not worth a broken bubble.
    */
-  function chime() {
-    try {
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      var ctx = new Ctx();
-      var note = function (freq, at, len) {
-        var osc = ctx.createOscillator(), gain = ctx.createGain();
-        osc.type = "sine"; osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, ctx.currentTime + at);
-        gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + at + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + at + len);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(ctx.currentTime + at); osc.stop(ctx.currentTime + at + len + 0.02);
-      };
-      note(784, 0, 0.16); note(1175, 0.13, 0.22);
-      setTimeout(function () { try { ctx.close(); } catch (e) {} }, 900);
-    } catch (e) { /* no audio permission, or no audio at all */ }
+  var audio = null, owed = false;
+  function notes() {
+    var ctx = audio, t0 = ctx.currentTime + 0.03;
+    var note = function (freq, at, len) {
+      var osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.type = "sine"; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t0 + at);
+      gain.gain.exponentialRampToValueAtTime(0.3, t0 + at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + at + len);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t0 + at); osc.stop(t0 + at + len + 0.03);
+    };
+    note(784, 0, 0.16); note(1175, 0.13, 0.26);
   }
-
-  /** A greeting on its own, or one word. Anything with a digit or a question
-   *  mark is a real question however short it is. */
-  function justAGreeting(t) {
-    var s = String(t || "").trim().replace(/[!.?,\s]+$/g, "");
-    if (s.length > 40) return false;
-    if (/[?0-9]/.test(s)) return false;
-    return /^(hi|hey+|hello+|yo|sup|hola|niaje|mambo|habari|help|good\s*(morning|afternoon|evening|day)|how\s*are\s*(you|u)|what'?s\s*up)$/i.test(s)
-      || s.split(/\s+/).length < 2;
+  /* Asleep (a call, the phone locked, a long time in the background): ask it to
+     run again; if the browser wants a touch first, the chime waits for it. */
+  function wake(then) {
+    try {
+      var p = audio.resume && audio.resume();
+      if (p && p.then) p.then(function () { if (audio.state === "running") then(); else owed = true; }, function () { owed = true; });
+      else owed = true;
+    } catch (e) { owed = true; }
+  }
+  function ring() {
+    try {
+      if (!audio) { owed = true; return; }
+      if (audio.state === "running") notes(); else wake(notes);
+    } catch (e) {}
+  }
+  function unlockAudio() {
+    try {
+      if (audio && audio.state === "running" && !owed) return;
+      if (!state.open && !state.thread.length) return;       // only for people talking to us
+      if (!audio) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        audio = new Ctx();
+      }
+      if (audio.state !== "running") {
+        // iPhones open the sound only from inside a touch: a silent blip does it.
+        var blip = audio.createBufferSource();
+        blip.buffer = audio.createBuffer(1, 1, 22050);
+        blip.connect(audio.destination);
+        blip.start(0);
+      }
+      if (owed) { owed = false; ring(); }
+      else if (audio.state !== "running") wake(function () {});
+    } catch (e) {}
+  }
+  ["touchend", "mousedown", "keydown", "click"].forEach(function (ev) {
+    document.addEventListener(ev, unlockAudio, true);
+  });
+  function alertArrival() {
+    ring();
+    try {
+      var ua = navigator.userActivation;
+      if (navigator.vibrate && (!ua || ua.hasBeenActive)) navigator.vibrate([90, 60, 90]);
+    } catch (e) {}
   }
 
   var id = get(ID_KEY);
@@ -149,7 +189,6 @@
 
   var state = {
     open: false,
-    nudged: get(NUDGED_KEY) === "1",
     busy: false,
     editWho: false,
     name: get(NAME_KEY),
@@ -405,27 +444,12 @@
 
     var box = panel.querySelector("#supText");
     var message = (box.value || "").trim();
-    if (message.length < 2 && !state.file) return;
+    if (!message && !state.file) return;
 
     var nameEl = panel.querySelector("#supName");
     var mailEl = panel.querySelector("#supMail");
     if (nameEl) state.name = nameEl.value.trim();
     if (mailEl) state.email = mailEl.value.trim();
-
-    if (!state.file && !state.nudged && justAGreeting(message)) {
-      state.nudged = true;
-      set(NUDGED_KEY, "1");
-      remember({ text: message, from: "them", sent: false });
-      remember({
-        from: "us",
-        system: true,
-        text: "Hello! So we can actually help, tell us what you need in a bit of detail — what you were doing, " +
-              "what happened, and what you expected instead. A screenshot helps too. Then send it and keep this window open — the answer usually comes back here in a few minutes."
-      });
-      state.draft = "";
-      draw();
-      return;
-    }
 
     if (!state.name) { state.err = "Add your name so we know who we are replying to."; draw(); return; }
     if (!isEmail(state.email)) { state.err = "Add the email we should reply to."; draw(); return; }
@@ -466,10 +490,26 @@
     });
   }
 
+  /* While the page is in the background, the tab's title carries the count of
+     unread replies — the "(1)" every messaging site shows — so a reply is seen
+     from another tab. Back on the page, the title is the page's own again. The
+     language layer keeps the page's own title to translate from
+     (document.__origTitle); it never keeps ours. */
+  var TITLE_MARK = /^\(\d+\+?\) /;
+  function paintTitle(n) {
+    try {
+      if (document.__origTitle) document.__origTitle = String(document.__origTitle).replace(TITLE_MARK, "");
+      var bare = document.title.replace(TITLE_MARK, "");
+      var want = document.hidden && n > 0 ? "(" + (n > 9 ? "9+" : n) + ") " + bare : bare;
+      if (document.title !== want) document.title = want;
+    } catch (e) {}
+  }
+
   function paintBadge() {
     var old = btn.querySelector(".sup-badge");
     if (old) old.remove();
     var n = unreadLines().length;
+    paintTitle(n);
     if (state.open || !n) return;
     var b = document.createElement("span");
     b.className = "sup-badge";
@@ -523,7 +563,6 @@
    * showed did not feel like support. Only runs once they have asked something.
    */
   var polling = null;
-  var rungFor = null;
 
   function poll() {
     if (!state.thread.length) return;
@@ -532,15 +571,21 @@
       .then(function (d) {
         var fresh = (d && d.replies) || [];
         if (!fresh.length) return;
+        /* An arrival is a reply this browser did not have yet. One already here
+           (from the look on opening, or an old line being repaired) is not, so
+           nothing rings twice for the same reply. */
+        var had = {};
+        state.thread.forEach(function (l) { if (l.from === "us" && l.id) had[l.id] = 1; });
+        var arrived = fresh.filter(function (r) { return r && r.id && r.from !== "them" && !had[r.id]; }).length;
         mergeReplies(fresh);
-        if (state.open) { draw(); markRead(); return; }
+        if (state.open) {
+          draw();
+          /* Read once it can be seen: with the page in the background it stays
+             new, and counted in the tab's title, until they come back to it. */
+          if (!document.hidden) markRead();
+        }
         paintBadge();
-        /* Sound the arrival, once per reply — keyed on the newest unread id
-           rather than the count, so a merge repairing an old line cannot ring
-           the bell again for something already seen. */
-        var u = unreadLines();
-        var newest = u.length ? u[u.length - 1].id : null;
-        if (newest && rungFor !== newest) { rungFor = newest; chime(); }
+        if (arrived) alertArrival();
       })
       .catch(function () { /* offline, or the tab is asleep — try again next tick */ });
   }
@@ -557,6 +602,13 @@
   paintBadge();
   if (state.thread.length) { poll(); }
   schedule();
+
+  /* Leaving the page puts the unread count in the tab's title; coming back
+     takes it off, and with the panel open what arrived meanwhile is read now. */
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && state.open) markRead();
+    paintBadge();
+  });
 
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && state.open) toggle(false);

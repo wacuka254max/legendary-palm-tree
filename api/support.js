@@ -127,7 +127,7 @@ module.exports = async (req, res) => {
     file = { data, type: f.type, name: str(f.name, 100) || (ALLOWED_IMAGE_TYPES.includes(f.type) ? "screenshot.png" : "file") };
   }
 
-  if (message.length < 2 && !file) return json(res, 400, { error: "Write your message first." });
+  if (!message && !file) return json(res, 400, { error: "Write your message first." });   // one word, even one letter, is a message (owner, 16 Nov 2026)
   if (message.length > MAX_MESSAGE) return json(res, 400, { error: "That message is too long." });
   if (!isEmail(email)) return json(res, 400, { error: "Add the email address we should reply to." });
 
