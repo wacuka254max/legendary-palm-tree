@@ -23,7 +23,13 @@ document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}c
    than assigns, so Back does not bounce between the two. Inline and first
    because a redirect that waits on a downloaded script is a redirect that
    flashes the page it was meant to prevent. */
-(function(){try{
+(function(){
+/* A connected Deriv account first, as on every page past the front door.
+   Owner, 17 Nov 2026: "nothing bypasses connected verification and home".
+   The same test as isConnected() in /deriv.js; without it, the front door. */
+var s=null;try{s=JSON.parse(localStorage.getItem("evie_deriv_session")||"null");}catch(e){}
+if(!(s&&s.access_token&&(s.refresh_token||!s.expires_at||Date.now()<Number(s.expires_at)-60000))){location.replace("/");return;}
+try{
   if(localStorage.getItem("evie_ui_k")==="1"&&localStorage.getItem("evie_ui_m")==="1")return;
 }catch(e){}
 location.replace("/home.html");})();

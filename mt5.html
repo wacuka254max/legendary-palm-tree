@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>MT5 Bots | Pipvana</title>
 <meta name="robots" content="noindex,nofollow" />
+<script>
+/* For a connected Deriv account only, before anything else on the page runs.
+   Owner, 17 Nov 2026: "if not connected to deriv they go to landing page then
+   connect and only then from home they can go to mt5". The test is
+   isConnected() in /deriv.js, inline and first so neither this page nor its
+   request form is ever drawn for somebody without the connection; replace,
+   so Back does not bounce. */
+(function(){var s=null;try{s=JSON.parse(localStorage.getItem("evie_deriv_session")||"null");}catch(e){}
+if(s&&s.access_token&&(s.refresh_token||!s.expires_at||Date.now()<Number(s.expires_at)-60000))return;
+try{document.documentElement.style.display="none";}catch(e){}
+location.replace("/");})();
+</script>
 <meta name="theme-color" content="#f7f7fb" />
 
 <link rel="icon" href="/favicon.ico" sizes="48x48" />

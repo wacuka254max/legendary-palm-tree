@@ -25,6 +25,21 @@
   var set = function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} };
   var isEmail = function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(v || "").trim()); };
 
+  /* For a connected Deriv account only. Owner, 17 Nov 2026: "nothing bypasses
+     connected verification and home". mt5.html sends anybody without the
+     connection to the front door before it draws; this is the same test
+     (isConnected() in /deriv.js) again the moment the sheet would open, send
+     or redeem, so a connection dropped in another tab is caught too. */
+  function linked() {
+    try {
+      var s = JSON.parse(localStorage.getItem("evie_deriv_session") || "null");
+      if (!s || !s.access_token) return false;
+      if (s.refresh_token) return true;
+      return !s.expires_at || Date.now() < Number(s.expires_at) - 60000;
+    } catch (e) { return false; }
+  }
+  function toFrontDoor() { location.replace("/"); }
+
   var NAME_KEY = "pipvana_support_name";
   var MAIL_KEY = "pipvana_support_email";
   var ID_KEY = "pipvana_support_id";
@@ -115,6 +130,7 @@
   }
 
   function open() {
+    if (!linked()) { toFrontDoor(); return; }
     if (!$("eaName").value) $("eaName").value = get(NAME_KEY);
     if (!$("eaMail").value) $("eaMail").value = get(MAIL_KEY);
     // A request already sent from this browser stays sent across a reload —
@@ -133,6 +149,7 @@
 
   function send() {
     if (busy || !formOk() || sendsLeft() === 0) return;
+    if (!linked()) { toFrontDoor(); return; }
     busy = true; showErr(null); paint();
     var id = $("eaId").value.trim(), name = $("eaName").value.trim(), email = $("eaMail").value.trim();
 
@@ -163,6 +180,7 @@
   function redeem() {
     var code = $("eaCode").value.trim();
     if (busy || !code) return;
+    if (!linked()) { toFrontDoor(); return; }
     busy = true; showErr(null); paint();
 
     fetch("/api/mt5/ea-download", {
