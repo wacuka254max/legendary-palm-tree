@@ -641,8 +641,8 @@
     var c = simCfg();
     if (!c) return;
     var sel = $("tm-sim-market");
-    /* The Headway markets first, the volatility indices after them, so the
-       list reads the way the choice above it does. */
+    /* The forex, metal, crypto and index markets first, the volatility
+       indices after them, so the list reads the way the choice above it does. */
     var syms = T.symbols();
     var names = syms.filter(function (x) { return !x.synthetic; }).map(function (x) { return x.name; })
       .concat(syms.filter(function (x) { return x.synthetic; }).map(function (x) { return x.name; }));

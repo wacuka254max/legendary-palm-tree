@@ -132,12 +132,11 @@
    * already shows, keeps Quotes, Charts, Trade and History talking about the
    * same markets.
    */
-  /* Since the move to Headway the list is what a Headway MT5 account
-     carries and this feed can price: the forex majors and minors, the four
-     metals, the two cryptos and the stock indices Deriv streams — then the
-     ten volatility indices, which only show when the settings ask for them.
-     Energies and single stocks are on Headway but not on this feed, so they
-     are not pretended. */
+  /* The list is what an MT5 account carries and this feed can price: the
+     forex majors and minors, the four metals, the two cryptos and the stock
+     indices Deriv streams — then the ten volatility indices, which only show
+     when the settings ask for them. Energies and single stocks are not on
+     this feed, so they are not pretended. */
   var WANTED = [
     "frxEURUSD", "frxGBPUSD", "frxUSDJPY", "frxAUDUSD", "frxUSDCAD", "frxUSDCHF", "frxNZDUSD",
     "frxXAUUSD", "frxXAGUSD", "frxXPTUSD", "frxXPDUSD",

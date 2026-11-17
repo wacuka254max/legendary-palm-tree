@@ -35,8 +35,8 @@
 
   var KEY = "evie_term_sim";
 
-  /* ALL is every market a Headway MT5 account carries; ALLVOL adds the
-     volatility indices; RANDOM draws from the Headway set per trade. */
+  /* ALL is every market in the MT5 list; ALLVOL adds the volatility
+     indices; RANDOM draws from that set per trade. */
   var ALL = "*all*", ALLVOL = "*allvol*", RANDOM = "*random*";
   /* A whole group — "*group:Forex*" — is a choice too: every instrument under
      that heading, and only those. */
